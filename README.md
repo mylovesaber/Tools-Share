@@ -1,2 +1,3 @@
-# auto_update_dns-nox
-linux命令行下的dns自动更新工具
+# Github hosts 自动更新工具
+自动更新 linux 服务器中的 hosts 文件（路径：/etc/hosts）以实现正常下载上传 github 项目的需求，
+本脚本未涉及包管理器的操作，故理论上各种 linux 发行版应该是通用的（路由器等特殊定制导致dns解析文件不是以上路径或命令被改名的就无法使用）。
