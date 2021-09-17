@@ -164,14 +164,31 @@ function _combine(){
 
 function _setcron(){
     # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
-    _info "清理残留定时任务中..."
-    sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
-    _success "清理完成"
-    _info "添加新定时任务中..."
-    echo "*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run" >> /etc/crontab
-    echo "* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom gitee" >> /etc/crontab
-    echo "* */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog" >> /etc/crontab
-    _success "新定时任务添加完成"
+    ifunraid=$(find / -name *unRAID* 2>/dev/null |xargs)
+    if [[ -z $ifunraid ]]; then
+        _info "清理残留定时任务中..."
+        sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
+        _success "清理完成"
+        _info "添加新定时任务中..."
+        echo "*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run" >> /etc/crontab
+        echo "* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom gitee" >> /etc/crontab
+        echo "* */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog" >> /etc/crontab
+        _success "新定时任务添加完成"
+    elif [[ $ifunraid =~ "unRAID" ]]; then
+        _warning "检测到当前系统为unRAID，切换到unRAID专用功能"
+        _info "清理残留定时任务中..."
+        hostpath=/boot/config/plugins/dynamix/github-hosts.cron
+        rm -rf $hostpath
+        _success "清理完成"
+        _info "添加新定时任务中..."
+        cat >> $hostpath <<EOF
+*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run
+* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom gitee
+* */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog
+EOF
+        /usr/local/sbin/update_cron
+        _success "新定时任务添加完成"
+    fi
 }
 
 function _showinfo(){
