@@ -44,7 +44,7 @@ function _checkhosts() {
 function _usage(){
 	# print help info
 	echo -e "\nGithub hosts 自动部署和更新工具"
-	echo -e "\n命令格式: \n$(basename "$0")  选项  参数"
+	echo -e "\n命令格式: \nsetup.sh  选项  参数"
 	echo -e "\n选项:\n"
 	echo "-s 或 --source        指定下载源，可选参数为 gitee 或 github，若不使用该选项则默认从 Gitee 下载"
 	echo "-h 或 --help          显示帮助信息并退出"
