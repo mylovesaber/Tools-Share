@@ -43,7 +43,9 @@ function _usage(){
 	echo "updatefrom gitee|github    需指定下载源才能升级该工具"
     echo "                           可选选项为 gitee 或 github，默认是码云"
     echo ""
-	echo "recover                    可选选项为 first_backup 或 uptodate_backup"
+	echo "recover                    该选项将将此工具所有功能从系统中移除"
+    echo "                           可选选项为 first_backup 或 uptodate_backup"
+    echo ""
 	echo "help                       显示帮助信息并退出"
 }
 
@@ -127,7 +129,7 @@ function _combine(){
 }
 
 function _setcron(){
-    # 默认每30分钟更新一次hosts，每周自动更新一次工具本身，每10天清理一次旧日志
+    # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
     _info "清理残留定时任务中..."
     sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
     _success "清理完成"

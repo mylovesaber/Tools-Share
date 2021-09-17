@@ -163,7 +163,7 @@ function _combine(){
 }
 
 function _setcron(){
-    # 默认每30分钟更新一次hosts，每周自动更新一次工具本身，每10天清理一次旧日志
+    # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
     _info "清理残留定时任务中..."
     sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
     _success "清理完成"
