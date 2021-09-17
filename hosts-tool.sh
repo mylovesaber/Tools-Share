@@ -1,7 +1,7 @@
 #!/bin/bash
 # Variable initialization
 options=$1
-exec_log=| tee /var/log/hosts-tool/exec-$(date +"%Y-%m-%d").log 2>&1
+exec_log=/var/log/hosts-tool/exec-$(date +"%Y-%m-%d").log
 
 _norm=$(tput sgr0)
 _red=$(tput setaf 1)
@@ -26,7 +26,7 @@ function _error() {
 }
 
 function _loginfo(){
-    cat >> /var/log/hosts-tool/$(date +"%Y-%m-%d").log <<EOF
+    cat >> /var/log/hosts-tool/exec-$(date +"%Y-%m-%d").log <<EOF
 
 ------------------------------------------------
 时间：$(date +"%Y-%m-%d %H:%M:%S")
@@ -147,7 +147,7 @@ function _recover(){
 }
 
 function _rmlog(){
-    logfile=$(find /var/log/hosts-tool/ -name "exec*.log" -mtime +20)
+    logfile=$(find /var/log/hosts-tool/ -name "exec*.log" -mtime +10)
     for a in $logfile
     do
         rm -f ${a}
@@ -162,8 +162,8 @@ if [[ $options == "updatefrom" ]]; then
 		_warning "Github（github）"
 	else
         _loginfo
-        _placescript ${exec_log}
-        _setcron ${exec_log}
+        _placescript | tee -a ${exec_log}
+        _setcron | tee -a ${exec_log}
 	fi
 fi
 
@@ -185,8 +185,8 @@ fi
 
 if [[ $options == "run" ]]; then
     _loginfo
-    _backuphosts ${exec_log}
-    _combine ${exec_log}
+    _backuphosts | tee -a ${exec_log}
+    _combine | tee -a ${exec_log}
 fi
 
 if [[ $options == "rmlog" ]]; then

@@ -162,7 +162,7 @@ function _setcron(){
 
 function _showinfo(){
     _success "Github hosts 自动部署和更新工具已安装完成并开启自动更新"
-    _success "命令行输入：hosts-tool -h 即可查看具体控制选项"
+    _success "命令行输入：hosts-tool 或 hosts-tool help 即可查看具体控制选项"
 }
 
 function _main(){
