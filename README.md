@@ -9,7 +9,11 @@
 
 # 工具说明与功能介绍
 
-本项目在码云和 Github 都有同步，内含两个脚本，分别为安装脚本和日用脚本。安装后系统会自动进行以下操作。
+本项目在码云和 Github 都有同步。
+Github： https://github.com/mylovesaber/auto_update_github_hosts
+Gitee：  https://gitee.com/mylovesaber/auto_update_github_hosts
+
+项目内含两个脚本，分别为安装脚本和日用脚本。安装后系统会自动进行以下操作。
 
 - 每30分钟自动更新一次hosts（实际效果取决于更新源的更新）
 - 每3天自动更新一次工具本身
