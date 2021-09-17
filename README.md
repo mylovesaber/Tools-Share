@@ -11,7 +11,9 @@ Tip: 群晖系统必要文件路径和常规 debian 系及 redhat 系的系统�
 # 工具说明与功能介绍
 
 本项目在码云和 Github 都有同步。
+
 Github： https://github.com/mylovesaber/auto_update_github_hosts
+
 Gitee：  https://gitee.com/mylovesaber/auto_update_github_hosts
 
 项目内含两个脚本，分别为安装脚本和日用脚本。安装后系统会自动进行以下操作。
