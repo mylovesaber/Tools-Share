@@ -48,20 +48,21 @@ function _usage(){
 }
 
 function _placescript(){
-    _info "开始安装工具..."
+    _info "开始更新工具..."
     if [[ $extraarg =~ "gitee" ]]; then
         _info "从码云下载脚本"
-        wget -qO /usr/bin/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
+        wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
     elif [[ $extraarg =~ "github" ]]; then
         _info "从 Github 下载脚本"
-        wget -qO /usr/bin/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+        wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
     fi
-    _success "已下载到特定路径"
+    _success "已下载，开始转移到系统程序路径"
+    cp /tmp/hosts-tool /usr/bin/hosts-tool
     _info "修改权限中..."
     chown root: /usr/bin/hosts-tool
     chmod 755 /usr/bin/hosts-tool
     _success "权限修改完成"
-    _success "工具安装完成"
+    _success "工具更新完成"
 }
 
 function _backuphosts(){
