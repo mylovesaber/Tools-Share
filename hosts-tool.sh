@@ -51,20 +51,20 @@ function _placescript(){
     _info "开始更新工具..."
     if [[ $extraarg =~ "gitee" ]]; then
         _info "从码云下载脚本"
-        wget -qO /root/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
+        wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
     elif [[ $extraarg =~ "github" ]]; then
         _info "从 Github 下载脚本"
-        wget -qO /root/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+        wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
     fi
     while true;do
-        if [[ -f /root/hosts-tool ]];then
+        if [[ -f /tmp/hosts-tool ]];then
             _success "已下载，开始转移到系统程序路径"
             break
         else
             sleep 1
         fi
     done
-    mv /root/hosts-tool /usr/bin/hosts-tool
+    mv /tmp/hosts-tool /usr/bin/hosts-tool
     _info "修改权限中..."
     chown root: /usr/bin/hosts-tool
     chmod 755 /usr/bin/hosts-tool
@@ -150,6 +150,11 @@ function _recover(){
     elif [[ ${extraarg} =~ "uptodate_backup" ]]; then
         mv -f /etc/hosts.default /etc/hosts
         rm -rf /etc/hosts_combine /etc/hosts.bak githubhosts.new
+    fi
+    if [[ -n $(grep "${cutlinetext}" /etc/hosts) ]]; then
+        _warning "发现恢复后的 hosts 文件存在残留的标记信息，清理中..."
+        sed -i '/'${cutlinetext}'/d' /etc/hosts
+        _success "清理完毕"
     fi
     _success "卸载完成，指定 hosts 文件已恢复，拜拜~~"
 }

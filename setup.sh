@@ -2,6 +2,7 @@
 
 # Variable initialization
 source=0
+eaxraarg=$1
 
 _norm=$(tput sgr0)
 _red=$(tput setaf 1)
@@ -185,6 +186,12 @@ function _main(){
         _combine
         _setcron
 }
+
+if [[ -z $eaxraarg ]];then
+    _error "未输入选项，请参照以下使用说明运行该程序"
+    _usage
+    exit 1
+fi
 
 if [[ ! -d /var/log/hosts-tool ]]; then
     mkdir -p /var/log/hosts-tool
