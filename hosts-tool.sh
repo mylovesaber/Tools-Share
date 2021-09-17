@@ -3,6 +3,7 @@
 options=$1
 exec_log=/var/log/hosts-tool/exec-$(date +"%Y-%m-%d").log
 ifunraid=$(find / -name *unRAID* 2>/dev/null |xargs)
+cutlinetext="#=========请确保hosts文件中新增的所有内容均在该行之后========="
 
 _norm=$(tput sgr0)
 _red=$(tput setaf 1)
@@ -89,7 +90,6 @@ function _backuphosts(){
     # 用户后续可在特定标记行之后自由修改 hosts 中的信息
     # hosts 文件中特定标记行之后改动的信息会随之后的系统定时任务更新到新的 hosts.default 文件中
     _info "检测环境安装后实时更新的 hosts.default 文件是否存在"
-    cutlinetext="#=========请确保hosts文件中新增的所有内容均在该行之后========="
     if [[ ! -f /etc/hosts.default ]]; then
         _warning "未发现 hosts.default 文件，为原始 hosts 文件文本添加标记并备份为实时更新的 hosts.default..."
         if [[ -n $(grep "${cutlinetext}" /etc/hosts) ]]; then
