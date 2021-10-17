@@ -2,7 +2,7 @@
 
 # Variable initialization
 source=0
-eaxraarg=$1
+ExtraArgs=$1
 
 _norm=$(tput sgr0)
 _red=$(tput setaf 1)
@@ -204,7 +204,7 @@ function _main(){
         _setcron
 }
 
-if [[ -z $eaxraarg ]];then
+if [[ -z $ExtraArgs ]];then
     _error "未输入选项，请参照以下使用说明运行该程序"
     _usage
     exit 1
