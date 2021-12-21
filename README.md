@@ -1,12 +1,24 @@
 # Github hosts 自动部署和更新工具
 
 自动更新 linux 服务器中的 hosts 文件（路径：/etc/hosts）以实现正常下载上传 github 项目的需求。
-制作此工具的目的是：一次无脑的一键安装后，永久不用在意更新事宜，全部自动搞定。
+制作此工具的目的是：一次无脑的一键安装后，永久不用在意更新事宜，全部自动搞定。（如果失效了请重新跑一下本项目...）
 工具中使用的 hosts 更新源来自此项目：https://github.com/521xueweihan/GitHub520
 在此表示感谢。
 
-本工具源码未涉及系统中包管理器的操作，故理论上各种 linux 发行版应该是通用的（路由器等特殊定制导致dns解析文件不是以上路径或系统命令被改名的就无法使用）。
-Tip: 群晖系统必要文件路径和常规 debian 系及 redhat 系的系统是一致的，理论通用，unRAID 系统定时功能做了定制，所以单独适配了，手动控制方式上没有区别，工具会自动识别。
+
+本工具具备 DNS 刷新功能，暂时指定支持以下系统：
+
+- Debian 9+
+- Ubuntu 18.04+
+- CentOS 7+
+- RHEL 7+
+- Synology(群晖)
+
+MacOS 择日适配，其他系统有需要适配的请发 issue 并提供所用系统版本和对应可用的 DNS 刷新功能的方法，如果有需要安装软件包的话请提供下包名
+
+Tip: 群晖系统必要文件路径和常规 debian 系及 redhat 系的系统是一致的，理论通用。
+unRAID 系统适配好像没完全生效。。。等以后单独测试吧。。。
+~unRAID 系统定时功能做了定制，所以单独适配了，手动控制方式上没有区别，工具会自动识别。~
 
 # 工具说明与功能介绍
 
@@ -18,7 +30,7 @@ Gitee：  https://gitee.com/mylovesaber/auto_update_github_hosts
 
 项目内含两个脚本，分别为安装脚本和日用脚本。安装后系统会自动进行以下操作。
 
-- 每30分钟自动更新一次hosts（实际效果取决于更新源的更新）
+- 每30分钟自动更新一次 hosts 并刷新 dns（实际效果取决于更新源的更新）
 - 每3天自动更新一次工具本身
 - 每10天自动清理一次工具产生的旧日志
 - 自动备份用户未来在 /etc/hosts 中新增的新内容
@@ -55,7 +67,7 @@ bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/mylove
 日用脚本包含以下功能：
 
 - 更新工具本身
-- 更新hosts
+- 更新 hosts 并刷新 dns
 - 完全卸载
 
 自带的帮助信息如下：
@@ -94,9 +106,3 @@ hosts-tool recover first_backup
 hosts-tool recover uptodate_backup
 
 ```
-
-## 其他
-
-如果 git push 到 github 没有反应，可以尝试下 Ctrl+C 强制中断后再执行该命令。
-如果执行几次还没反应，可等自动提示 push 失败后执行命令：hosts-tool run ，之后再尝试 push
-再不行的话。。。。晚些时候再尝试吧。。。。

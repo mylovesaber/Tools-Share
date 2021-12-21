@@ -72,25 +72,40 @@ function _checksys(){
         fi
     elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
         SYSTEM_TYPE="unRAID"
+    elif which synoservicectl > /dev/null 2>&1; then
+        SYSTEM_TYPE="Synology"
     fi
 }
 
 function _placescript(){
     _info "开始更新工具..."
+    count=1
     while true;do
-        if [[ $extraarg =~ "gitee" ]]; then
+        if [[ $source =~ "gitee" ]]; then
             _info "从码云下载脚本"
-            wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
-        elif [[ $extraarg =~ "github" ]]; then
+            timeout 5s wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
+        elif [[ $source =~ "github" ]]; then
             _info "从 Github 下载脚本"
-            wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+            _info "开始检测 Github 连通性..."
+            if ! timeout 5s ping github.com > /dev/null 2>&1; then
+                _error "本机所在网络无法连接 Github，将切换到码云同步源进行更新..."
+                source="gitee"
+                continue
+            else
+                timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+            fi
         fi
         if [[ -f /tmp/hosts-tool ]];then
             _success "已下载，开始转移到系统程序路径"
             break
         else
             sleep 1
-            _error "下载失败，开始重新尝试下载..."
+            count=$(expr $count + 1)
+            _error "更新文件不存在，开始尝试第 ${count} 次下载..."
+        fi
+        if [[ ${count} > 5 ]]; then
+            _error "工具下载失败，请择日再运行此脚本，退出中..."
+            exit 1
         fi
     done
     mv /tmp/hosts-tool /usr/bin/hosts-tool
@@ -197,6 +212,8 @@ function _refresh_dns(){
             fi
         fi
         systemctl restart nscd
+    elif [[ "${SYSTEM_TYPE}" == "Synology" ]]; then
+        /var/packages/DNSServer/target/script/flushcache.sh
     fi
 }
 
