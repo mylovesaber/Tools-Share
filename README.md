@@ -6,7 +6,7 @@
 在此表示感谢。
 
 
-本工具具备 DNS 刷新功能，暂时指定支持以下系统：
+本工具已具备 DNS 刷新功能，所以取消通用性，暂时指定支持以下系统：
 
 - Debian 9+
 - Ubuntu 18.04+
@@ -14,13 +14,14 @@
 - RHEL 7+
 - Synology(群晖)
 
-MacOS 择日适配，其他系统有需要适配的请发 issue 并提供所用系统版本和对应可用的 DNS 刷新功能的方法，如果有需要安装软件包的话请提供下包名
+MacOS 择日适配，其他系统或版本有需要适配的请发 issue 并提供所用系统版本和对应可用的 DNS 刷新功能的方法，如果有需要安装软件包的话请提供下包名
 
 Tip: 群晖系统必要文件路径和常规 debian 系及 redhat 系的系统是一致的，理论通用。
-unRAID 系统适配好像没完全生效。。。等以后单独测试吧。。。
-~unRAID 系统定时功能做了定制，所以单独适配了，手动控制方式上没有区别，工具会自动识别。~
 
-# 工具说明与功能介绍
+~unRAID 系统定时功能做了定制，所以单独适配了，手动控制方式上没有区别，工具会自动识别。~
+unRAID 系统适配好像没完全生效。。。等以后单独测试吧。。。
+
+# 工具说明、功能介绍、安装步骤
 
 本项目在码云和 Github 都有同步。
 
@@ -28,7 +29,10 @@ Github： https://github.com/mylovesaber/auto_update_github_hosts
 
 Gitee：  https://gitee.com/mylovesaber/auto_update_github_hosts
 
-项目内含两个脚本，分别为安装脚本和日用脚本。安装后系统会自动进行以下操作。
+项目内含两个脚本，分别为安装脚本和日用脚本。 **首次请运行安装脚本，如果未来日用脚本失效了，请重新运行安装脚本即可**
+两个脚本均存在当检测到 github 源无法正常连通时就自动切换到国内码云源进行更新的逻辑判断，并且一旦 github 源更新失败的时候，自动更新工具在切换到码云源并更新本身之后，将把未来自动更新工具的源头替换为码云源，如果有人执意要用 github 更新的话，请手动运行一次日用脚本中的更新工具本身并指定 github 为更新源(说真的，没必要，因为两个源是同步的，使用哪个都一样...)
+
+安装后系统会自动进行以下操作。
 
 - 每30分钟自动更新一次 hosts 并刷新 dns（实际效果取决于更新源的更新）
 - 每3天自动更新一次工具本身
@@ -58,7 +62,7 @@ setup.sh  选项  参数
 bash <(wget --no-check-certificate -qO- https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh) -s gitee
 
 # github 托管的安装脚本 + 指定码云为日用脚本安装源
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/main/setup.sh) -s gitee
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/main/setup.sh) -s github
 
 ```
 
@@ -96,8 +100,9 @@ help                       显示帮助信息并退出
 # 即时更新 hosts（同时会立即备份 /etc/hosts 中新增的各种dns解析规则）
 hosts-tool run
 
-# 即时更新此工具本身
+# 即时更新此工具本身（以下有两种源，择一运行即可）
 hosts-tool updatefrom gitee
+hosts-tool updatefrom github
 
 # 完全卸载工具（恢复第一次安装工具时备份的 hosts 文件，会丢弃日后新增的其他各种dns解析规则）
 hosts-tool recover first_backup
