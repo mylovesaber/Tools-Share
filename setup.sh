@@ -118,7 +118,7 @@ function _placescript(){
         elif [[ $source =~ "github" ]]; then
             _info "从 Github 下载脚本"
             _info "开始检测 Github 连通性..."
-            if ! timeout 5s ping github.com > /dev/null 2>&1; then
+            if ! timeout 5s ping -c2 -W1 github.com > /dev/null 2>&1; then
                 _error "本机所在网络无法连接 Github，将切换到码云同步源进行更新..."
                 source="gitee"
                 continue
