@@ -106,20 +106,21 @@ while true; do
 done
 
 function _placescript(){
-_info "开始安装工具..."
-    if [[ $source =~ "gitee" ]]; then
-        _info "从码云下载脚本"
-        wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
-    elif [[ $source =~ "github" ]]; then
-        _info "从 Github 下载脚本"
-        wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
-    fi
+    _info "开始安装工具..."
     while true;do
+        if [[ $source =~ "gitee" ]]; then
+            _info "从码云下载脚本"
+            wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
+        elif [[ $source =~ "github" ]]; then
+            _info "从 Github 下载脚本"
+            wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+        fi
         if [[ -f /tmp/hosts-tool ]];then
             _success "已下载，开始转移到系统程序路径"
             break
         else
             sleep 1
+            _error "下载失败，开始重新尝试下载..."
         fi
     done
     mv /tmp/hosts-tool /usr/bin/hosts-tool
