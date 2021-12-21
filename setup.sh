@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Variable initialization
-source=0
+source=gitee
 ExtraArgs=$1
+SYSTEM_TYPE=
 
 _norm=$(tput sgr0)
 _red=$(tput setaf 1)
@@ -34,11 +35,32 @@ function _checkroot() {
 }
 _checkroot
 
-function _checkhosts() {
-    if [[ ! -f /etc/hosts ]]; then
-        _error "该linux系统中默认位置不存在hosts文件，安装取消"
+function _checksys(){
+    _info "正在检查系统兼容性..."
+    # if [ -f /usr/bin/sw_vers ]; then
+    #     SYSTEM_TYPE="MacOS"
+    # el
+    if [ -f /usr/bin/lsb_release ]; then
+        system_name=$(lsb_release -i 2>/dev/null)
+        if [[ ${system_name} =~ "Debian" ]]; then
+            SYSTEM_TYPE="Debian"
+        elif [[ ${system_name} =~ "Ubuntu" ]]; then
+            SYSTEM_TYPE="Ubuntu"
+        fi
+    elif [ -f /etc/redhat-release ]; then
+        system_name=$(cat /etc/redhat-release 2>/dev/null)
+        if [[ ${system_name} =~ "CentOS" ]]; then
+            SYSTEM_TYPE="CentOS"
+        elif [[ ${system_name} =~ "Red" ]]; then
+            SYSTEM_TYPE="RedHat"
+        fi
+    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
+        SYSTEM_TYPE="unRAID"
+    else
+        _error "暂未适配该系统，退出..."
         exit 1
     fi
+    _success "此脚本支持该系统！"
 }
 
 function _usage(){
@@ -162,19 +184,24 @@ function _combine(){
     _success "合并替换完成"
 }
 
+function _refresh_dns(){
+    if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+        systemd-resolve --flush-caches
+    elif [[ "${SYSTEM_TYPE}" == "CentOS" ]]; then
+        if ! which nscd > /dev/null 2>&1; then
+            if ! which dnf > /dev/null 2>&1; then
+                yum install -y nscd
+            else
+                dnf install -y nscd
+            fi
+        fi
+        systemctl restart nscd
+    fi
+}
+
 function _setcron(){
     # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
-    ifunraid=$(find / -name *unRAID* 2>/dev/null |xargs)
-    if [[ -z $ifunraid ]]; then
-        _info "清理残留定时任务中..."
-        sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
-        _success "清理完成"
-        _info "添加新定时任务中..."
-        echo "*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run" >> /etc/crontab
-        echo "* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom gitee" >> /etc/crontab
-        echo "* */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog" >> /etc/crontab
-        _success "新定时任务添加完成"
-    elif [[ $ifunraid =~ "unRAID" ]]; then
+    if [[ ${SYSTEM_TYPE} =~ "unRAID" ]]; then
         _warning "检测到当前系统为unRAID，切换到unRAID专用功能"
         _info "清理残留定时任务中..."
         hostpath=/boot/config/plugins/dynamix/github-hosts.cron
@@ -183,10 +210,21 @@ function _setcron(){
         _info "添加新定时任务中..."
         cat >> $hostpath <<EOF
 */30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run
-* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom gitee
+* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $source
 * */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog
 EOF
         /usr/local/sbin/update_cron
+        _success "新定时任务添加完成"
+    else
+        _info "清理残留定时任务中..."
+        sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
+        _success "清理完成"
+        _info "添加新定时任务中..."
+        {
+            echo "*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run"
+            echo "* */3 * * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $source"
+            echo "* */10 * * * root /usr/bin/bash /usr/bin/hosts-tool rmlog"
+        } >> /etc/crontab
         _success "新定时任务添加完成"
     fi
 }
@@ -197,11 +235,12 @@ function _showinfo(){
 }
 
 function _main(){
-        _checkhosts
-        _placescript
-        _backuphosts
-        _combine
-        _setcron
+    _checksys
+    _placescript
+    _backuphosts
+    _combine
+    _refresh_dns
+    _setcron
 }
 
 if [[ -z $ExtraArgs ]];then
