@@ -30,6 +30,7 @@ Github： https://github.com/mylovesaber/auto_update_github_hosts
 Gitee：  https://gitee.com/mylovesaber/auto_update_github_hosts
 
 项目内含两个脚本，分别为安装脚本和日用脚本。 **首次请运行安装脚本，如果未来日用脚本失效了，请重新运行安装脚本即可**
+
 两个脚本均存在当检测到 github 源无法正常连通时就自动切换到国内码云源进行更新的逻辑判断，并且一旦 github 源更新失败的时候，自动更新工具在切换到码云源并更新本身之后，将把未来自动更新工具的源头替换为码云源，如果有人执意要用 github 更新的话，请手动运行一次日用脚本中的更新工具本身并指定 github 为更新源(说真的，没必要，因为两个源是同步的，使用哪个都一样...)
 
 安装后系统会自动进行以下操作。
