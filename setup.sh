@@ -58,7 +58,6 @@ function _checksys(){
         SYSTEM_TYPE="unRAID"
     elif which synoservicectl > /dev/null 2>&1; then
         SYSTEM_TYPE="Synology"
-    fi
     else
         _error "暂未适配该系统，退出..."
         exit 1
