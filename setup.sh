@@ -201,6 +201,7 @@ function _combine(){
 }
 
 function _refresh_dns(){
+    _info "正在刷新 DNS 缓存..."
     if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         systemd-resolve --flush-caches
     elif [[ "${SYSTEM_TYPE}" == "CentOS" ]]; then
@@ -215,6 +216,7 @@ function _refresh_dns(){
     elif [[ "${SYSTEM_TYPE}" == "Synology" ]]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
+    _success "DNS 缓存刷新完成"
 }
 
 function _setcron(){

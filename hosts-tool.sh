@@ -201,6 +201,7 @@ EOF
 }
 
 function _refresh_dns(){
+    _info "正在刷新 DNS 缓存..."
     if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         systemd-resolve --flush-caches
     elif [[ "${SYSTEM_TYPE}" == "CentOS" ]]; then
@@ -215,6 +216,7 @@ function _refresh_dns(){
     elif [[ "${SYSTEM_TYPE}" == "Synology" ]]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
+    _success "DNS 缓存刷新完成"
 }
 
 function _recover(){
@@ -289,7 +291,7 @@ if [[ $options == "run" ]]; then
     _loginfo
     _backuphosts | tee -a "${exec_log}"
     _combine | tee -a "${exec_log}"
-    _refresh_dns
+    _refresh_dns | tee -a "${exec_log}"
 fi
 
 if [[ $options == "rmlog" ]]; then
