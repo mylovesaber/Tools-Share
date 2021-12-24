@@ -109,9 +109,11 @@ done
 function _placescript(){
     _info "开始安装工具..."
     if ! which timeout > /dev/null 2>&1; then
+        _warning "未发现 timeout 命令，将临时下载 timeout 命令程序"
         wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
         chmod +x /tmp/timeout
         export PATH="/tmp:$PATH"
+        _success "timeout 命令程序已下载并应用成功"
     fi
     count=1
     while true;do
