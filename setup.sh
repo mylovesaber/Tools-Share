@@ -108,7 +108,7 @@ done
 
 function _placescript(){
     _info "开始安装工具..."
-    if ! which timeout; then
+    if ! which timeout > /dev/null 2>&1; then
         wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
         chmod +x /tmp/timeout
         export PATH="/tmp:$PATH"

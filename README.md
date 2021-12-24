@@ -57,13 +57,16 @@ setup.sh  选项  参数
 ```
 
 大陆节点或家宽 nas 直接指定码云为工具安装源和即可。
+本脚本依赖 bash shell，如果系统不存在 bash 的话暂时未适配请勿使用。(输入命令： `which bash` 能看到具体 bash 路径就能用)
+
+安装命令：
 
 ```bash
 # 码云托管的安装脚本 + 指定码云为日用脚本安装源
-bash <(wget --no-check-certificate -qO- https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh) -s gitee
+wget --no-check-certificate -qO- https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh | bash -s gitee
 
 # github 托管的安装脚本 + 指定码云为日用脚本安装源
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/main/setup.sh) -s github
+wget --no-check-certificate -qO- https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh | bash -s gitee
 
 ```
 
