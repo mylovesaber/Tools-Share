@@ -53,10 +53,9 @@ function _usage(){
 }
 
 function _checksys(){
-    # if [ -f /usr/bin/sw_vers ]; then
-    #     SYSTEM_TYPE="MacOS"
-    # el
-    if [ -f /usr/bin/lsb_release ]; then
+    if [ -f /usr/bin/sw_vers ]; then
+        SYSTEM_TYPE="MacOS"
+    elif [ -f /usr/bin/lsb_release ]; then
         system_name=$(lsb_release -i 2>/dev/null)
         if [[ ${system_name} =~ "Debian" ]]; then
             SYSTEM_TYPE="Debian"
@@ -108,12 +107,21 @@ function _placescript(){
             exit 1
         fi
     done
-    mv /tmp/hosts-tool /usr/bin/hosts-tool
-    _info "修改权限中..."
-    chown root: /usr/bin/hosts-tool
-    chmod 755 /usr/bin/hosts-tool
-    _success "权限修改完成"
-    _success "工具更新完成"
+    if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
+        mv /tmp/hosts-tool /usr/local/bin/hosts-tool
+        _info "修改权限中..."
+        chown root:admin /usr/local/bin/hosts-tool
+        chmod 755 /usr/local/bin/hosts-tool
+        _success "权限修改完成"
+        _success "工具安装完成"
+    else
+        mv /tmp/hosts-tool /usr/bin/hosts-tool
+        _info "修改权限中..."
+        chown root: /usr/bin/hosts-tool
+        chmod 755 /usr/bin/hosts-tool
+        _success "权限修改完成"
+        _success "工具更新完成"
+    fi
 }
 
 function _backuphosts(){
@@ -171,8 +179,20 @@ function _combine(){
 
 function _setcron(){
     # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
-    if [[ ${SYSTEM_TYPE} =~ "unRAID" ]]; then
-        _warning "检测到当前系统为unRAID，切换到unRAID专用功能"
+    if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
+        _info "清理残留定时任务中..."
+        crontab -l | grep -v "hosts-tool" | crontab -
+        _success "清理完成"
+        _info "添加新定时任务中..."
+        {
+            echo "*/30 * * * * /usr/local/bin/hosts-tool run"
+            echo "* * */3 * * /usr/local/bin/hosts-tool updatefrom $source"
+            echo "* * */10 * * /usr/local/bin/hosts-tool rmlog"
+        } >> /tmp/cronfile
+        crontab /tmp/cronfile
+        rm -rf /tmp/cronfile
+        _success "新定时任务添加完成"
+    elif [[ ${SYSTEM_TYPE} =~ "unRAID" ]]; then
         _info "清理残留定时任务中..."
         hostpath=/boot/config/plugins/dynamix/github-hosts.cron
         rm -rf $hostpath
@@ -196,7 +216,6 @@ EOF
             echo "* * */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog"
         } >> /etc/crontab
         _success "新定时任务添加完成"
-    
     fi
 }
 
@@ -204,6 +223,8 @@ function _refresh_dns(){
     _info "正在刷新 DNS 缓存..."
     if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         systemd-resolve --flush-caches
+    elif [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
+        killall -HUP mDNSResponder
     elif [[ "${SYSTEM_TYPE}" == "CentOS" ]]; then
         if ! which nscd > /dev/null 2>&1; then
             if ! which dnf > /dev/null 2>&1; then
@@ -221,22 +242,28 @@ function _refresh_dns(){
 
 function _recover(){
     _warning "开始卸载工具"
-    if [[ -z $ifunraid ]]; then
-        sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
-    elif [[ $ifunraid =~ "unRAID" ]]; then
-        _warning "检测到当前系统为unRAID，切换到unRAID专用功能"
+    if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
+        crontab -l | grep -v "hosts-tool" | crontab -
+    elif [[ "${SYSTEM_TYPE}" =~ "unRAID" ]]; then
         rm -rf /boot/config/plugins/dynamix/github-hosts.cron
         /usr/local/sbin/update_cron
+    else
+        sed -i '/\/usr\/bin\/hosts-tool/d' /etc/crontab
     fi
     _success "定时任务已清除"
-    rm -rf /usr/bin/hosts-tool /var/log/hosts-tool/
+    if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
+        rm -rf /usr/local/bin/hosts-tool
+    else
+        rm -rf /usr/bin/hosts-tool
+    fi
+    rm -rf /var/log/hosts-tool
     _success "工具和日志记录已清除"
     if [[ ${extraarg} =~ "first_backup" ]]; then
         mv -f /etc/hosts.bak /etc/hosts
-        rm -rf /etc/hosts_combine /etc/hosts.default githubhosts.new
+        rm -rf /etc/hosts_combine /etc/hosts.default /etc/githubhosts.new
     elif [[ ${extraarg} =~ "uptodate_backup" ]]; then
         mv -f /etc/hosts.default /etc/hosts
-        rm -rf /etc/hosts_combine /etc/hosts.bak githubhosts.new
+        rm -rf /etc/hosts_combine /etc/hosts.bak /etc/githubhosts.new
     fi
     if [[ -n $(grep "${cutlinetext}" /etc/hosts) ]]; then
         _warning "发现恢复后的 hosts 文件存在残留的标记信息，清理中..."
