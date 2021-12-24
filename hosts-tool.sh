@@ -78,6 +78,11 @@ function _checksys(){
 
 function _placescript(){
     _info "开始更新工具..."
+    if ! which timeout; then
+        wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
+        chmod +x /tmp/timeout
+        export PATH="/tmp:$PATH"
+    fi
     count=1
     while true;do
         if [[ $source =~ "gitee" ]]; then
@@ -107,6 +112,9 @@ function _placescript(){
             exit 1
         fi
     done
+    if [[ $? != 0 ]]; then
+        exit 1
+    fi
     if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
         mv /tmp/hosts-tool /usr/local/bin/hosts-tool
         _info "修改权限中..."
