@@ -5,19 +5,19 @@ source=gitee
 ExtraArgs=$1
 SYSTEM_TYPE=
 
-if ! which tput > /dev/null 2>&1; then
-    _norm="\033[39m"
-    _red="\033[31m"
-    _green="\033[32m"
-    _tan="\033[33m"     
-    _cyan="\033[36m"
-else
-    _norm=$(tput sgr0)
-    _red=$(tput setaf 1)
-    _green=$(tput setaf 2)
-    _tan=$(tput setaf 3)
-    _cyan=$(tput setaf 6)
-fi
+# if ! which tput > /dev/null 2>&1; then
+_norm="\033[39m"
+_red="\033[31m"
+_green="\033[32m"
+_tan="\033[33m"     
+_cyan="\033[36m"
+# else
+#     _norm=$(tput sgr0)
+#     _red=$(tput setaf 1)
+#     _green=$(tput setaf 2)
+#     _tan=$(tput setaf 3)
+#     _cyan=$(tput setaf 6)
+# fi
 
 function _print() {
 	printf "${_norm}%s${_norm}\n" "$@"
@@ -63,10 +63,10 @@ function _checksys(){
         fi
     elif which synoservicectl > /dev/null 2>&1; then
         SYSTEM_TYPE="Synology"
-    elif which opkg > /dev/null 2>&1; then
-        SYSTEM_TYPE="ROUTER"
-    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
-        SYSTEM_TYPE="unRAID"
+    # elif which opkg > /dev/null 2>&1; then
+    #     SYSTEM_TYPE="ROUTER"
+    # elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
+    #     SYSTEM_TYPE="unRAID"
     else
         _error "暂未适配该系统，退出..."
         exit 1
@@ -119,18 +119,18 @@ done
 function _placescript(){
     _info "开始安装工具..."
     if ! which timeout > /dev/null 2>&1; then
-        if [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
-            _info "开始安装 timeout"
-            opkg update > /dev/null 2>&1
-            opkg install coreutils-timeout
-            _success "timeout 安装完成"
-        else
-            _warning "未发现 timeout 命令，将临时下载 timeout 命令程序"
-            wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
-            chmod +x /tmp/timeout
-            export PATH="/tmp:$PATH"
-            _success "timeout 命令程序已下载并应用成功"
-        fi
+        # if [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
+        #     _info "开始安装 timeout"
+        #     opkg update > /dev/null 2>&1
+        #     opkg install coreutils-timeout
+        #     _success "timeout 安装完成"
+        # else
+        _warning "未发现 timeout 命令，将临时下载 timeout 命令程序"
+        wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
+        chmod +x /tmp/timeout
+        export PATH="/tmp:$PATH"
+        _success "timeout 命令程序已下载并应用成功"
+        # fi
     fi
     count=1
     while true;do
@@ -169,10 +169,10 @@ function _placescript(){
         _info "修改权限中..."
         chown root:admin /usr/local/bin/hosts-tool
         chmod 755 /usr/local/bin/hosts-tool
-    elif [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
-        mv /tmp/hosts-tool /opt/bin/hosts-tool
-        _info "修改权限中..."
-        chmod 755 /opt/bin/hosts-tool
+    # elif [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
+    #     mv /tmp/hosts-tool /opt/bin/hosts-tool
+    #     _info "修改权限中..."
+    #     chmod 755 /opt/bin/hosts-tool
     else
         mv /tmp/hosts-tool /usr/bin/hosts-tool
         _info "修改权限中..."
@@ -240,13 +240,14 @@ function _combine(){
 function _refresh_dns(){
     _info "正在刷新 DNS 缓存..."
     # 路由器中的 bash 不知道啥原因不识别 =~ 会报错，以下其他系统都正常
-    if [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
-        if ! which restart_dns > /dev/null 2>&1; then
-            _error "暂未发现该系统中的刷新 dns 功能，请自行搜索该系统的刷新 dns 方法并给脚本作者发 issue"
-            exit 1
-        fi
-        restart_dns
-    elif [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+    # if [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
+    #     if ! which restart_dns > /dev/null 2>&1; then
+    #         _error "暂未发现该系统中的刷新 dns 功能，请自行搜索该系统的刷新 dns 方法并给脚本作者发 issue"
+    #         exit 1
+    #     fi
+    #     restart_dns
+    # elif [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+    if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         systemd-resolve --flush-caches
     elif [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
         killall -HUP mDNSResponder
@@ -280,19 +281,19 @@ function _setcron(){
         crontab /tmp/cronfile
         rm -rf /tmp/cronfile
         _success "新定时任务添加完成"
-    elif [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
-        _info "清理残留定时任务中..."
-        crontab -l | grep -v "hosts-tool" | crontab -
-        _success "清理完成"
-        _info "添加新定时任务中..."
-        {
-            echo "*/30 * * * * /opt/bin/hosts-tool run"
-            echo "* * */3 * * /opt/bin/hosts-tool updatefrom $source"
-            echo "* * */10 * * /opt/bin/hosts-tool rmlog"
-        } >> /tmp/cronfile
-        crontab /tmp/cronfile
-        rm -rf /tmp/cronfile
-        _success "新定时任务添加完成"
+    # elif [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
+    #     _info "清理残留定时任务中..."
+    #     crontab -l | grep -v "hosts-tool" | crontab -
+    #     _success "清理完成"
+    #     _info "添加新定时任务中..."
+    #     {
+    #         echo "*/30 * * * * /opt/bin/hosts-tool run"
+    #         echo "* * */3 * * /opt/bin/hosts-tool updatefrom $source"
+    #         echo "* * */10 * * /opt/bin/hosts-tool rmlog"
+    #     } >> /tmp/cronfile
+    #     crontab /tmp/cronfile
+    #     rm -rf /tmp/cronfile
+    #     _success "新定时任务添加完成"
     elif [[ ${SYSTEM_TYPE} =~ "unRAID" ]]; then
         _info "清理残留定时任务中..."
         hostpath=/boot/config/plugins/dynamix/github-hosts.cron
