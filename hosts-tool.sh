@@ -104,10 +104,10 @@ function _placescript(){
     fi
     count=1
     while true;do
-        if [[ $source =~ "gitee" ]]; then
+        if [[ $source == "gitee" ]]; then
             _info "从码云下载脚本"
             timeout 5s wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
-        elif [[ $source =~ "github" ]]; then
+        elif [[ $source == "github" ]]; then
             _info "从 Github 下载脚本"
             _info "开始检测 Github 连通性..."
             if ! timeout 5s ping -c2 -W1 github.com > /dev/null 2>&1; then
