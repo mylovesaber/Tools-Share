@@ -36,7 +36,7 @@ function _error() {
 }
 
 function _checkroot() {
-	if [[ $EUID != 0 ]] || [[ $(grep "$(whoami)" /etc/passwd | cut -d':' -f3) != 0 ]]; then
+	if [[ $EUID != 0 ]] || [[ $(grep "^$(whoami)" /etc/passwd | cut -d':' -f3) != 0 ]]; then
         _error "没有 root 权限，请运行 \"sudo su -\" 命令并重新运行该脚本"
 		exit 1
 	fi
@@ -239,7 +239,14 @@ function _combine(){
 
 function _refresh_dns(){
     _info "正在刷新 DNS 缓存..."
-    if [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+    # 路由器中的 bash 不知道啥原因不识别 =~ 会报错，以下其他系统都正常
+    if [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
+        if ! which restart_dns > /dev/null 2>&1; then
+            _error "暂未发现该系统中的刷新 dns 功能，请自行搜索该系统的刷新 dns 方法并给脚本作者发 issue"
+            exit 1
+        fi
+        restart_dns
+    elif [[ "${SYSTEM_TYPE}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         systemd-resolve --flush-caches
     elif [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
         killall -HUP mDNSResponder
@@ -252,12 +259,6 @@ function _refresh_dns(){
             fi
         fi
         systemctl restart nscd
-    elif [[ "${SYSTEM_TYPE}" == "ROUTER" ]]; then
-        if ! which restart_dns > /dev/null 2>&1; then
-            _error "暂未发现该系统中的刷新 dns 功能，请自行搜索该系统的刷新 dns 方法并给脚本作者发 issue"
-            exit 1
-        fi
-        restart_dns
     elif [[ "${SYSTEM_TYPE}" == "Synology" ]]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
