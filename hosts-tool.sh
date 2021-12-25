@@ -69,10 +69,10 @@ function _checksys(){
         elif [[ ${system_name} =~ "Red" ]]; then
             SYSTEM_TYPE="RedHat"
         fi
-    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
-        SYSTEM_TYPE="unRAID"
     elif which synoservicectl > /dev/null 2>&1; then
         SYSTEM_TYPE="Synology"
+    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
+        SYSTEM_TYPE="unRAID"
     fi
 }
 

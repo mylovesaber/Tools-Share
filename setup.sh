@@ -53,10 +53,10 @@ function _checksys(){
         elif [[ ${system_name} =~ "Red" ]]; then
             SYSTEM_TYPE="RedHat"
         fi
-    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
-        SYSTEM_TYPE="unRAID"
     elif which synoservicectl > /dev/null 2>&1; then
         SYSTEM_TYPE="Synology"
+    elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
+        SYSTEM_TYPE="unRAID"
     else
         _error "暂未适配该系统，退出..."
         exit 1
@@ -293,6 +293,7 @@ function _main(){
     _combine
     _refresh_dns
     _setcron
+    _showinfo
 }
 
 if [[ -z $ExtraArgs ]];then
@@ -305,4 +306,3 @@ if [[ ! -d /var/log/hosts-tool ]]; then
     mkdir -p /var/log/hosts-tool
 fi
 _main | tee /var/log/hosts-tool/install.log
-_showinfo
