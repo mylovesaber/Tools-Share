@@ -29,8 +29,8 @@ unRAID 系统适配好像没完全生效。。。等以后单独测试吧。。�
 本项目在 GitLab 和 GitHub 都有同步。
 2022年5月18日，码云（Gitee）启动了代码审查机制，但凡不合规矩或者存在个别字眼比较敏感的都可能被删除或阻止其他用户访问，
 且默认阻断匿名访问，鉴于本工具骨骼清奇，码云平台已彻底屏蔽此项目，所以该平台我已彻底放弃。
-经过测试，中国大陆大部分地区没有特殊手段无法打开 GitHub 网站，但基本都能打开 Gitlab，于是我设置成中国大陆用户默认从 Gitlab 获取工具源码。
-不要有非 GitHub 不用的思想，我代码都是首先同步到 Gitlab，然后再由 Gitlab 自动同步到 GitHub 上。
+经过测试，中国大陆大部分地区没有特殊手段无法打开 GitHub 网站，但基本都能打开 GitLab，于是我设置成中国大陆用户默认从 GitLab 获取工具源码。
+不要有非 GitHub 不用的思想，我代码都是首先同步到 GitLab，然后再由 GitLab 自动同步到 GitHub 上。
 
 GitHub： https://github.com/mylovesaber/auto_update_github_hosts
 
@@ -70,10 +70,10 @@ setup.sh  选项  参数
 
 ```bash
 # GitLab 托管的安装脚本 + 指定 GitLab 为日用脚本安装源
-bash<(curl -Ls https://gitlab.com/api/v4/projects/36462411/repository/files/setup.sh/raw?ref=main) -s gitlab
+bash <(curl -Ls https://gitlab.com/api/v4/projects/36462411/repository/files/setup.sh/raw?ref=main) -s gitlab
 
 # GitHub 托管的安装脚本 + 指定 GitLab 为日用脚本安装源
-bash<(curl -Ls https://github.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh) -s gitlab
+bash <(curl -Ls https://github.com/mylovesaber/auto_update_github_hosts/raw/main/setup.sh) -s gitlab
 
 ```
 
