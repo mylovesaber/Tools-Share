@@ -131,7 +131,7 @@ function _placescript(){
             exit 1
         fi
     done
-    if [ $? != 0 ]; then
+    if [ "$(grep -c gitlab /tmp/hosts-tool)" == 0 ]; then
         _error "安装出现错误，退出中..."
         exit 1
     fi
