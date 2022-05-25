@@ -36,7 +36,7 @@ function _error() {
 }
 
 function _checkroot() {
-	if [[ $EUID != 0 ]] || [[ $(grep "^$(whoami)" /etc/passwd | cut -d':' -f3) != 0 ]]; then
+	if [ $EUID != 0 ] || [[ $(grep "^$(whoami)" /etc/passwd | cut -d':' -f3) != 0 ]]; then
         _error "没有 root 权限，请运行 \"sudo su -\" 命令并重新运行该脚本"
 		exit 1
 	fi
@@ -76,10 +76,10 @@ function _checksys(){
 
 function _usage(){
 	# print help info
-	echo -e "\nGithub hosts 自动部署和更新工具"
+	echo -e "\nGitHub hosts 自动部署和更新工具"
 	echo -e "\n命令格式: \nsetup.sh  选项  参数"
 	echo -e "\n选项:\n"
-	echo "-s 或 --source        指定下载源，可选参数为 gitee 或 github，若不使用该选项则默认从 Gitee 下载"
+	echo "-s 或 --source        指定下载源，可选参数为 gitlab 或 github，若不使用该选项则默认从 GitLab 下载"
 	echo "-h 或 --help          显示帮助信息并退出"
 }
 
@@ -95,7 +95,7 @@ eval set -- "${ARGS}"
 while true; do
     case "$1" in
     -s | --source)
-        if [[ "$2" =~ "gitee"|"github" ]]; then
+        if [[ "$2" =~ "gitlab"|"github" ]]; then
             source="$2"
         else
             _error "参数输入错误，请参照以下使用说明"
@@ -126,7 +126,7 @@ function _placescript(){
         #     _success "timeout 安装完成"
         # else
         _warning "未发现 timeout 命令，将临时下载 timeout 命令程序"
-        wget -qO /tmp/timeout https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/timeout
+        curl -Ls https://gitlab.com/api/v4/projects/36462411/repository/files/timeout/raw?ref=main
         chmod +x /tmp/timeout
         export PATH="/tmp:$PATH"
         _success "timeout 命令程序已下载并应用成功"
@@ -134,34 +134,35 @@ function _placescript(){
     fi
     count=1
     while true;do
-        if [[ $source == "gitee" ]]; then
-            _info "从码云下载脚本"
-            timeout 5s wget -qO /tmp/hosts-tool https://gitee.com/mylovesaber/auto_update_github_hosts/raw/main/hosts-tool.sh
+        if [[ $source == "gitlab" ]]; then
+            _info "从 GitLab 下载脚本"
+            timeout 20s curl -Ls https://gitlab.com/api/v4/projects/36462411/repository/files/hosts-tool.sh/raw?ref=main -o /tmp/hosts-tool
         elif [[ $source == "github" ]]; then
-            _info "从 Github 下载脚本"
-            _info "开始检测 Github 连通性..."
+            _info "从 GitHub 下载脚本"
+            _info "开始检测 GitHub 连通性..."
             if ! timeout 5s ping -c2 -W1 github.com > /dev/null 2>&1; then
-                _error "本机所在网络无法连接 Github，将切换到码云同步源进行更新..."
-                source="gitee"
+                _error "本机所在网络无法连接 GitHub，将切换到 GitLab 同步源进行更新..."
+                source="gitlab"
                 continue
             else
                 timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
             fi
         fi
-        if [[ -f /tmp/hosts-tool ]];then
+        if [ -f /tmp/hosts-tool ] && [ -n "$(cat /tmp/hosts-tool)" ];then
             _success "已下载，开始转移到系统程序路径"
             break
         else
             sleep 1
-            count=$(expr $count + 1)
+            count=$(( count + 1 ))
             _error "下载文件不存在，开始尝试第 ${count} 次下载..."
         fi
-        if [[ ${count} > 5 ]]; then
+        if [ "${count}" -gt 5 ]; then
             _error "工具下载失败，请择日再运行此脚本，退出中..."
             exit 1
         fi
     done
-    if [[ $? != 0 ]]; then
+    if [ $? != 0 ]; then
+        _error "安装出现错误，退出中..."
         exit 1
     fi
     if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
@@ -227,7 +228,7 @@ function _combine(){
         rm -rf /etc/githubhosts.new
         _success "清理完毕"
     fi
-    _info "下载最新 Github hosts 信息中..."
+    _info "下载最新 GitHub hosts 信息中..."
     wget -qO /etc/githubhosts.new https://raw.hellogithub.com/hosts
     _success "下载完成"
     _info "正在合并并替换成新hosts文件..."
@@ -267,14 +268,14 @@ function _refresh_dns(){
 }
 
 function _setcron(){
-    # 默认每30分钟更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
+    # 默认每1小时更新一次hosts，每3天自动更新一次工具本身，每10天清理一次旧日志
     if [[ "${SYSTEM_TYPE}" == "MacOS" ]]; then
         _info "清理残留定时任务中..."
         crontab -l | grep -v "hosts-tool" | crontab -
         _success "清理完成"
         _info "添加新定时任务中..."
         {
-            echo "*/30 * * * * /usr/local/bin/hosts-tool run"
+            echo "* */1 * * * /usr/local/bin/hosts-tool run"
             echo "* * */3 * * /usr/local/bin/hosts-tool updatefrom $source"
             echo "* * */10 * * /usr/local/bin/hosts-tool rmlog"
         } >> /tmp/cronfile
@@ -287,7 +288,7 @@ function _setcron(){
     #     _success "清理完成"
     #     _info "添加新定时任务中..."
     #     {
-    #         echo "*/30 * * * * /opt/bin/hosts-tool run"
+    #         echo "* */1 * * * /opt/bin/hosts-tool run"
     #         echo "* * */3 * * /opt/bin/hosts-tool updatefrom $source"
     #         echo "* * */10 * * /opt/bin/hosts-tool rmlog"
     #     } >> /tmp/cronfile
@@ -301,7 +302,7 @@ function _setcron(){
         _success "清理完成"
         _info "添加新定时任务中..."
         cat >> $hostpath <<EOF
-*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run
+* */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run
 * * */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $source
 * * */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog
 EOF
@@ -313,7 +314,7 @@ EOF
         _success "清理完成"
         _info "添加新定时任务中..."
         {
-            echo "*/30 * * * * root /usr/bin/bash /usr/bin/hosts-tool run"
+            echo "* */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run"
             echo "* * */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $source"
             echo "* * */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog"
         } >> /etc/crontab
@@ -322,7 +323,7 @@ EOF
 }
 
 function _showinfo(){
-    _success "Github hosts 自动部署和更新工具已安装完成并开启自动更新"
+    _success "GitHub hosts 自动部署和更新工具已安装完成并开启自动更新"
     _success "命令行输入：hosts-tool 或 hosts-tool help 即可查看具体控制选项"
 }
 

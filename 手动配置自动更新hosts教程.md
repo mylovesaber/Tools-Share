@@ -76,9 +76,9 @@ restart_dns
 
 ## 3. 定时运行
 
-比如每 30 分钟运行一次名为 test 的文件，格式：
+比如每 1 小时运行一次名为 test 的文件，格式：
 ```bash
-echo "*/30 * * * * test" | crontab -
+echo "* */1 * * * test" | crontab -
 ```
 
 # 自动更新
@@ -91,7 +91,7 @@ echo "*/30 * * * * test" | crontab -
 ## 一键定时
 
 ```bash
-echo "*/30 * * * * sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts; curl https://raw.hellogithub.com/hosts >> /etc/hosts; restart_dns" | crontab - 
+echo "* */1 * * * sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts; curl https://raw.hellogithub.com/hosts >> /etc/hosts; restart_dns" | crontab - 
 ```
 
 ## 定时脚本
@@ -108,5 +108,5 @@ EOF
 
 chmod +x /etc/autoupdatehosts
 
-echo "*/30 * * * * /etc/autoupdatehosts" | crontab -
+echo "* */1 * * * /etc/autoupdatehosts" | crontab -
 ```
