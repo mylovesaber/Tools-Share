@@ -204,6 +204,7 @@ function _combine(){
     cat /etc/githubhosts.new > /etc/hosts_combine
     cat /etc/hosts.default >> /etc/hosts_combine
     mv -f /etc/hosts_combine /etc/hosts
+    sed -i '/^</d' /etc/hosts
     _success "合并替换完成"
 }
 

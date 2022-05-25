@@ -91,7 +91,7 @@ echo "* */1 * * * test" | crontab -
 ## 一键定时
 
 ```bash
-echo "* */1 * * * sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts; curl https://raw.hellogithub.com/hosts >> /etc/hosts; restart_dns" | crontab - 
+echo "* */1 * * * sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts; curl https://raw.hellogithub.com/hosts >> /etc/hosts; sed -i '/^</d' /etc/hosts; restart_dns" | crontab - 
 ```
 
 ## 定时脚本
@@ -103,6 +103,7 @@ cat < EOF > /etc/autoupdatehosts
 #!/bin/bash
 sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts
 curl https://raw.hellogithub.com/hosts >> /etc/hosts
+sed -i '/^</d' /etc/hosts
 restart_dns
 EOF
 
