@@ -170,7 +170,7 @@ function _backuphosts(){
     _info "检测环境安装后实时更新的 hosts.default 文件是否存在"
     if [[ ! -f /etc/hosts.default ]]; then
         _warning "未发现 hosts.default 文件，为原始 hosts 文件文本添加标记并备份为实时更新的 hosts.default..."
-        if [[ -n $(grep "${cutlinetext}" /etc/hosts) ]]; then
+        if grep -q "${cutlinetext}" /etc/hosts; then
             _warning "发现原始 hosts 文件存在残留的标记信息，清理中..."
             sed -i '/'${cutlinetext}'/d' /etc/hosts
             _success "清理完毕"
@@ -198,14 +198,20 @@ function _combine(){
         _success "清理完毕"
     fi
     _info "下载最新 GitHub hosts 信息中..."
-    wget -qO /etc/githubhosts.new https://raw.hellogithub.com/hosts
-    _success "下载完成"
-    _info "正在合并并替换成新hosts文件..."
-    cat /etc/githubhosts.new > /etc/hosts_combine
-    cat /etc/hosts.default >> /etc/hosts_combine
-    mv -f /etc/hosts_combine /etc/hosts
-    sed -i '/^</d' /etc/hosts
-    _success "合并替换完成"
+    # wget -qO /etc/githubhosts.new https://raw.hellogithub.com/hosts
+    newIP=$(curl -Ls https://raw.hellogithub.com/hosts|sed '/^</d')
+    if [ -n "${newIP}" ]; then
+        _success "下载完成"
+        _info "正在合并并替换成新hosts文件..."
+        sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts
+        "${newIP}" > /etc/hosts_combine
+        cat /etc/hosts.default >> /etc/hosts_combine
+        mv -f /etc/hosts_combine /etc/hosts
+        _success "合并替换完成"
+    else
+        _error "获取失败，等待下次获取"
+        exit 1
+    fi
 }
 
 function _setcron(){
@@ -320,7 +326,7 @@ function _recover(){
         mv -f /etc/hosts.default /etc/hosts
         rm -rf /etc/hosts_combine /etc/hosts.bak /etc/githubhosts.new
     fi
-    if [[ -n $(grep "${cutlinetext}" /etc/hosts) ]]; then
+    if grep -q "${cutlinetext}" /etc/hosts; then
         _warning "发现恢复后的 hosts 文件存在残留的标记信息，清理中..."
         sed -i '/'${cutlinetext}'/d' /etc/hosts
         _success "清理完毕"
