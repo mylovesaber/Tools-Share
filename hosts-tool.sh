@@ -204,7 +204,7 @@ function _combine(){
         _success "下载完成"
         _info "正在合并并替换成新hosts文件..."
         sed -i '/# GitHub520 Host Start/,/# GitHub520 Host End/d' /etc/hosts
-        "${newIP}" > /etc/hosts_combine
+        echo "${newIP}" > /etc/hosts_combine
         cat /etc/hosts.default >> /etc/hosts_combine
         mv -f /etc/hosts_combine /etc/hosts
         _success "合并替换完成"
