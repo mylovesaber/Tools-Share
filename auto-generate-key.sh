@@ -43,10 +43,45 @@ CONFIG_FILE=
 LOCAL_IP=
 HELP=0
 TO_DELETE=0
+CHECK_DEP_SEP=0
 
 # 功能模块
 InfoCheck(){
     [ "${TO_DELETE}" -eq 1 ] && rm -rf /root/.ssh && _success "已删除 /root/.ssh 文件夹" && exit 0
+
+    _info "检查脚本使用的有关软件安装情况"
+    # 检查必要软件包安装情况
+    appList="timeout tput pwd ip ifconfig"
+    appNotInstalled=""
+    for i in ${appList}; do
+        if which "$i" >/dev/null 2>&1; then
+            _success "$i 已安装"
+        else
+            _error "$i 未安装"
+            appNotInstalled="${appNotInstalled} $i"
+        fi
+    done
+
+    # 独立检查脚本依赖情况模块
+    if [ "${CHECK_DEP_SEP}" == 1 ]; then
+        if [ -n "${appNotInstalled}" ]; then
+            _error "未安装的软件为: ${appNotInstalled}"
+            _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
+            exit 1
+        elif [ -z "${appNotInstalled}" ]; then
+            _success "脚本正常工作所需依赖全部满足要求"
+            exit 0
+        fi
+    elif [ "${CHECK_DEP_SEP}" == 0 ]; then
+        if [ -n "${appNotInstalled}" ]; then
+            _error "未安装的软件为: ${appNotInstalled}"
+            _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
+            exit 1
+        elif [ -z "${appNotInstalled}" ]; then
+            _success "脚本正常工作所需依赖全部满足要求"
+        fi
+    fi
+
     [ -z "${COMMIT_INFO}" ] && _error "必须指定公钥的备注信息" && exit 1
     [ -z "${PRE_ADD_LIST}" ] && _error "必须指定要生成免密信息的服务器列表" && exit 1
 
@@ -330,6 +365,9 @@ Help(){
                                         <别名>-<用户名>-<ip>-<ssh端口号>
                                         多个服务器信息之间用空格格开
 
+    -D | --check_dep_sep                一个独立检查脚本工作的所有必须依赖是否满足的功能
+                                        和其他选项随便搭配，他总是最先检查的，检查完就自动退出了
+
     -d | --delete                       此选项将直接删除 /root/.ssh 文件夹，测试用，
                                         生产环境如果此文件夹下有非此工具生成的文件别用这参数
 
@@ -375,10 +413,14 @@ Help(){
     4. 如果服务器之前并没有任何工具或项目创建了 /root/.ssh 文件夹并往其中写入有关文件的话，部署过本工具的服务器重新部署的话肯定存在残留文件
     以下命令并不会部署而是直接删掉整个 /root/.ssh 文件夹，适合测试本工具并清理垃圾用。
     bash <(cat $(pwd)/${SH_NAME}.sh) -d
+
+    5. 检查脚本工作的所有必须依赖是否满足运行要求，但又不想开始运行脚本本身，就可以用这个命令，检查完成后立刻自动退出
+    而且哪怕不小心跟其他选项组合了也没关系，这个选项优先级仅次于清理功能，指定该选项后，一旦检查完，其他所有后续功能都不会被运行:
+    bash <(cat $(pwd)/${SH_NAME}.sh) -D
     "
 }
 
-if ! ARGS=$(getopt -a -o l:,C:,d,h -l pre_add_list:,commit:,delete,help -- "$@")
+if ! ARGS=$(getopt -a -o l:,C:,D,d,h -l pre_add_list:,commit:,check_dep_sep,delete,help -- "$@")
 then
     _error "脚本中没有此选项"
     exit 1
@@ -409,6 +451,9 @@ while true; do
             COMMIT_INFO="$2"
         fi
         shift
+        ;;
+    -D | --check_dep_sep)
+        CHECK_DEP_SEP=1
         ;;
     -d | --delete)
         TO_DELETE=1
