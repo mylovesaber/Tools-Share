@@ -50,36 +50,24 @@ InfoCheck(){
     [ "${TO_DELETE}" -eq 1 ] && rm -rf /root/.ssh && _success "已删除 /root/.ssh 文件夹" && exit 0
 
     _info "检查脚本使用的有关软件安装情况"
-    # 检查必要软件包安装情况
-    appList="timeout tput pwd ip ifconfig"
+    # 检查必要软件包安装情况(集成独立检测依赖功能)
+    appList="timeout tput scp pwd basename sort tail tee md5sum ip ifconfig"
     appNotInstalled=""
     for i in ${appList}; do
         if which "$i" >/dev/null 2>&1; then
-            _success "$i 已安装"
+            [ "${CHECK_DEP_SEP}" == 1 ] && _success "$i 已安装"
         else
-            _error "$i 未安装"
+            [ "${CHECK_DEP_SEP}" == 1 ] && _error "$i 未安装"
             appNotInstalled="${appNotInstalled} $i"
         fi
     done
-
-    # 独立检查脚本依赖情况模块
-    if [ "${CHECK_DEP_SEP}" == 1 ]; then
-        if [ -n "${appNotInstalled}" ]; then
-            _error "未安装的软件为: ${appNotInstalled}"
-            _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
-            exit 1
-        elif [ -z "${appNotInstalled}" ]; then
-            _success "脚本正常工作所需依赖全部满足要求"
-            exit 0
-        fi
-    elif [ "${CHECK_DEP_SEP}" == 0 ]; then
-        if [ -n "${appNotInstalled}" ]; then
-            _error "未安装的软件为: ${appNotInstalled}"
-            _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
-            exit 1
-        elif [ -z "${appNotInstalled}" ]; then
-            _success "脚本正常工作所需依赖全部满足要求"
-        fi
+    if [ -n "${appNotInstalled}" ]; then
+        _error "未安装的软件为: ${appNotInstalled}"
+        _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
+        exit 1
+    elif [ -z "${appNotInstalled}" ]; then
+        _success "脚本正常工作所需依赖全部满足要求"
+        [ "${CHECK_DEP_SEP}" == 1 ] && exit 0
     fi
 
     [ -z "${COMMIT_INFO}" ] && _error "必须指定公钥的备注信息" && exit 1
@@ -87,14 +75,17 @@ InfoCheck(){
 
     _info "检测本机 IP 地址"
     COUNT=0
+    LOCAL_NIC_NAME=$(find /sys/class/net -maxdepth 1 -type l | grep -v "lo\|docker\|br\|veth" | awk -F '/' '{print $NF}')
     for i in $(find /sys/class/net -maxdepth 1 -type l | grep -v "lo\|docker\|br\|veth" | awk -F '/' '{print $NF}');do
         COUNT=$(( COUNT + 1 ))
     done
-    if [ "${COUNT}" -ne 1 ]; then
-        _error "检测到本机存在多个网卡，请联系脚本作者进行适配"
+    if [ "${COUNT}" -lt 1 ]; then
+        _error "未检测到网卡，请联系脚本作者进行适配"
+        exit 1
+    elif [ "${COUNT}" -gt 1 ]; then
+        _error "检测到多个网卡，请联系脚本作者进行适配"
         exit 1
     else
-        LOCAL_NIC_NAME=$(find /sys/class/net -maxdepth 1 -type l | grep -v "lo\|docker\|br\|veth" | awk -F '/' '{print $NF}')
         IP_RESULT1=$(ip addr | grep "${LOCAL_NIC_NAME}" | grep inet | awk '{print $2}' | cut -d'/' -f1)
         IP_RESULT2=$(ifconfig "${LOCAL_NIC_NAME}" | grep "inet " | awk '{print $2}')
         if [ "${IP_RESULT1}" = "${IP_RESULT2}" ]; then
@@ -294,7 +285,6 @@ elif [ "\${COUNT}" -gt 1 ]; then
     _error "检测到多个网卡，请联系脚本作者进行适配"
     exit 1
 else
-    
     IP_RESULT1=\$(ip addr | grep "\${LOCAL_NIC_NAME}" | grep inet | awk '{print \$2}' | cut -d'/' -f1)
     IP_RESULT2=\$(ifconfig "\${LOCAL_NIC_NAME}" | grep "inet " | awk '{print \$2}')
     if [ "\${IP_RESULT1}" = "\${IP_RESULT2}" ]; then
