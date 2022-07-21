@@ -26,8 +26,14 @@ _info() {
 _success() {
 	printf "${_green}✓ %s${_norm}\n" "$@"
 }
+_successnoblank() {
+	printf "${_green}%s${_norm}\n" "$@"
+}
 _warning() {
 	printf "${_tan}⚠ %s${_norm}\n" "$@"
+}
+_warningnoblank() {
+	printf "${_tan}%s${_norm}\n" "$@"
 }
 _error() {
 	printf "${_red}✗ %s${_norm}\n" "$@"
@@ -84,10 +90,11 @@ ALLOW_DAYS=
 
 CHECK_DEP_SEP=0
 DELETE_EXPIRED_LOG=0
+NEED_CLEAN=0
 CONFIRM_CONTINUE=0
 HELP=0
 
-if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,r:,F:,s,E:,e,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_group_info:,remove_operation_file:,deploy:,deploy_group_info:,days:,check_dep_sep,deploy,delete_expired_log,yes,help -- "$@")
+if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,r:,F:,s,E:,e,c,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_group_info:,remove_operation_file:,deploy:,deploy_group_info:,days:,check_dep_sep,deploy,delete_expired_log,clean,yes,help -- "$@")
 then
     _error "脚本中没有此无参选项或此选项为有参选项"
     exit 1
@@ -333,7 +340,7 @@ while true; do
         shift
         ;;
 
-    # 允许的最长历史搜索天数
+    # 允许搜索的最长历史天数
     --days)
         if [ "$2" == "-" ]; then
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
@@ -350,6 +357,9 @@ while true; do
         ;;
     -e | --delete_expired_log)
         DELETE_EXPIRED_LOG=1
+        ;;
+    -c | --clean)
+        NEED_CLEAN=1
         ;;
     -y | --yes)
         CONFIRM_CONTINUE=1
@@ -477,12 +487,10 @@ EnvCheck(){
     _success "环境自检完成"
 }
 
-CheckExecOption(){
-    # 只执行完就直接退出
-    [ "${HELP}" -eq 1 ] && Help && exit 0
-    [ "${DELETE_EXPIRED_LOG}" -eq 1 ] && DeleteExpiredLog && exit 0
 
-    _info "开始检查传递的选项和参数"
+
+CheckExecOption(){
+    _info "开始检查传递的执行选项和参数"
     ################################################################
     # 仅运行同步备份或先同步再备份的所有选项
     if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
@@ -495,23 +503,25 @@ CheckExecOption(){
         _error "用户层面只有三种输入选项参数的组合方式，同步、备份、同步后备份，请仔细对比帮助信息并检查缺失的选项和参数"
         _warning "运行同步功能所需的八个有参选项(两个通用选项见下):"
         _errornoblank "
-                       --sync_source_path 设置源同步路径
-                       --sync_dest_path 设置目的同步路径
-                       --sync_source_alias 设置源同步节点别名
-                       --sync_dest_alias 设置目的同步节点别名
-                       --sync_group 设置同步的节点组别名
-                       --sync_type 设置同步的内容类型
-                       --sync_date_type 设置同步的日期格式"|column -t
+        --sync_source_path 设置源同步路径
+        --sync_dest_path 设置目的同步路径
+        --sync_source_alias 设置源同步节点别名
+        --sync_dest_alias 设置目的同步节点别名"|column -t
+        _errornoblank "
+        -G | --sync_group 同步需指定的免密节点组名
+        -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+        -D | --sync_date_type 指定同步时包含的日期格式"|column -t
         echo ""
         _warning "运行备份功能所需的八个有参选项(两个通用选项见下):"
         _errornoblank "
-                       --backup_source_path 设置源备份路径
-                       --backup_dest_path 设置目的备份路径
-                       --backup_source_alias 设置源备份节点别名
-                       --backup_dest_alias 设置目的备份节点别名
-                       --backup_group 设置备份的节点组别名
-                       --backup_type 设置备份的内容类型
-                       --backup_date_type 设置备份的日期格式"|column -t
+        --backup_source_path 设置源备份路径
+        --backup_dest_path 设置目的备份路径
+        --backup_source_alias 设置源备份节点别名
+        --backup_dest_alias 设置目的备份节点别名"|column -t
+        _errornoblank "
+        -g | --backup_group 备份需指定的免密节点组名
+        -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
+        -d | --backup_date_type 指定备份时包含的日期格式"|column -t
         echo ""
         _error "运行任意一种功能均需设置最长查找历史天数的有参选项: --days"
         _warning "运行同步后备份的功能需要以上所有有参选项共十六个，三种组合方式中，任何选项均没有次序要求"
@@ -571,9 +581,9 @@ CheckExecOption(){
         fi
 
         if [[ "${SYNC_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
-            SYNC_DATE_TYPE="YYYY-MMMM-DDDD"
+            SYNC_DATE_TYPE_CONVERTED="YYYY-MMMM-DDDD"
         elif [[ "${SYNC_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
-            SYNC_DATE_TYPE="YYYY_MMMM_DDDD"
+            SYNC_DATE_TYPE_CONVERTED="YYYY_MMMM_DDDD"
         else
             _error "同步日期格式不存在，格式举例: abcd-Mm-12 或 2000_0a_3F，年份四位，月和日均为两位字符"
             _error "格式支持大小写字母和数字随机组合，只检测连接符号特征，支持的格式暂时只有连字符和下划线两种"
@@ -634,9 +644,9 @@ CheckExecOption(){
         fi
         
         if [[ "${BACKUP_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
-            BACKUP_DATE_TYPE="YYYY-MMMM-DDDD"
+            BACKUP_DATE_TYPE_CONVERTED="YYYY-MMMM-DDDD"
         elif [[ "${BACKUP_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
-            BACKUP_DATE_TYPE="YYYY_MMMM_DDDD"
+            BACKUP_DATE_TYPE_CONVERTED="YYYY_MMMM_DDDD"
         else
             _error "同步日期格式不存在，格式举例: abcd-Mm-12 或 2000_0a_3F，年份四位字符，月和日均为两位字符"
             _error "格式支持大小写字母和数字随意组合，只检测连接符号特征，支持的格式暂时只有连字符和下划线两种"
@@ -649,7 +659,7 @@ CheckExecOption(){
         _error "选项名为: --days  参数为非负整数"
         exit 116
     fi
-    _success "所有参数选项指定正确"
+    _success "所有执行参数选项指定正确"
 }
 
 CheckDeployOption(){
@@ -666,19 +676,19 @@ CheckDeployOption(){
             _error "部署时用户层面只有三种输入选项参数的组合方式，除了需要以上执行同步、备份、同步后备份的操作的所有选项外，还需指定部署节点、删除过期日志定时、操作别名和操作定时，请仔细对比帮助信息并检查缺失的选项和参数"
             _warning "部署同步功能所需的六个有参选项(五个通用选项见下):"
             _errornoblank "
-                           --sync_operation_name 设置同步操作的别名"|column -t
+            -N | --sync_operation_name 设置同步操作的别名"|column -t
             echo ""
             _warning "部署备份功能所需的六个有参选项(五个通用选项见下):"
             _errornoblank "
-                           --backup_operation_name 设置备份操作的别名"|column -t
+            -n | --backup_operation_name 设置备份操作的别名"|column -t
             echo ""
             _warning "运行任意一种功能均需设置的五种通用有参选项: "
             _errornoblank "
-                           --deploy 设置部署节点别名
-                           --operation_cron 设置集合功能脚本启动定时
-                           --operation_cron_name 设置集合功能脚本名
-                           --deploy_group_info 指定部署节点所在的免密节点组名
-                           --log_cron 设置删除过期日志定时规则"|column -t
+            -L | --deploy 设置部署节点别名
+            -O | --operation_cron 设置方案组启动定时规则
+            -o | --operation_cron_name 设置方案组名
+            -l | --deploy_group_info 指定部署节点所在的免密节点组名
+            -E | --log_cron 设置删除过期日志定时规则"|column -t
             _warning "启用同步后备份的功能需要以上所有有参选项共七个，三种组合方式中，任何选项均没有次序要求"
             exit 1
         fi
@@ -744,7 +754,7 @@ CheckDeployOption(){
             fi
         fi
 
-        mapfile -t OPERATION_CRON_NAME_FILE < <(ssh "${DEPLOY_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f "*run-*"|awk -F '/' '{print \$NF}'")
+        mapfile -t OPERATION_CRON_NAME_FILE < <(ssh "${DEPLOY_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "*run-*"|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
         MARK=0
         for i in "${OPERATION_CRON_NAME_FILE[@]}"; do
             [ "$i" = "${OPERATION_CRON_NAME}" ] && MARK=1
@@ -753,8 +763,8 @@ CheckDeployOption(){
         MARK_SYNC_OPERATION_NAME=0
         MARK_BACKUP_OPERATION_NAME=0
         if [ "${MARK}" -eq 1 ]; then
-            mapfile -t SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -oP \"--sync_operation_name\s+\K\w+\" /var/log/${SH_NAME}/exec/${OPERATION_CRON_NAME}")
-            mapfile -t BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -oP \"--backup_operation_name\s+\K\w+\" /var/log/${SH_NAME}/exec/${OPERATION_CRON_NAME}")
+            mapfile -t SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -o \"\-\-sync_operation_name .* \" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}|awk '{print \$2}'")
+            mapfile -t BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -o \"\-\-backup_operation_name .* \" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}|awk '{print \$2}'")
             SAME_SYNC_OPERATION_NAME_LIST=()
             SAME_BACKUP_OPERATION_NAME_LIST=()
             for i in "${SYNC_OPERATION_NAME_LIST[@]}"; do
@@ -765,39 +775,41 @@ CheckDeployOption(){
                 [ "$i" = "${BACKUP_OPERATION_NAME}" ] && MARK_BACKUP_OPERATION_NAME=1 && break
             done
             
-            mapfile -t -O "${#SAME_SYNC_OPERATION_NAME_LIST[@]}" SAME_SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"--sync_operation_name ${SYNC_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/${OPERATION_CRON_NAME}")
-            mapfile -t -O "${#SAME_BACKUP_OPERATION_NAME_LIST[@]}" SAME_BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"--backup_operation_name ${BACKUP_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/${OPERATION_CRON_NAME}")
+            mapfile -t -O "${#SAME_SYNC_OPERATION_NAME_LIST[@]}" SAME_SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"\-\-sync_operation_name ${SYNC_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}")
+            mapfile -t -O "${#SAME_BACKUP_OPERATION_NAME_LIST[@]}" SAME_BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"\-\-backup_operation_name ${BACKUP_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}")
             # 信息汇总
             _success "已收集所需信息，请检查以下汇总信息:"
-            _success "部署节点 ${DEPLOY_NODE_ALIAS} 中存在集合功能脚本 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}"
+            _success "部署节点 ${DEPLOY_NODE_ALIAS} 中存在方案组文件 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}"
             if [ "${MARK_SYNC_OPERATION_NAME}" -eq 1 ]; then
-                _warning "发现同名同步执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
+                _warning "在以上方案组文件中发现同名同步执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
                 _warning "如果确认部署的话将追加而非替换，以下是全部同名同步执行功能:"
                 for i in "${SAME_SYNC_OPERATION_NAME_LIST[@]}"; do
                     echo "$i"
                 done
+                echo ""
             fi
-            echo ""
             if [ "${MARK_BACKUP_OPERATION_NAME}" -eq 1 ]; then
-                _warning "发现同名同步执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
-                _warning "如果确认部署的话将追加而非替换，以下是全部同名同步执行功能:"
+                _warning "在以上方案组文件中发现同名备份执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
+                _warning "如果确认部署的话将追加而非替换，以下是全部同名备份执行功能:"
                 for i in "${SAME_BACKUP_OPERATION_NAME_LIST[@]}"; do
                     echo "$i"
                 done
+                echo ""
             fi
-            echo ""
-            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 集合功能脚本加入以下执行功能:"
+            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 方案组加入以下执行功能:"
             if [ -n "${SYNC_OPERATION_NAME}" ]; then
                 echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y"
+                echo ""
             fi
             if [ -n "${BACKUP_OPERATION_NAME}" ]; then
                 echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" --backup_operation_name \"${BACKUP_OPERATION_NAME}\" -y"
+                echo ""
             fi
         else
             # 信息汇总
             _success "已收集所需信息，请检查以下汇总信息:"
-            _warning "部署节点 ${DEPLOY_NODE_ALIAS} 中未找到集合功能脚本 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}，即将创建该文件"
-            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 集合功能脚本加入以下执行功能:"
+            _warning "部署节点 ${DEPLOY_NODE_ALIAS} 中未找到方案组 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}，即将创建该文件"
+            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 方案组加入以下执行功能:"
             if [ -n "${SYNC_OPERATION_NAME}" ]; then
                 echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y"
             fi
@@ -815,14 +827,16 @@ CheckDeployOption(){
             exit 0
         fi
     else
-        if [ -n "${SYNC_CRON}" ] || [ -n "${BACKUP_CRON}" ] || [ -n "${SYNC_OPERATION_NAME}" ] || [ -n "${BACKUP_OPERATION_NAME}" ] || [ -n "${LOG_CRON}" ]; then
-            _warning "以下五个选项均为部署时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
+        if [ -n "${SYNC_OPERATION_NAME}" ] || [ -n "${BACKUP_OPERATION_NAME}" ] || [ -n "${OPERATION_CRON}" ] || [ -n "${OPERATION_CRON_NAME}" ] || [ -n "${LOG_CRON}" ] || [ -n "${DEPLOY_GROUP_INFO}" ]; then
+            _warning "以下六个选项均为部署时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
             _errornoblank "
-                           --sync_operation_name 设置同步操作的别名
-                           --sync_cron 设置同步操作定时规则
-                           --backup_operation_name 设置备份操作的别名
-                           --backup_cron 设置备份操作定时规则
-                           --log_cron 设置删除过期日志定时规则"|column -t
+            -N | --sync_operation_name 设置同步操作的别名
+            -n | --backup_operation_name 设置备份操作的别名
+            -O | --operation_cron 设置方案组启动定时规则
+            -o | --operation_cron_name 设置方案组名
+            -l | --deploy_group_info 指定部署节点所在的免密节点组名
+            -E | --log_cron 设置删除过期日志定时规则"|column -t
+            _errornoblank "以上选项必须和指定部署脚本的节点别名选项同时被指定: -L | --deploy"
             exit 1
         fi
     fi
@@ -841,9 +855,9 @@ CheckRemoveOption(){
             _error "请仔细对比帮助信息并检查缺失的选项和参数"
             _warning "需设置的三种通用有参选项: "
             _errornoblank "
-                           --remove 设置卸载节点别名
-                           --remove_group_info 指定卸载节点所在的免密节点组名
-                           --remove_operation_file 设置卸载的具体备份方案组名"|column -t
+            -R | --remove 指定卸载脚本的节点别名
+            -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
+            -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
             _warning "以上任何选项写在同一行均没有次序要求"
             exit 1
         fi
@@ -877,9 +891,9 @@ CheckRemoveOption(){
             exit 114
         fi
         if ssh -o BatchMode=yes "${REMOVE_NODE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "部署节点 ${REMOVE_NODE_ALIAS} 连接正常"
+            _success "卸载节点 ${REMOVE_NODE_ALIAS} 连接正常"
         else
-            _error "部署节点 ${REMOVE_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
+            _error "卸载节点 ${REMOVE_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
             MARK=1
         fi
 
@@ -894,28 +908,38 @@ CheckRemoveOption(){
         if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
             IS_REMOVE_ALL=1
         else
-            mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f "*run-*"|awk -F '/' '{print \$NF}'")
+            mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
             MARK=0
             for i in "${OPERATION_NAME_FILE[@]}"; do
                 [ "$i" = "${REMOVE_OPERATION_FILE}" ] && MARK=1 && break
             done
         fi
-        if [ "${MARK}" -eq 0 ]; then
-            _error "请输入正确的方案组名称"
-            _error "可选的方案组名称如下:"
-            for i in "${OPERATION_NAME_FILE[@]}"; do
-                echo "${i}"
-            done
-            exit 1
+        if [ "${#OPERATION_NAME_FILE[@]}" -gt 0 ]; then
+            if [ "${MARK}" -eq 0 ]; then
+                _error "请输入正确的方案组名称"
+                _error "可选的方案组名称如下:"
+                for i in "${OPERATION_NAME_FILE[@]}"; do
+                    echo "${i}"
+                done
+                exit 1
+            fi
         fi
-        
+
         # 信息汇总
         if [ "${IS_REMOVE_ALL}" -eq 1 ]; then
-            echo "即将卸载指定节点中所有的同步或备份方案组，以下为需卸载节点中保存的所有方案细节:"
-            ssh "${REMOVE_NODE_ALIAS}" "cat /var/log/${SH_NAME}/exec/run-*"
+            if [ "${#OPERATION_NAME_FILE[@]}" -eq 0 ]; then
+                _warning "指定节点中不存在任何同步或备份方案组，继续执行将检查并清理系统中其余残留信息"
+            else
+                _warning "即将卸载指定节点中所有的同步或备份方案组，以下为需卸载节点中保存的所有方案细节:"
+                ssh "${REMOVE_NODE_ALIAS}" "sed '/\/bin\/bash/d' /var/log/${SH_NAME}/exec/run-*"
+            fi
         else
-            echo "即将卸载指定节点中名为 ${REMOVE_OPERATION_FILE} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
-            ssh "${REMOVE_NODE_ALIAS}" "cat /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
+            if [ "${#OPERATION_NAME_FILE[@]}" -eq 0 ]; then
+                _warning "指定节点中不存在任何同步或备份方案组，如果不是人为因素导致此问题，请在卸载时直接将选项 --remove_operation_file 或 -F 的参数设置成 all 以完成全部卸载，再重新部署"
+            else
+                _warning "即将卸载指定节点中名为 ${REMOVE_OPERATION_FILE} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
+                ssh "${REMOVE_NODE_ALIAS}" "sed '/\/bin\/bash/d' /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
+            fi
         fi
 
         if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
@@ -929,8 +953,8 @@ CheckRemoveOption(){
         if [ -n "${REMOVE_GROUP_INFO}" ] || [ -n "${REMOVE_OPERATION_FILE}" ]; then
             _warning "以下两个选项均为卸载时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
             _errornoblank "
-                           --remove_group_info 指定卸载节点所在的免密节点组名
-                           --remove_operation_file 设置卸载的具体同步或备份的方案组名"|column -t
+            -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
+            -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
             exit 1
         fi
     fi
@@ -1053,7 +1077,7 @@ SyncLocateFolders(){
         YEAR_VALUE=$(date -d ${days}days +%Y)
         MONTH_VALUE=$(date -d ${days}days +%m)
         DAY_VALUE=$(date -d ${days}days +%d)
-        SYNC_DATE=$(echo "${SYNC_DATE_TYPE}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
+        SYNC_DATE=$(echo "${SYNC_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
         mapfile -t SYNC_SOURCE_FIND_FOLDER_NAME_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type d -name \"*${SYNC_DATE}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
         mapfile -t SYNC_DEST_FIND_FOLDER_NAME_1 < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -maxdepth 1 -type d -name \"*${SYNC_DATE}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
 
@@ -1213,11 +1237,9 @@ SyncLocateFiles(){
         YEAR_VALUE=$(date -d ${days}days +%Y)
         MONTH_VALUE=$(date -d ${days}days +%m)
         DAY_VALUE=$(date -d ${days}days +%d)
-        SYNC_DATE=$(echo "${SYNC_DATE_TYPE}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
+        SYNC_DATE=$(echo "${SYNC_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
         mapfile -t SYNC_SOURCE_FIND_FILE_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
         mapfile -t SYNC_DEST_FIND_FILE_1 < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
-        mapfile -t SYNC_SOURCE_FIND_FILE_PATH < <(ssh "${SYNC_SOURCE_ALIAS}" "find \"${SYNC_SOURCE_PATH}\" -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
-        mapfile -t SYNC_DEST_FIND_FILE_PATH < <(ssh "${SYNC_DEST_ALIAS}" "find \"${SYNC_DEST_PATH}\" -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
 
         
         [ "${#SYNC_SOURCE_FIND_FILE_1[@]}" -gt 0 ] && MARK_SYNC_SOURCE_FIND_FILE_1=1 && JUMP=1
@@ -1315,7 +1337,7 @@ BackupLocateFolders(){
         YEAR_VALUE=$(date -d ${days}days +%Y)
         MONTH_VALUE=$(date -d ${days}days +%m)
         DAY_VALUE=$(date -d ${days}days +%d)
-        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
+        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
         mapfile -t BACKUP_SOURCE_FIND_FOLDER_FULL_PATH < <(ssh "${BACKUP_SOURCE_ALIAS}" "find \"${BACKUP_SOURCE_PATH}\" -maxdepth 1 -type d -name \"*${BACKUP_DATE}*\"|grep -v \"\.$\"")
         
         [ "${#BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[@]}" -gt 0 ] && MARK_BACKUP_SOURCE_FIND_FOLDER_FULL_PATH=1 && JUMP=1
@@ -1350,7 +1372,7 @@ BackupLocateFiles(){
         YEAR_VALUE=$(date -d ${days}days +%Y)
         MONTH_VALUE=$(date -d ${days}days +%m)
         DAY_VALUE=$(date -d ${days}days +%d)
-        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
+        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
         mapfile -t BACKUP_SOURCE_FIND_FILE_1 < <(ssh "${BACKUP_SOURCE_ALIAS}" "find \"${BACKUP_SOURCE_PATH}\" -maxdepth 1 -type f -name \"*${BACKUP_DATE}*\"")
 
         [ "${#BACKUP_SOURCE_FIND_FILE_1[@]}" -gt 0 ] && MARK_BACKUP_SOURCE_FIND_FILE_1=1 && JUMP=1
@@ -1566,14 +1588,14 @@ Deploy(){
     ssh "${DEPLOY_NODE_ALIAS}" "echo \"${LOG_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) -e'\" >> /etc/crontab"
 
     # 集合定时任务，里面将存放各种同步或备份的执行功能
-    ssh "${DEPLOY_NODE_ALIAS}" "[ ! -f /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" ] && echo -e \"#!/bin/bash\n\" >/var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" && chmod +x /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
-    ssh "${DEPLOY_NODE_ALIAS}" "echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
+    ssh "${DEPLOY_NODE_ALIAS}" "[ ! -f /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" ] && echo \"#!/bin/bash\" >/var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" && chmod +x /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+    ssh "${DEPLOY_NODE_ALIAS}" "[ \"$(grep -c \"${OPERATION_CRON_NAME}\" /etc/crontab)\" -eq 0 ] && echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
     # 向集合定时任务添加具体执行功能
     if [ -n "${SYNC_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" --backup_operation_name \"${BACKUP_OPERATION_NAME}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     _success "部署成功"
 }
@@ -1582,68 +1604,297 @@ Remove(){
     if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
         _info "开始卸载工具本身和生成的日志，不会对同步或备份文件产生任何影响"
         ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}"
-        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/bashrc"
-        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/crontab"
+        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/bashrc"
+        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/crontab"
     else
         _info "开始卸载指定的方案组，不会对其他方案组、同步或备份文件产生任何影响"
         ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
-        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${REMOVE_OPERATION_FILE}/d\" /etc/crontab"
+        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${REMOVE_OPERATION_FILE}/d\" /etc/crontab"
     fi
     _success "卸载成功"
 }
 
+Clean(){
+    if [ -d "/var/log/${SH_NAME}" ]; then
+        _warning "发现脚本运行残留，正在清理"
+        rm -rf /var/log/${SH_NAME}
+        _success "清理完成"
+    else
+        _success "未发现脚本运行残留"
+    fi
+}
+
 Help(){
+    _successnoblank "
+    本脚本依赖SCP传输
+    所有内置选项及传参格式如下，有参选项必须加具体参数，否则脚本会自动检测并阻断运行:"| column -t
+
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
     echo "
-    本脚本依赖 SCP 传输
-    所有内置选项及传参格式如下，有参选项必须加具体参数，否则脚本会自动检测并阻断运行：
-    -P | --source_path <本地发送方的绝对路径>           有参选项，脚本会从此路径下查找符合条件的搜索结果，
-                                                        找不到的话会停止工作防止通过 SCP 往远程节点乱拉屎
+    --sync_source_path 同步源路径
+    --sync_dest_path 同步目的路径
+    --backup_source_path 备份源路径
+    --backup_dest_path 备份目的路径
 
-    -p | --dest_path <远程节点接收方的绝对路径>         有参选项，脚本会检查远程节点是否存在此目录，没有的话会自动创建，
-                                                        如果用户错误输入非绝对路径，会根据目的节点默认登录路径自动修复为绝对路径
+    --sync_source_alias 同步源节点别名
+    --sync_dest_alias 同步目的节点别名
+    --backup_source_alias 备份源节点别名
+    --backup_dest_alias 备份目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
 
-    -u | --user <远程节点的登录用户名>           有参选项，脚本无法检测是否正确，但如果填写错误的话，
-                                                        在已经配置了密钥公钥的两台服务器之间使用 scp 会提示要输入密码
+    echo ""
+    echo "
+    -G | --sync_group 同步需指定的免密节点组名
+    -g | --backup_group 备份需指定的免密节点组名
+    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
 
-    -d | --address <远程节点的 IP 地址>         有参选项，脚本无法检测是否正确，但如果填写错误的话，
-                                                        脚本会根据超时时长到时间自动退出防止死在当前不可继续的任务上
+    -D | --sync_date_type 指定同步时包含的日期格式
+    -d | --backup_date_type 指定备份时包含的日期格式
 
-    -L | --deploy                                       不可独立无参选项，目的是一键部署，但必须与所有有参选项同时搭配才能完成部署
-    -B | --backup_cron                                  有参选项，方便测试和生产环境定时备份的一键设置，不设置此选项则默认生产环境参数
-    -l | --log_cron                                     有参选项，方便测试和生产环境定时删日志的一键设置，不设置此选项则默认生产环境参数
-    -r | --delete_expired_log <删除脚本产生的超时陈旧日志>           可独立无参选项，指定后会立即清理超过预定时间的陈旧日志
-    -R | --remove                                       可独立无参选项，目的是一键移除脚本对系统所做的所有修改。
-    -h | --help                                         打印此帮助信息并退出
+    -N | --sync_operation_name 指定部署的同步操作名称
+    -n | --backup_operation_name 指定部署的备份操作名称
 
-    部署和立即同步只有一个 -L 区别，其他完全相同，部署的时候不会进行同步。
+    -O | --operation_cron 指定方案组工作的定时规则
+    -o | --operation_cron_name 指定方案组名称
+    -E | --log_cron 指定删除过期日志的定时规则
 
-    使用示例：
-    1.1 测试部署(需同时指定本地备份所在路径 + 远程节点已配置过密钥对登录的用户名 + 节点 IP + 节点中备份的目标路径 + 超时阈值)
-    bash <(cat ${SH_NAME}.sh) -P /root/test108 -p /root/test119 -u root -d 1.2.3.4 -t 10s -B \"*/2 * * * *\" -l \"* * */10 * *\" -L
+    -R | --remove 指定卸载脚本的节点别名
+    -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
+    -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)
+    -L | --deploy 指定部署脚本的节点别名
+    -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
+    
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -s | --check_dep_sep 只检测并打印脚本运行必备依赖情况的详细信息并退出
+    -e | --delete_expired_log 即时删除超期历史日志文件并退出
+    -c | --clean 清理脚本在本地测试运行或部署功能时的残留(不含指定错误路径导致的文件夹被新建情况)
+    -y | --yes 确认执行所有检测结果后的实际操作
+    -h | --help 打印此帮助信息并退出" | column -t
+    echo ""
+    echo "----------------------------------------------------------------"
+    _warningnoblank "以下为根据脚本内置8种可重复功能归类各自选项(存在选项复用情况)"
+    echo ""
+    _successnoblank "|------------|"
+    _successnoblank "|部署同步功能|"
+    _successnoblank "|------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --sync_source_path 同步源路径
+    --sync_dest_path 同步目的路径
+    --sync_source_alias 同步源节点别名
+    --sync_dest_alias 同步目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
 
-    1.2 生产部署(需同时指定本地备份所在路径 + 远程节点已配置过密钥对登录的用户名 + 节点 IP + 节点中备份的目标路径 + 超时阈值)
-    bash <(cat ${SH_NAME}.sh) -P /root/test108 -p /root/test119 -u root -d 1.2.3.4 -t 10s -B \"30 23 * * *\" -l \"* * */10 * *\" -L
+    echo ""
+    echo "
+    -G | --sync_group 同步需指定的免密节点组名
+    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+    -D | --sync_date_type 指定同步时包含的日期格式
+    -N | --sync_operation_name 指定部署的同步操作名称" | column -t
 
-    2. 立即同步(需同时指定本地备份所在路径 + 远程节点已配置过密钥对登录的用户名 + 节点 IP + 节点中备份的目标路径 + 超时阈值)
-    bash <(cat ${SH_NAME}.sh) -P /root/test108 -p /root/test119 -u root -d 1.2.3.4 -t 10s
+    echo ""
+    echo "
+    -O | --operation_cron 指定方案组工作的定时规则
+    -o | --operation_cron_name 指定方案组名称
+    -E | --log_cron 指定删除过期日志的定时规则
+    -L | --deploy 指定部署脚本的节点别名
+    -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
 
-    3. 删除陈旧日志(默认10天)
-    bash <(cat ${SH_NAME}.sh) -r
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
 
-    4. 卸载
-    bash <(cat ${SH_NAME}.sh) -R
-"
+
+    _successnoblank "|------------|"
+    _successnoblank "|部署备份功能|"
+    _successnoblank "|------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --backup_source_path 备份源路径
+    --backup_dest_path 备份目的路径
+    --backup_source_alias 备份源节点别名
+    --backup_dest_alias 备份目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
+
+    echo ""
+    echo "
+    -g | --backup_group 备份需指定的免密节点组名
+    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
+    -d | --backup_date_type 指定备份时包含的日期格式
+    -n | --backup_operation_name 指定部署的备份操作名称" | column -t
+
+    echo ""
+    echo "
+    -O | --operation_cron 指定方案组工作的定时规则
+    -o | --operation_cron_name 指定方案组名称
+    -E | --log_cron 指定删除过期日志的定时规则
+    -L | --deploy 指定部署脚本的节点别名
+    -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
+    _successnoblank "|------------------|"
+    _successnoblank "|部署同步后备份功能|"
+    _successnoblank "|------------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --sync_source_path 同步源路径
+    --sync_dest_path 同步目的路径
+    --sync_source_alias 同步源节点别名
+    --sync_dest_alias 同步目的节点别名
+    --backup_source_path 备份源路径
+    --backup_dest_path 备份目的路径
+    --backup_source_alias 备份源节点别名
+    --backup_dest_alias 备份目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
+
+    echo ""
+    echo "
+    -G | --sync_group 同步需指定的免密节点组名
+    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+    -D | --sync_date_type 指定同步时包含的日期格式
+    -N | --sync_operation_name 指定部署的同步操作名称
+    -g | --backup_group 备份需指定的免密节点组名
+    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
+    -d | --backup_date_type 指定备份时包含的日期格式
+    -n | --backup_operation_name 指定部署的备份操作名称" | column -t
+
+    echo ""
+    echo "
+    -O | --operation_cron 指定方案组工作的定时规则
+    -o | --operation_cron_name 指定方案组名称
+    -E | --log_cron 指定删除过期日志的定时规则
+    -L | --deploy 指定部署脚本的节点别名
+    -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
+
+    _successnoblank "|------------|"
+    _successnoblank "|执行同步功能|"
+    _successnoblank "|------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --sync_source_path 同步源路径
+    --sync_dest_path 同步目的路径
+    --sync_source_alias 同步源节点别名
+    --sync_dest_alias 同步目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
+
+    echo ""
+    echo "
+    -G | --sync_group 同步需指定的免密节点组名
+    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+    -D | --sync_date_type 指定同步时包含的日期格式" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
+
+    _successnoblank "|------------|"
+    _successnoblank "|执行备份功能|"
+    _successnoblank "|------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --backup_source_path 备份源路径
+    --backup_dest_path 备份目的路径
+    --backup_source_alias 备份源节点别名
+    --backup_dest_alias 备份目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
+
+    echo ""
+    echo "
+    -g | --backup_group 备份需指定的免密节点组名
+    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
+    -d | --backup_date_type 指定备份时包含的日期格式" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
+
+    _successnoblank "|------------------|"
+    _successnoblank "|执行同步后备份功能|"
+    _successnoblank "|------------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    --sync_source_path 同步源路径
+    --sync_dest_path 同步目的路径
+    --sync_source_alias 同步源节点别名
+    --sync_dest_alias 同步目的节点别名
+    --backup_source_path 备份源路径
+    --backup_dest_path 备份目的路径
+    --backup_source_alias 备份源节点别名
+    --backup_dest_alias 备份目的节点别名
+    --days 指定允许搜索的最长历史天数" | column -t
+
+    echo ""
+    echo "
+    -G | --sync_group 同步需指定的免密节点组名
+    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
+    -D | --sync_date_type 指定同步时包含的日期格式
+    -g | --backup_group 备份需指定的免密节点组名
+    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
+    -d | --backup_date_type 指定备份时包含的日期格式" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
+
+    _successnoblank "|--------------------|"
+    _successnoblank "|卸载方案组或全部功能|"
+    _successnoblank "|--------------------|"
+    _warningnoblank "
+    以下为有参选项，必须带上相应参数"| column -t
+    echo "
+    -R | --remove 指定卸载脚本的节点别名
+    -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
+    -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
+
+    _warningnoblank "
+    以下为无参选项:"| column -t
+    echo "
+    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    echo ""
 }
 
 Main(){
     EnvCheck
     # 卸载检测和执行
-    CheckRemoveOption
+    CheckRemoveOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论成功与否都不会走完此模块后往下执行
     CheckExecOption
     CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论成功与否都不会走完此模块后往下执行
     CheckTransmissionStatus
     SearchCondition
 }
+
+# 只执行完就直接退出
+[ "${HELP}" -eq 1 ] && Help && exit 0
+[ "${DELETE_EXPIRED_LOG}" -eq 1 ] && DeleteExpiredLog && exit 0
+[ "${NEED_CLEAN}" -eq 1 ] && Clean && exit 0
 
 [ ! -d /var/log/${SH_NAME} ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${SH_NAME}/{exec,log}
 Main | tee -a "${EXEC_COMMON_LOGFILE}"
