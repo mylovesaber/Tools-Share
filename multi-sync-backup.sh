@@ -75,8 +75,10 @@ OPERATION_CRON_NAME=
 LOG_CRON=
 
 REMOVE_NODE_ALIAS=
-REMOVE_OPERATION_NAME=
+REMOVE_GROUP_INFO=
+REMOVE_OPERATION_FILE=
 DEPLOY_NODE_ALIAS=
+DEPLOY_GROUP_INFO=
 
 ALLOW_DAYS=
 
@@ -85,7 +87,7 @@ DELETE_EXPIRED_LOG=0
 CONFIRM_CONTINUE=0
 HELP=0
 
-if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,s,e,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_operation_name:,deploy:,days:,check_dep_sep,deploy,delete_expired_log,yes,help -- "$@")
+if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,r:,F:,s,E:,e,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_group_info:,remove_operation_file:,deploy:,deploy_group_info:,days:,check_dep_sep,deploy,delete_expired_log,yes,help -- "$@")
 then
     _error "脚本中没有此无参选项或此选项为有参选项"
     exit 1
@@ -274,7 +276,7 @@ while true; do
         fi
         shift
         ;;
-    -l | --log_cron)
+    -E | --log_cron)
         if [ "$2" == "-" ]; then
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
@@ -294,12 +296,21 @@ while true; do
         fi
         shift
         ;;
-    -r | --remove_operation_name)
+    -r | --remove_group_info)
         if [ "$2" == "-" ]; then
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            REMOVE_OPERATION_NAME="$2"
+            REMOVE_GROUP_INFO="$2"
+        fi
+        shift
+        ;;
+    -F | --remove_operation_file)
+        if [ "$2" == "-" ]; then
+            _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
+            exit 5
+        else
+            REMOVE_OPERATION_FILE="$2"
         fi
         shift
         ;;
@@ -309,6 +320,15 @@ while true; do
             exit 5
         else
             DEPLOY_NODE_ALIAS="$2"
+        fi
+        shift
+        ;;
+    -l | --deploy_group_info)
+        if [ "$2" == "-" ]; then
+            _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
+            exit 5
+        else
+            DEPLOY_GROUP_INFO="$2"
         fi
         shift
         ;;
@@ -634,12 +654,39 @@ CheckExecOption(){
 
 CheckDeployOption(){
     # 检查部署选项
-    _info "开始检查传递的选项和参数"
     if [ -n "${DEPLOY_NODE_ALIAS}" ]; then
+        _info "开始检查传递的部署选项和参数"
+        if [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+            :
+        elif [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+            :
+        elif [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+            :
+        else
+            _error "部署时用户层面只有三种输入选项参数的组合方式，除了需要以上执行同步、备份、同步后备份的操作的所有选项外，还需指定部署节点、删除过期日志定时、操作别名和操作定时，请仔细对比帮助信息并检查缺失的选项和参数"
+            _warning "部署同步功能所需的六个有参选项(五个通用选项见下):"
+            _errornoblank "
+                           --sync_operation_name 设置同步操作的别名"|column -t
+            echo ""
+            _warning "部署备份功能所需的六个有参选项(五个通用选项见下):"
+            _errornoblank "
+                           --backup_operation_name 设置备份操作的别名"|column -t
+            echo ""
+            _warning "运行任意一种功能均需设置的五种通用有参选项: "
+            _errornoblank "
+                           --deploy 设置部署节点别名
+                           --operation_cron 设置集合功能脚本启动定时
+                           --operation_cron_name 设置集合功能脚本名
+                           --deploy_group_info 指定部署节点所在的免密节点组名
+                           --log_cron 设置删除过期日志定时规则"|column -t
+            _warning "启用同步后备份的功能需要以上所有有参选项共七个，三种组合方式中，任何选项均没有次序要求"
+            exit 1
+        fi
+
         mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
         for i in "${GROUP_NAME_IN_FILE[@]}"; do
             MARK=0
-            if [ "$i" = "${SYNC_GROUP_INFO}" ]; then
+            if [ "$i" = "${DEPLOY_GROUP_INFO}" ]; then
                 MARK=1
                 break
             fi
@@ -652,51 +699,23 @@ CheckDeployOption(){
             done
             exit 1
         fi
-        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${SYNC_GROUP_INFO}"/config-"${SYNC_GROUP_INFO}"-*|awk '/Host / {print $2}')
-        if [ -n "${DEPLOY_NODE_ALIAS}" ]; then
+        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${DEPLOY_GROUP_INFO}"/config-"${DEPLOY_GROUP_INFO}"-*|awk '/Host / {print $2}')
+        for i in "${HOST_ALIAS[@]}"; do
+            MARK=0
+            [ "${i}" = "${DEPLOY_NODE_ALIAS}" ] && MARK=1 && break
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            _error "部署节点别名错误，请检查指定的免密节点组名中可用的部署节点别名:"
             for i in "${HOST_ALIAS[@]}"; do
-                MARK=0
-                [ "${i}" = "${DEPLOY_NODE_ALIAS}" ] && MARK=1 && break
+                echo "${i}"
             done
-            if [ "${MARK}" -eq 0 ]; then
-                _error "部署节点别名错误，请检查指定的免密节点组名中可用的部署节点别名:"
-                for i in "${HOST_ALIAS[@]}"; do
-                    echo "${i}"
-                done
-                exit 114
-            fi
+            exit 114
         fi
         if ssh -o BatchMode=yes "${DEPLOY_NODE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "部署节点 ${DEPLOY_NODE_ALIAS} 连接正常"
         else
             _error "部署节点 ${DEPLOY_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
             MARK=1
-        fi
-
-        if [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ]; then
-            :
-        elif [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ]; then
-            :
-        elif [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ]; then
-            :
-        else
-            _error "部署时用户层面只有三种输入选项参数的组合方式，除了需要以上执行同步、备份、同步后备份的操作的所有选项外，还需指定部署节点、删除过期日志定时、操作别名和操作定时，请仔细对比帮助信息并检查缺失的选项和参数"
-            _warning "部署同步功能所需的五个有参选项(四个通用选项见下):"
-            _errornoblank "
-                           --sync_operation_name 设置同步操作的别名"|column -t
-            echo ""
-            _warning "部署备份功能所需的五个有参选项(四个通用选项见下):"
-            _errornoblank "
-                           --backup_operation_name 设置备份操作的别名"|column -t
-            echo ""
-            _warning "运行任意一种功能均需设置的四种通用有参选项: "
-            _errornoblank "
-                           --deploy 设置部署节点别名
-                           --operation_cron 设置集合功能脚本启动定时
-                           --operation_cron_name 设置集合功能脚本名
-                           --log_cron 设置删除过期日志定时规则"|column -t
-            _warning "启用同步后备份的功能需要以上所有有参选项共六个，三种组合方式中，任何选项均没有次序要求"
-            exit 1
         fi
 
         # 参数传入规范检查
@@ -790,8 +809,9 @@ CheckDeployOption(){
         # 部署流程末尾，无论是否确认，各自功能都会运行完成后退出
         if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
             Deploy
+            exit 0
         else
-            _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
+            _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行部署"
             exit 0
         fi
     else
@@ -809,13 +829,110 @@ CheckDeployOption(){
 }
 
 CheckRemoveOption(){
-    _info "开始检查传递的选项和参数"
     if [ -n "${REMOVE_NODE_ALIAS}" ]; then
-        OPERATION_NAME_COLLECT=()
-        mapfile -t -O "${#OPERATION_NAME_COLLECT[@]}" OPERATION_NAME_COLLECT < <(grep -oP "cc\s+\K\w+" /etc/crontab)
+        _info "开始检查传递的卸载选项和参数"
+        if [ -n "${REMOVE_GROUP_INFO}" ] && [ -n "${REMOVE_OPERATION_FILE}" ]; then
+            :
+        else
+            _error "卸载时用户层面只有一种输入选项参数的组合方式，需同时指定:"
+            _error "1. 需要卸载同步及备份脚本所在的节点"
+            _error "2. 节点所在的免密节点组（操作远程卸载的节点必须和需要卸载的节点处于同一节点组）"
+            _error "3. 卸载的具体的方案"
+            _error "请仔细对比帮助信息并检查缺失的选项和参数"
+            _warning "需设置的三种通用有参选项: "
+            _errornoblank "
+                           --remove 设置卸载节点别名
+                           --remove_group_info 指定卸载节点所在的免密节点组名
+                           --remove_operation_file 设置卸载的具体备份方案组名"|column -t
+            _warning "以上任何选项写在同一行均没有次序要求"
+            exit 1
+        fi
+
+        mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+        for i in "${GROUP_NAME_IN_FILE[@]}"; do
+            MARK=0
+            if [ "$i" = "${REMOVE_GROUP_INFO}" ]; then
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            _error "请输入正确的同步免密节点组名称"
+            _error "可用节点组如下:"
+            for i in "${GROUP_NAME_IN_FILE[@]}"; do
+                echo "${i}"
+            done
+            exit 1
+        fi
+        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${REMOVE_GROUP_INFO}"/config-"${REMOVE_GROUP_INFO}"-*|awk '/Host / {print $2}')
+        for i in "${HOST_ALIAS[@]}"; do
+            MARK=0
+            [ "${i}" = "${REMOVE_NODE_ALIAS}" ] && MARK=1 && break
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            _error "部署节点别名错误，请检查指定的免密节点组名中可用的部署节点别名:"
+            for i in "${HOST_ALIAS[@]}"; do
+                echo "${i}"
+            done
+            exit 114
+        fi
+        if ssh -o BatchMode=yes "${REMOVE_NODE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "部署节点 ${REMOVE_NODE_ALIAS} 连接正常"
+        else
+            _error "部署节点 ${REMOVE_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
+            MARK=1
+        fi
+
+        if [ -n "${REMOVE_OPERATION_FILE}" ]; then
+            if [[ ! "${REMOVE_OPERATION_FILE}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+                _error "需移除的方案组别名写法有错，只支持大小写字母、数字、下划线和连字符，请检查"
+                exit 1
+            fi
+        fi
         
-        Remove
-        exit 0
+        IS_REMOVE_ALL=0
+        if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
+            IS_REMOVE_ALL=1
+        else
+            mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f "*run-*"|awk -F '/' '{print \$NF}'")
+            MARK=0
+            for i in "${OPERATION_NAME_FILE[@]}"; do
+                [ "$i" = "${REMOVE_OPERATION_FILE}" ] && MARK=1 && break
+            done
+        fi
+        if [ "${MARK}" -eq 0 ]; then
+            _error "请输入正确的方案组名称"
+            _error "可选的方案组名称如下:"
+            for i in "${OPERATION_NAME_FILE[@]}"; do
+                echo "${i}"
+            done
+            exit 1
+        fi
+        
+        # 信息汇总
+        if [ "${IS_REMOVE_ALL}" -eq 1 ]; then
+            echo "即将卸载指定节点中所有的同步或备份方案组，以下为需卸载节点中保存的所有方案细节:"
+            ssh "${REMOVE_NODE_ALIAS}" "cat /var/log/${SH_NAME}/exec/run-*"
+        else
+            echo "即将卸载指定节点中名为 ${REMOVE_OPERATION_FILE} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
+            ssh "${REMOVE_NODE_ALIAS}" "cat /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
+        fi
+
+        if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
+            Remove
+            exit 0
+        else
+            _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行卸载"
+            exit 0
+        fi
+    else
+        if [ -n "${REMOVE_GROUP_INFO}" ] || [ -n "${REMOVE_OPERATION_FILE}" ]; then
+            _warning "以下两个选项均为卸载时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
+            _errornoblank "
+                           --remove_group_info 指定卸载节点所在的免密节点组名
+                           --remove_operation_file 设置卸载的具体同步或备份的方案组名"|column -t
+            exit 1
+        fi
     fi
 }
 
@@ -1453,20 +1570,25 @@ Deploy(){
     ssh "${DEPLOY_NODE_ALIAS}" "echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
     # 向集合定时任务添加具体执行功能
     if [ -n "${SYNC_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --sync_source_path \"\"${SYNC_SOURCE_PATH}\"\" --sync_dest_path \"\"${SYNC_DEST_PATH}\"\" --sync_source_alias \"\"${SYNC_SOURCE_ALIAS}\"\" --sync_dest_alias \"\"${SYNC_DEST_ALIAS}\"\" --sync_group \"\"${SYNC_GROUP_INFO}\"\" --sync_type \"\"${SYNC_TYPE}\"\" --sync_date_type \"\"${SYNC_DATE_TYPE}\"\" --sync_operation_name \"\"${SYNC_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --backup_source_path \"\"${BACKUP_SOURCE_PATH}\"\" --backup_dest_path \"\"${BACKUP_DEST_PATH}\"\" --backup_source_alias \"\"${BACKUP_SOURCE_ALIAS}\"\" --backup_dest_alias \"\"${BACKUP_DEST_ALIAS}\"\" --backup_group \"\"${BACKUP_GROUP_INFO}\"\" --backup_type \"\"${BACKUP_TYPE}\"\" --backup_date_type \"\"${BACKUP_DATE_TYPE}\"\" --backup_operation_name \"\"${BACKUP_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" --backup_operation_name \"${BACKUP_OPERATION_NAME}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     _success "部署成功"
-    exit 0
 }
 
 Remove(){
-    _info "开始卸载同步工具本身和生成的日志，不会对同步或备份文件产生任何影响"
-    rm -rf /${SH_NAME}.sh /var/log/${SH_NAME}
-    sed -i "/${SH_NAME}/d" /etc/bashrc
-    sed -i "/${SH_NAME})\ -r/d" /etc/crontab
+    if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
+        _info "开始卸载工具本身和生成的日志，不会对同步或备份文件产生任何影响"
+        ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}"
+        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/bashrc"
+        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/crontab"
+    else
+        _info "开始卸载指定的方案组，不会对其他方案组、同步或备份文件产生任何影响"
+        ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
+        ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${REMOVE_OPERATION_FILE}/d\" /etc/crontab"
+    fi
     _success "卸载成功"
 }
 
@@ -1516,15 +1638,7 @@ Help(){
 Main(){
     EnvCheck
     # 卸载检测和执行
-    if [ -n "${REMOVE_NODE_ALIAS}" ]; then
-        CheckRemoveOption
-        if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
-            Remove
-        else
-            _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
-        fi
-        exit 0
-    fi
+    CheckRemoveOption
     CheckExecOption
     CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论成功与否都不会走完此模块后往下执行
     CheckTransmissionStatus
