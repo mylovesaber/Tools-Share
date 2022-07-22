@@ -493,14 +493,16 @@ CheckExecOption(){
     _info "开始检查传递的执行选项和参数"
     ################################################################
     # 仅运行同步备份或先同步再备份的所有选项
-    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
+    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -z "${BACKUP_SOURCE_PATH}" ] && [ -z "${BACKUP_DEST_PATH}" ] && [ -z "${BACKUP_SOURCE_ALIAS}" ] && [ -z "${BACKUP_DEST_ALIAS}" ] && [ -z "${BACKUP_GROUP_INFO}" ] && [ -z "${BACKUP_TYPE}" ] && [ -z "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ] && [ -n "${SYNC_OPERATION_NAME}" ] && [ -z "${BACKUP_OPERATION_NAME}" ]; then
+        :
+    elif [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -z "${SYNC_SOURCE_PATH}" ] && [ -z "${SYNC_DEST_PATH}" ] && [ -z "${SYNC_SOURCE_ALIAS}" ] && [ -z "${SYNC_DEST_ALIAS}" ] && [ -z "${SYNC_GROUP_INFO}" ] && [ -z "${SYNC_TYPE}" ] && [ -z "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ] && [ -z "${SYNC_OPERATION_NAME}" ] && [ -n "${BACKUP_OPERATION_NAME}" ]; then
         :
     elif [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -z "${BACKUP_SOURCE_PATH}" ] && [ -z "${BACKUP_DEST_PATH}" ] && [ -z "${BACKUP_SOURCE_ALIAS}" ] && [ -z "${BACKUP_DEST_ALIAS}" ] && [ -z "${BACKUP_GROUP_INFO}" ] && [ -z "${BACKUP_TYPE}" ] && [ -z "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
         :
     elif [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -z "${SYNC_SOURCE_PATH}" ] && [ -z "${SYNC_DEST_PATH}" ] && [ -z "${SYNC_SOURCE_ALIAS}" ] && [ -z "${SYNC_DEST_ALIAS}" ] && [ -z "${SYNC_GROUP_INFO}" ] && [ -z "${SYNC_TYPE}" ] && [ -z "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
         :
     else
-        _error "用户层面只有三种输入选项参数的组合方式，同步、备份、同步后备份，请仔细对比帮助信息并检查缺失的选项和参数"
+        _error "用户层面只有两种输入选项参数的组合方式，同步或备份，先同步后备份则是执行两次，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
         _warning "运行同步功能所需的八个有参选项(两个通用选项见下):"
         _errornoblank "
         --sync_source_path 设置源同步路径
@@ -524,7 +526,7 @@ CheckExecOption(){
         -d | --backup_date_type 指定备份时包含的日期格式"|column -t
         echo ""
         _error "运行任意一种功能均需设置最长查找历史天数的有参选项: --days"
-        _warning "运行同步后备份的功能需要以上所有有参选项共十六个，三种组合方式中，任何选项均没有次序要求"
+        _warning "两种组合方式中，任何选项均没有次序要求"
         exit 1
     fi
 
@@ -827,11 +829,9 @@ CheckDeployOption(){
             exit 0
         fi
     else
-        if [ -n "${SYNC_OPERATION_NAME}" ] || [ -n "${BACKUP_OPERATION_NAME}" ] || [ -n "${OPERATION_CRON}" ] || [ -n "${OPERATION_CRON_NAME}" ] || [ -n "${LOG_CRON}" ] || [ -n "${DEPLOY_GROUP_INFO}" ]; then
-            _warning "以下六个选项均为部署时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
+        if [ -n "${OPERATION_CRON}" ] || [ -n "${OPERATION_CRON_NAME}" ] || [ -n "${LOG_CRON}" ] || [ -n "${DEPLOY_GROUP_INFO}" ]; then
+            _warning "以下四个选项均为部署时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
             _errornoblank "
-            -N | --sync_operation_name 设置同步操作的别名
-            -n | --backup_operation_name 设置备份操作的别名
             -O | --operation_cron 设置方案组启动定时规则
             -o | --operation_cron_name 设置方案组名
             -l | --deploy_group_info 指定部署节点所在的免密节点组名
@@ -905,23 +905,23 @@ CheckRemoveOption(){
         fi
         
         IS_REMOVE_ALL=0
+        mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
         if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
             IS_REMOVE_ALL=1
         else
-            mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
             MARK=0
             for i in "${OPERATION_NAME_FILE[@]}"; do
                 [ "$i" = "${REMOVE_OPERATION_FILE}" ] && MARK=1 && break
             done
-        fi
-        if [ "${#OPERATION_NAME_FILE[@]}" -gt 0 ]; then
-            if [ "${MARK}" -eq 0 ]; then
-                _error "请输入正确的方案组名称"
-                _error "可选的方案组名称如下:"
-                for i in "${OPERATION_NAME_FILE[@]}"; do
-                    echo "${i}"
-                done
-                exit 1
+            if [ "${#OPERATION_NAME_FILE[@]}" -gt 0 ]; then
+                if [ "${MARK}" -eq 0 ]; then
+                    _error "请输入正确的方案组名称"
+                    _error "可选的方案组名称如下:"
+                    for i in "${OPERATION_NAME_FILE[@]}"; do
+                        echo "${i}"
+                    done
+                    exit 1
+                fi
             fi
         fi
 
@@ -935,7 +935,8 @@ CheckRemoveOption(){
             fi
         else
             if [ "${#OPERATION_NAME_FILE[@]}" -eq 0 ]; then
-                _warning "指定节点中不存在任何同步或备份方案组，如果不是人为因素导致此问题，请在卸载时直接将选项 --remove_operation_file 或 -F 的参数设置成 all 以完成全部卸载，再重新部署"
+                _error "指定节点中不存在任何同步或备份方案组，如果不是人为因素导致此问题，请在卸载时直接将选项 --remove_operation_file 或 -F 的参数设置成 all 以完成全部卸载，再重新部署"
+                exit 1
             else
                 _warning "即将卸载指定节点中名为 ${REMOVE_OPERATION_FILE} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
                 ssh "${REMOVE_NODE_ALIAS}" "sed '/\/bin\/bash/d' /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
@@ -1238,7 +1239,7 @@ SyncLocateFiles(){
         MONTH_VALUE=$(date -d ${days}days +%m)
         DAY_VALUE=$(date -d ${days}days +%d)
         SYNC_DATE=$(echo "${SYNC_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
-        mapfile -t SYNC_SOURCE_FIND_FILE_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
+        mapfile -t SYNC_SOURCE_FIND_FILE_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
         mapfile -t SYNC_DEST_FIND_FILE_1 < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
 
         
@@ -1587,15 +1588,17 @@ Deploy(){
     ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME})\ -e/d\" /etc/crontab"
     ssh "${DEPLOY_NODE_ALIAS}" "echo \"${LOG_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) -e'\" >> /etc/crontab"
 
-    # 集合定时任务，里面将存放各种同步或备份的执行功能
+    # 集合定时任务，里面将存放各种同步或备份的执行功能(if判断如果写在ssh命令会出现判断功能失效的毛病)
     ssh "${DEPLOY_NODE_ALIAS}" "[ ! -f /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" ] && echo \"#!/bin/bash\" >/var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" && chmod +x /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
-    ssh "${DEPLOY_NODE_ALIAS}" "[ \"$(grep -c \"${OPERATION_CRON_NAME}\" /etc/crontab)\" -eq 0 ] && echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
+    if [ "$(ssh "${DEPLOY_NODE_ALIAS}" "grep -c \"${OPERATION_CRON_NAME}\" /etc/crontab")" -eq 0 ]; then
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
+    fi
     # 向集合定时任务添加具体执行功能
     if [ -n "${SYNC_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --sync_source_path \"\"${SYNC_SOURCE_PATH}\"\" --sync_dest_path \"\"${SYNC_DEST_PATH}\"\" --sync_source_alias \"\"${SYNC_SOURCE_ALIAS}\"\" --sync_dest_alias \"\"${SYNC_DEST_ALIAS}\"\" --sync_group \"\"${SYNC_GROUP_INFO}\"\" --sync_type \"\"${SYNC_TYPE}\"\" --sync_date_type \"\"${SYNC_DATE_TYPE}\"\" --sync_operation_name \"\"${SYNC_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --backup_source_path \"\"${BACKUP_SOURCE_PATH}\"\" --backup_dest_path \"\"${BACKUP_DEST_PATH}\"\" --backup_source_alias \"\"${BACKUP_SOURCE_ALIAS}\"\" --backup_dest_alias \"\"${BACKUP_DEST_ALIAS}\"\" --backup_group \"\"${BACKUP_GROUP_INFO}\"\" --backup_type \"\"${BACKUP_TYPE}\"\" --backup_date_type \"\"${BACKUP_DATE_TYPE}\"\" --backup_operation_name \"\"${BACKUP_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
     fi
     _success "部署成功"
 }
@@ -1653,8 +1656,8 @@ Help(){
     -D | --sync_date_type 指定同步时包含的日期格式
     -d | --backup_date_type 指定备份时包含的日期格式
 
-    -N | --sync_operation_name 指定部署的同步操作名称
-    -n | --backup_operation_name 指定部署的备份操作名称
+    -N | --sync_operation_name 指定部署的同步操作名称(仅部署时用于识别，执行时可不写)
+    -n | --backup_operation_name 指定部署的备份操作名称(仅部署时用于识别，执行时可不写)
 
     -O | --operation_cron 指定方案组工作的定时规则
     -o | --operation_cron_name 指定方案组名称
@@ -1676,7 +1679,7 @@ Help(){
     -h | --help 打印此帮助信息并退出" | column -t
     echo ""
     echo "----------------------------------------------------------------"
-    _warningnoblank "以下为根据脚本内置8种可重复功能归类各自选项(存在选项复用情况)"
+    _warningnoblank "以下为根据脚本内置5种可重复功能归类各自选项(存在选项复用情况)"
     echo ""
     _successnoblank "|------------|"
     _successnoblank "|部署同步功能|"
@@ -1695,7 +1698,7 @@ Help(){
     -G | --sync_group 同步需指定的免密节点组名
     -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
     -D | --sync_date_type 指定同步时包含的日期格式
-    -N | --sync_operation_name 指定部署的同步操作名称" | column -t
+    -N | --sync_operation_name 指定部署的同步操作名称(仅部署时用于识别)" | column -t
 
     echo ""
     echo "
@@ -1729,47 +1732,7 @@ Help(){
     -g | --backup_group 备份需指定的免密节点组名
     -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
     -d | --backup_date_type 指定备份时包含的日期格式
-    -n | --backup_operation_name 指定部署的备份操作名称" | column -t
-
-    echo ""
-    echo "
-    -O | --operation_cron 指定方案组工作的定时规则
-    -o | --operation_cron_name 指定方案组名称
-    -E | --log_cron 指定删除过期日志的定时规则
-    -L | --deploy 指定部署脚本的节点别名
-    -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
-
-    _warningnoblank "
-    以下为无参选项:"| column -t
-    echo "
-    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
-    echo ""
-    _successnoblank "|------------------|"
-    _successnoblank "|部署同步后备份功能|"
-    _successnoblank "|------------------|"
-    _warningnoblank "
-    以下为有参选项，必须带上相应参数"| column -t
-    echo "
-    --sync_source_path 同步源路径
-    --sync_dest_path 同步目的路径
-    --sync_source_alias 同步源节点别名
-    --sync_dest_alias 同步目的节点别名
-    --backup_source_path 备份源路径
-    --backup_dest_path 备份目的路径
-    --backup_source_alias 备份源节点别名
-    --backup_dest_alias 备份目的节点别名
-    --days 指定允许搜索的最长历史天数" | column -t
-
-    echo ""
-    echo "
-    -G | --sync_group 同步需指定的免密节点组名
-    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
-    -D | --sync_date_type 指定同步时包含的日期格式
-    -N | --sync_operation_name 指定部署的同步操作名称
-    -g | --backup_group 备份需指定的免密节点组名
-    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
-    -d | --backup_date_type 指定备份时包含的日期格式
-    -n | --backup_operation_name 指定部署的备份操作名称" | column -t
+    -n | --backup_operation_name 指定部署的备份操作名称(仅部署时用于识别)" | column -t
 
     echo ""
     echo "
@@ -1801,7 +1764,8 @@ Help(){
     echo "
     -G | --sync_group 同步需指定的免密节点组名
     -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
-    -D | --sync_date_type 指定同步时包含的日期格式" | column -t
+    -D | --sync_date_type 指定同步时包含的日期格式
+    -N | --sync_operation_name 指定部署的同步操作名称(仅部署时用于识别，执行时可不写)" | column -t
 
     _warningnoblank "
     以下为无参选项:"| column -t
@@ -1825,38 +1789,8 @@ Help(){
     echo "
     -g | --backup_group 备份需指定的免密节点组名
     -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
-    -d | --backup_date_type 指定备份时包含的日期格式" | column -t
-
-    _warningnoblank "
-    以下为无参选项:"| column -t
-    echo "
-    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
-    echo ""
-
-    _successnoblank "|------------------|"
-    _successnoblank "|执行同步后备份功能|"
-    _successnoblank "|------------------|"
-    _warningnoblank "
-    以下为有参选项，必须带上相应参数"| column -t
-    echo "
-    --sync_source_path 同步源路径
-    --sync_dest_path 同步目的路径
-    --sync_source_alias 同步源节点别名
-    --sync_dest_alias 同步目的节点别名
-    --backup_source_path 备份源路径
-    --backup_dest_path 备份目的路径
-    --backup_source_alias 备份源节点别名
-    --backup_dest_alias 备份目的节点别名
-    --days 指定允许搜索的最长历史天数" | column -t
-
-    echo ""
-    echo "
-    -G | --sync_group 同步需指定的免密节点组名
-    -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
-    -D | --sync_date_type 指定同步时包含的日期格式
-    -g | --backup_group 备份需指定的免密节点组名
-    -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
-    -d | --backup_date_type 指定备份时包含的日期格式" | column -t
+    -d | --backup_date_type 指定备份时包含的日期格式
+    -n | --backup_operation_name 指定部署的备份操作名称(仅部署时用于识别，执行时可不写)" | column -t
 
     _warningnoblank "
     以下为无参选项:"| column -t
