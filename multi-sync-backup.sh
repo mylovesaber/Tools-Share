@@ -1,6 +1,7 @@
 #!/bin/bash
 # 作者: 欧阳剑宇
-# 日期: 2022-07-19
+# 功能: 为多机同步和备份数据方案提供安装卸载基本控制功能
+# 修改日期: 2022-07-22
 
 # 全局颜色
 if ! which tput >/dev/null 2>&1;then
@@ -416,7 +417,7 @@ EnvCheck(){
 
     # 2. 如果 /root/.ssh/config 存在，则遍历 /root/.ssh/config 中保存的节点组名的配置对比 /root/.ssh 下的所有文件夹名，查找里面的 .backup_config，在 /root/.ssh/config 中存在但对应文件夹中不存在 .backup_config 则做个硬链接到对应文件夹，
     # 如果文件夹被删，则删除 config 中的配置并报错退出
-    mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+    mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '/Include/{print $2}' /root/.ssh/config)
     for i in "${GROUP_NAME_IN_FILE[@]}"; do
         if [ ! -f /root/.ssh/"${i}"/.backup_config ]; then
             if [ ! -d /root/.ssh/"${i}" ]; then
@@ -486,8 +487,6 @@ EnvCheck(){
     [ "${IF_NEED_RESTART_SSHD}" -eq 1 ] && systemctl restart sshd
     _success "环境自检完成"
 }
-
-
 
 CheckExecOption(){
     _info "开始检查传递的执行选项和参数"
