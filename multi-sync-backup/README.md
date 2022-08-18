@@ -186,7 +186,7 @@
 
 # 选项组合举例
 
-请仿照 [测试记录]() 文档中的配置内容进行部署和执行。
+请仿照 [测试记录](https://gitlab.com/mylovesaber/anshare/-/blob/main/multi-sync-backup/%E6%B5%8B%E8%AF%95%E8%AE%B0%E5%BD%95.md) 文档中的配置内容进行部署和执行。
 
 # 缺陷
 
