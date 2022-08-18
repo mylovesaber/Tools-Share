@@ -11,8 +11,8 @@
 
 |文件夹名称|用途|
 |---|---|
-|auto-generate-key|此仓库中多个自动化工具必备前提条件|
-|multi-sync-backup|任意多节点之间同步和备份工具|
+|[auto-generate-key](https://gitlab.com/mylovesaber/anshare/-/tree/main/auto-generate-key)|此仓库中多个自动化工具必备前提条件|
+|[multi-sync-backup](https://gitlab.com/mylovesaber/anshare/-/tree/main/multi-sync-backup)|任意多节点之间同步和备份工具|
 
 ---
 
