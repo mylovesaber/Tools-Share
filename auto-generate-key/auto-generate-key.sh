@@ -208,14 +208,14 @@ CheckOption(){
         _errornoblank "1. 部署一个免密节点组并为该组添加一个或多个节点信息:"
         _warningnoblank "
         -G | --deploy_group_name 设置免密节点组名称
-        -N | --deploy_node_info 设置组内每个节点的信息
-        -t | --type 设置生成密钥的类型"|column -t
+        -N | --deploy_node_info 设置组内每个节点的信息(每个节点信息填写顺序为：节点别名,登录名,IP,端口号，不同节点信息用空格隔开)
+        -t | --type 设置生成密钥的类型(可选类型:dsa/ecdsa/ed25519/rsa/rsa1)"|column -t
         echo ""
 
         _errornoblank "2. 向已存在的免密节点组追加一个或多个节点信息:"
         _warningnoblank "
         -G | --deploy_group_name 设置免密节点组名称
-        -N | --deploy_node_info 设置组内每个节点的信息"|column -t
+        -N | --deploy_node_info 设置组内每个节点的信息(每个节点信息填写顺序为：节点别名,登录名,IP,端口号，不同节点信息用空格隔开)"|column -t
         echo ""
 
         # _errornoblank "3. 卸载指定免密节点组中的一个或多个节点信息:"
@@ -896,10 +896,15 @@ Help(){
     
     echo "
     -G | --deploy_group_name 设置免密节点组名称
-    -g | --remove_group_name 设置需要完整卸载的免密节点组名称
-    -N | --deploy_node_info 设置组内每个节点的信息
-    -n | --remove_node_alias 设置指定免密节点组中的一个或多个节点别名
-    -t | --type 设置生成密钥的类型" | column -t
+    -N | --deploy_node_info 设置组内每个节点的信息(每个节点信息填写顺序为：节点别名,登录名,IP,端口号，不同节点信息用空格隔开)
+    -t | --type 设置生成密钥的类型(可选类型:dsa/ecdsa/ed25519/rsa/rsa1)" | column -t
+
+    # echo "
+    # -G | --deploy_group_name 设置免密节点组名称
+    # -g | --remove_group_name 设置需要完整卸载的免密节点组名称
+    # -N | --deploy_node_info 设置组内每个节点的信息
+    # -n | --remove_node_alias 设置指定免密节点组中的一个或多个节点别名
+    # -t | --type 设置生成密钥的类型" | column -t
 
     _warningnoblank "
     以下为无参选项:"| column -t
@@ -910,10 +915,10 @@ Help(){
     echo ""
     _errornoblank "执行任意一种功能均需设置确认执行的无参选项: -y 或 --yes"
     _errornoblank "否则脚本只进行检测但不会实际运行"
-    _warningnoblank "三种组合方式中，任何选项均没有次序要求"
+    _warningnoblank "所有组合方式中，任何选项均没有次序要求"
 
     echo "----------------------------------------------------------------"
-    _warningnoblank "以下为根据脚本内置4种可重复功能归类各自必要选项(存在选项复用情况)"
+    _warningnoblank "以下为根据脚本内置可重复功能归类各自必要选项(存在选项复用情况)"
     echo ""
     _successnoblank "|--------------------------------|"
     _successnoblank "|新增一个免密节点组和多个节点信息|"
@@ -924,8 +929,8 @@ Help(){
     echo ""
     echo "
     -G | --deploy_group_name 设置免密节点组名称
-    -N | --deploy_node_info 设置组内每个节点的信息
-    -t | --type 设置生成密钥的类型"|column -t
+    -N | --deploy_node_info 设置组内每个节点的信息(每个节点信息填写顺序为：节点别名,登录名,IP,端口号，不同节点信息用空格隔开)
+    -t | --type 设置生成密钥的类型(可选类型:dsa/ecdsa/ed25519/rsa/rsa1)"|column -t
 
     _warningnoblank "
     以下为无参选项:"| column -t
@@ -942,7 +947,7 @@ Help(){
     echo ""
     echo "
     -G | --deploy_group_name 设置免密节点组名称
-    -N | --deploy_node_info 设置组内每个节点的信息"|column -t
+    -N | --deploy_node_info 设置组内每个节点的信息(每个节点信息填写顺序为：节点别名,登录名,IP,端口号，不同节点信息用空格隔开)"|column -t
 
     _warningnoblank "
     以下为无参选项:"| column -t
@@ -950,38 +955,38 @@ Help(){
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
     echo ""
 
-    _successnoblank "|----------------------------------------|"
-    _successnoblank "|卸载指定免密节点组中的一个或多个节点信息|"
-    _successnoblank "|----------------------------------------|"
-    _warningnoblank "
-    以下为有参选项，必须带上相应参数"| column -t
+    # _successnoblank "|----------------------------------------|"
+    # _successnoblank "|卸载指定免密节点组中的一个或多个节点信息|"
+    # _successnoblank "|----------------------------------------|"
+    # _warningnoblank "
+    # 以下为有参选项，必须带上相应参数"| column -t
 
-    echo ""
-    echo "
-    -g | --remove_group_name 设置需要卸载的节点所在免密节点组名称
-    -n | --remove_node_alias 设置指定免密节点组中需要卸载的一个或多个节点别名"|column -t
+    # echo ""
+    # echo "
+    # -g | --remove_group_name 设置需要卸载的节点所在免密节点组名称
+    # -n | --remove_node_alias 设置指定免密节点组中需要卸载的一个或多个节点别名"|column -t
 
-    _warningnoblank "
-    以下为无参选项:"| column -t
-    echo "
-    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
-    echo ""
+    # _warningnoblank "
+    # 以下为无参选项:"| column -t
+    # echo "
+    # -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    # echo ""
 
-    _successnoblank "|----------------------------------|"
-    _successnoblank "|卸载指定免密节点组及其所有节点信息|"
-    _successnoblank "|----------------------------------|"
-    _warningnoblank "
-    以下为有参选项，必须带上相应参数"| column -t
+    # _successnoblank "|----------------------------------|"
+    # _successnoblank "|卸载指定免密节点组及其所有节点信息|"
+    # _successnoblank "|----------------------------------|"
+    # _warningnoblank "
+    # 以下为有参选项，必须带上相应参数"| column -t
 
-    echo ""
-    echo "
-    -g | --remove_group_name 设置需要完整卸载的免密节点组名称"|column -t
+    # echo ""
+    # echo "
+    # -g | --remove_group_name 设置需要完整卸载的免密节点组名称"|column -t
 
-    _warningnoblank "
-    以下为无参选项:"| column -t
-    echo "
-    -y | --yes 确认执行所有检测结果后的实际操作" | column -t
-    echo ""
+    # _warningnoblank "
+    # 以下为无参选项:"| column -t
+    # echo "
+    # -y | --yes 确认执行所有检测结果后的实际操作" | column -t
+    # echo ""
 }
 
 [ "${HELP}" -eq 1 ] && Help && exit 0
