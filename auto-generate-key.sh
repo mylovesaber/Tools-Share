@@ -64,7 +64,6 @@ CHECK_DEP_SEP=0
 CONFIRM_CONTINUE=0
 HELP=0
 GEN_SH_NAME="generated-script"
-LOCAL_IP=
 
 if ! ARGS=$(getopt -a -o G:,g:,N:,n:,t:,s,y,h -l deploy_group_name:,remove_group_name:,deploy_node_info:,remove_node_alias:,type:,check_dep_sep,yes,help -- "$@")
 then
@@ -199,12 +198,13 @@ CheckOption(){
         DeployCheck
     elif [ -n "${DEPLOY_GROUP_NAME}" ] && [ -n "${DEPLOY_NODE_INFO}" ] && [ -z "${KEY_TYPE}" ] && [ -z "${REMOVE_GROUP_NAME}" ] && [ -z "${REMOVE_NODE_ALIAS}" ]; then
         DeployCheck
-    elif [ -n "${REMOVE_GROUP_NAME}" ] && [ -n "${REMOVE_NODE_ALIAS}" ] && [ -z "${DEPLOY_GROUP_NAME}" ] && [ -z "${DEPLOY_NODE_INFO}" ] && [ -z "${KEY_TYPE}" ]; then
-        RemoveNodeCheck
-    elif [ -n "${REMOVE_GROUP_NAME}" ] && [ -z "${REMOVE_NODE_ALIAS}" ] && [ -z "${DEPLOY_GROUP_NAME}" ] && [ -z "${DEPLOY_NODE_INFO}" ] && [ -z "${KEY_TYPE}" ]; then
-        RemoveGroupCheck
+    # elif [ -n "${REMOVE_GROUP_NAME}" ] && [ -n "${REMOVE_NODE_ALIAS}" ] && [ -z "${DEPLOY_GROUP_NAME}" ] && [ -z "${DEPLOY_NODE_INFO}" ] && [ -z "${KEY_TYPE}" ]; then
+    #     RemoveNodeCheck
+    # elif [ -n "${REMOVE_GROUP_NAME}" ] && [ -z "${REMOVE_NODE_ALIAS}" ] && [ -z "${DEPLOY_GROUP_NAME}" ] && [ -z "${DEPLOY_NODE_INFO}" ] && [ -z "${KEY_TYPE}" ]; then
+    #     RemoveGroupCheck
     else
-        _error "本脚本只有安装和卸载共四种可重复使用的选项组合方式，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
+        # _error "本脚本只有安装和卸载共四种可重复使用的选项组合方式，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
+        _error "本脚本只有两种可重复使用的选项组合方式，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
         _errornoblank "1. 部署一个免密节点组并为该组添加一个或多个节点信息:"
         _warningnoblank "
         -G | --deploy_group_name 设置免密节点组名称
@@ -218,20 +218,20 @@ CheckOption(){
         -N | --deploy_node_info 设置组内每个节点的信息"|column -t
         echo ""
 
-        _errornoblank "3. 卸载指定免密节点组中的一个或多个节点信息:"
-        _warningnoblank "
-        -g | --remove_group_name 设置需要卸载的节点所在免密节点组名称
-        -n | --remove_node_alias 设置指定免密节点组中的一个或多个节点别名"|column -t
-        echo ""
+        # _errornoblank "3. 卸载指定免密节点组中的一个或多个节点信息:"
+        # _warningnoblank "
+        # -g | --remove_group_name 设置需要卸载的节点所在免密节点组名称
+        # -n | --remove_node_alias 设置指定免密节点组中的一个或多个节点别名"|column -t
+        # echo ""
 
-        _errornoblank "4. 卸载指定免密节点组及其所有节点信息:"
-        _warningnoblank "
-        -g | --remove_group_name 设置需要完整卸载的免密节点组名称"|column -t
-        echo ""
+        # _errornoblank "4. 卸载指定免密节点组及其所有节点信息:"
+        # _warningnoblank "
+        # -g | --remove_group_name 设置需要完整卸载的免密节点组名称"|column -t
+        # echo ""
 
         _errornoblank "执行任意一种功能均需设置确认执行的无参选项: -y 或 --yes"
         _errornoblank "否则脚本只进行检测但不会实际运行"
-        _warningnoblank "三种组合方式中，任何选项均没有次序要求"
+        _warningnoblank "几种组合方式中，任何选项均没有次序要求"
         exit 1
     fi
 }
@@ -261,7 +261,7 @@ DeployCheck(){
     GROUP_EXIST=0
     if [ -f /root/.ssh/config ]; then
         mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '/Include/{print $2}' /root/.ssh/config)
-        # 这段防止后续部署失败时往 config 文件写入了本不存在的节点组信息或节点组内没有节点信息，对遍历出来的节点组名对比实际文件夹排除掉没有对应文件夹或节点组内没有节点信息的节点组名，后面写入 config 时有判断是否重复，重复就跳过
+        # 代码段开始行，以下这段防止后续部署失败时往 config 文件写入了本不存在的节点组信息或节点组内没有节点信息，对遍历出来的节点组名对比实际文件夹排除掉没有对应文件夹或节点组内没有节点信息的节点组名
         for i in "${GROUP_NAME_IN_FILE[@]}";do
             if [ -d /root/.ssh/"${i}" ] && [ -n "$(find /root/.ssh/"${i}" -maxdepth 1 -type f -name "config-${i}-*")" ]; then
                 TEMP_GROUP_NAME_IN_FILE+=("${i}")
@@ -269,16 +269,14 @@ DeployCheck(){
         done
         TEMP_GROUP_NAME_IN_FILE_STRING=$(declare -p TEMP_GROUP_NAME_IN_FILE)
         eval "declare -A GROUP_NAME_IN_FILE=""${TEMP_GROUP_NAME_IN_FILE_STRING#*=}"
+        # 代码段结束行，以上这段在后面写入 config 时有判断是否重复，重复就跳过
 
         if grep -wq "${DEPLOY_GROUP_NAME}" <<< "${GROUP_NAME_IN_FILE[@]}"; then
             _success "${DEPLOY_GROUP_NAME} 免密节点组已存在"
             GROUP_EXIST=1
         else
             _warning "免密节点组不存在，将创建对应节点组"
-            GROUP_EXIST=0
         fi
-    else
-        GROUP_EXIST=0
     fi
     if [ "${GROUP_EXIST}" -eq 0 ]; then
         case "${KEY_TYPE}" in
@@ -287,8 +285,13 @@ DeployCheck(){
             "ed25519")shift;;
             "rsa")shift;;
             "rsa1")shift;;
-            *) _error "密钥类型填写错误，可选项: dsa | ecdsa | ed25519 | rsa | rsa1";exit 1
+            *) _error "密钥类型填写错误，选项: -t | --type，可选参数: dsa | ecdsa | ed25519 | rsa | rsa1";exit 1
         esac
+    elif [ "${GROUP_EXIST}" -eq 1 ]; then
+        if [ -n "${KEY_TYPE}" ]; then
+            _error "向已有免密组添加节点不需要设置密钥类型，请删除该选项"
+            exit 1
+        fi
     fi
 
     _info "正在检测节点信息完整性"
@@ -316,6 +319,37 @@ DeployCheck(){
             mapfile -t -O "${#PORT_NUMBER[@]}" PORT_NUMBER < <(awk -F ',' '{print $4}' <<< "${i}")
         fi
     done
+
+    # 检查本机 IP 对应的节点别名，如果是新建节点，则新增节点信息中必须包含本机节点信息，否则报错退出
+    # 如果向已有节点组添加节点，则节点组中必须已有本机节点信息，否则报错退出
+    LOCAL_ALIAS=
+    NUM=
+    if [ "${GROUP_EXIST}" -eq 0 ]; then
+        for i in "${!IP_ADDRESS[@]}";do
+            if [ "${LOCAL_IP}" = "${IP_ADDRESS[$i]}" ]; then
+                NUM=$i
+                break
+            fi
+        done
+        if [ -z "${NUM}" ]; then
+            _error "新增节点信息中必须包含本机节点信息"
+            exit 1
+        else
+            LOCAL_ALIAS="${NODE_ALIAS[$NUM]}"
+        fi
+    elif [ "${GROUP_EXIST}" -eq 1 ]; then
+        mapfile -t EXIST_NODE_FILE_NAME < <(find /root/.ssh/"${DEPLOY_GROUP_NAME}" -maxdepth 1 -type f -name "config-${DEPLOY_GROUP_NAME}-*")
+        for i in "${EXIST_NODE_FILE_NAME[@]}";do
+            if [ "$(awk '/HostName/{print $2}' "${i}")" = "${LOCAL_IP}" ];then
+                LOCAL_ALIAS=$(awk '/Host\ /{print $2}' "${i}")
+            fi
+        done
+        if [ -z "${LOCAL_ALIAS}" ]; then
+            _error "指定的节点组中必须存在本机节点信息"
+            exit 1
+        fi
+    fi
+
     if [ "${GROUP_EXIST}" -eq 0 ]; then
         if [ "${#DEPLOY_NODE_INFO[@]}" -eq 1 ]; then
             _error "新创建的节点组中至少要有两个节点的配置"
@@ -440,6 +474,25 @@ DeployCheck(){
     fi
     _success " IPV4 地址均可连通"
 
+    if [ "${GROUP_EXIST}" -eq 1 ]; then
+        MARK=0
+        _info "开始检查已加入免密节点组中的节点免密情况"
+        # HOST_ALIAS 数组在上面节点别名合法性中被定义
+        for i in "${HOST_ALIAS[@]}";do
+            if ssh -o BatchMode=yes "${i}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+                VALIDATION_SUCCESS_LIST+=("${i}")
+            else
+                VALIDATION_FAILURE_LIST+=("${i}")
+                MARK=1
+            fi
+        done
+        if [ "${MARK}" -eq 1 ]; then
+            _warning "存在免密故障的节点"
+        elif [ "${MARK}" -eq 0 ]; then
+            _success "免密节点检测通过"
+        fi
+    fi
+
     # 检测端口号合法性
     _info "正在检测端口号合法性"
     ERROR_PORT_NUMBER=()
@@ -482,6 +535,19 @@ DeployCheck(){
         echo ""
     done
 
+    if [ "${#VALIDATION_SUCCESS_LIST[@]}" -gt 0 ];then
+        _info "以下是 ${DEPLOY_GROUP_NAME} 免密节点组中免密检测通过的节点名:"
+        for i in "${VALIDATION_SUCCESS_LIST[@]}";do
+            _success "${i}"
+        done
+    fi
+    if [ "${#VALIDATION_FAILURE_LIST[@]}" -gt 0 ];then
+        _info "以下是 ${DEPLOY_GROUP_NAME} 免密节点组中免密检测失败的节点名:"
+        for i in "${VALIDATION_FAILURE_LIST[@]}";do
+            _warning "${i}"
+        done
+        _warning "继续执行将创建用于修复免密检测失败节点和部署新增节点的子脚本"
+    fi
     if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
         Deploy "${GROUP_EXIST}"
         exit 0
@@ -501,7 +567,7 @@ Deploy(){
         _info "正在创建免密节点组"
         mkdir -p /root/.ssh/"${DEPLOY_GROUP_NAME}"
     fi
-    if [ ! -f /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-key ]; then
+    if [ ! -f /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-key ] || [ ! -f /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-authorized_keys ]; then
         _info "正在生成并部署公密钥"
         ssh-keygen -t "${KEY_TYPE}" -q -N "" -C "" -f /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-key <<< y >/dev/null 2>&1
         mv /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-key.pub /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-authorized_keys
@@ -554,11 +620,21 @@ EOF
         systemctl restart sshd
     fi
     _success "本机公密钥配置已完成"
-    GenerateScript
+    if [ "${#VALIDATION_SUCCESS_LIST[@]}" -gt 0 ]; then
+        _info "开始向指定免密组工作正常的节点更新新增节点信息"
+        for i in "${VALIDATION_SUCCESS_LIST[@]}";do
+            if [ "${i}" != "${LOCAL_ALIAS}" ]; then
+                _successnoblank "正在更新 ${i} 节点中保存的节点信息"
+                scp -r /root/.ssh/"${DEPLOY_GROUP_NAME}"/* "${i}":/root/.ssh/"${DEPLOY_GROUP_NAME}"
+                ssh "${i}" "chmod -R 644 /root/.ssh/${DEPLOY_GROUP_NAME};chmod 600 /root/.ssh/${DEPLOY_GROUP_NAME}/${DEPLOY_GROUP_NAME}-key"
+            fi
+        done
+    fi
+    GenerateDeployScript
     Tips
 }
 
-GenerateScript(){
+GenerateDeployScript(){
     CONFIG_FILE=$(cat /root/.ssh/"${DEPLOY_GROUP_NAME}"/config-"${DEPLOY_GROUP_NAME}"-*)
     AUTHORIZED_KEYS=$(cat /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-authorized_keys)
     PRIVATE_KEY=$(cat /root/.ssh/"${DEPLOY_GROUP_NAME}"/"${DEPLOY_GROUP_NAME}"-key)
@@ -672,11 +748,11 @@ fi
 CONFIG_FILE="$CONFIG_FILE"
 AUTHORIZED_KEYS="$AUTHORIZED_KEYS"
 PRIVATE_KEY="$PRIVATE_KEY"
-# 临时加的
-echo "\$CONFIG_FILE"
-echo "\$AUTHORIZED_KEYS"
-echo "\$PRIVATE_KEY"
-echo ""
+# 测试用途
+# echo "\$CONFIG_FILE"
+# echo "\$AUTHORIZED_KEYS"
+# echo "\$PRIVATE_KEY"
+# echo ""
 
 if [ ! "\$(grep "\${LOCAL_IP}" <<< "\${CONFIG_FILE}" | awk '{print \$2}')" = "\${LOCAL_IP}" ]; then
     _error "此服务器不在自动装配列表中，退出中"
@@ -756,39 +832,60 @@ EOF
 Tips(){
     _success "此服务器已完成部署，已自动生成子自动部署脚本"
     _success "生成的子脚本会检测所在设备 IP 是否在安装列表中，故在非安装列表 IP 中的服务器上会自动中断运行"
-    _success "请将生成的子脚本放置在以下 IP 的服务器上并执行部署:"
-    mapfile PRE_ADD_LIST -t < <(awk '/HostName\ /{print $2}' <<< cat /root/.ssh/"${DEPLOY_GROUP_NAME}"/config-"${DEPLOY_GROUP_NAME}"-*)
-    for i in "${PRE_ADD_LIST[@]}"; do
-        if [ "${i}" != "${LOCAL_IP}" ]; then
-            echo -n "${i}"
+    if [ "${GROUP_EXIST}" -eq 0 ]; then
+        _success "请将生成的子脚本放置在以下 IP 的服务器上并执行部署:"
+        mapfile -t PRE_ADD_LIST < <(awk '/HostName/{print $2}' <<< cat /root/.ssh/"${DEPLOY_GROUP_NAME}"/config-"${DEPLOY_GROUP_NAME}"-*)
+        for i in "${PRE_ADD_LIST[@]}"; do
+            if [ "${i}" != "${LOCAL_IP}" ]; then
+                echo "${i}"
+            fi
+        done
+        echo ""
+    elif [ "${GROUP_EXIST}" -eq 1 ]; then
+        if [ "${#VALIDATION_FAILURE_LIST[@]}" -gt 0 ]; then
+            _warning "检测到部分节点存在免密故障，请在以下这些故障节点中重新运行新生成的子自动部署脚本:"
+            for i in "${VALIDATION_FAILURE_LIST[@]}"; do
+                echo "${i}"
+            done
         fi
-    done
-    echo ""
+        if [ "${#VALIDATION_SUCCESS_LIST[@]}" -gt 1 ]; then
+            _success "已向组内检测通过的免密节点 IP 同步更新新增节点，生成的子自动部署脚本不用在以下节点中重复安装:"
+            for i in "${VALIDATION_SUCCESS_LIST[@]}"; do
+                if [ "${i}" != "${LOCAL_ALIAS}" ]; then
+                    echo "${i}"
+                fi
+            done
+        fi
+        _success "请将生成的子脚本放置在以下新增的节点中执行部署:"
+        for i in "${IP_ADDRESS[@]}"; do
+            echo "${i}"
+        done
+    fi
     _infonoblank "部署命令: "
     _infonoblank "当 authorized_keys 文件不存在或其中存在其他项目写入的免密公钥则实现清理残留文件和配置信息后再完成新信息的配置: "
     _print "bash <(cat ${GEN_SH_NAME}.sh)"
     _infonoblank "待以上 IP 列表中的所有服务器均部署完毕后，子脚本将保持可用状态直到父脚本执行增减节点或节点组。"
 }
 
-RemoveNodeCheck(){
-    # 参数传入规范检查
-    if [[ ! "${REMOVE_GROUP_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
-        _error "需移除的节点所属组名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
-        exit 1
-    fi
-    if [[ ! "${REMOVE_NODE_ALIAS}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
-        _error "需移除的节点名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
-        exit 1
-    fi
-}
+# RemoveNodeCheck(){
+#     # 参数传入规范检查
+#     if [[ ! "${REMOVE_GROUP_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+#         _error "需移除的节点所属组名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
+#         exit 1
+#     fi
+#     if [[ ! "${REMOVE_NODE_ALIAS}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+#         _error "需移除的节点名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
+#         exit 1
+#     fi
+# }
 
-RemoveGroupCheck(){
-    # 参数传入规范检查
-    if [[ ! "${REMOVE_GROUP_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
-        _error "需完整移除的免密节点组名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
-        exit 1
-    fi
-}
+# RemoveGroupCheck(){
+#     # 参数传入规范检查
+#     if [[ ! "${REMOVE_GROUP_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+#         _error "需完整移除的免密节点组名写法有错，只支持大小写字母、数字、下划线(_)和连字符(-)，请检查"
+#         exit 1
+#     fi
+# }
 
 Help(){
     _successnoblank "

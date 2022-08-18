@@ -722,7 +722,7 @@ CheckDeployOption(){
             done
             exit 114
         fi
-        if ssh -o BatchMode=yes "${DEPLOY_NODE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${DEPLOY_NODE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "部署节点 ${DEPLOY_NODE_ALIAS} 连接正常"
         else
             _error "部署节点 ${DEPLOY_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
@@ -889,7 +889,7 @@ CheckRemoveOption(){
             done
             exit 114
         fi
-        if ssh -o BatchMode=yes "${REMOVE_NODE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${REMOVE_NODE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "卸载节点 ${REMOVE_NODE_ALIAS} 连接正常"
         else
             _error "卸载节点 ${REMOVE_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
@@ -964,7 +964,7 @@ CheckTransmissionStatus(){
     _info "测试节点连通性"
     MARK=0
     if [ -n "${SYNC_SOURCE_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${SYNC_SOURCE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${SYNC_SOURCE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "源同步节点 ${SYNC_SOURCE_ALIAS} 连接正常"
         else
             _error "源同步节点 ${SYNC_SOURCE_ALIAS} 无法连接，请检查源同步节点硬件是否损坏"
@@ -973,7 +973,7 @@ CheckTransmissionStatus(){
     fi
 
     if [ -n "${SYNC_DEST_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${SYNC_DEST_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${SYNC_DEST_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "目标同步节点 ${SYNC_DEST_ALIAS} 连接正常"
         else
             _error "目标同步节点 ${SYNC_DEST_ALIAS} 无法连接，请检查目标同步节点硬件是否损坏"
@@ -982,7 +982,7 @@ CheckTransmissionStatus(){
     fi
 
     if [ -n "${BACKUP_SOURCE_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${BACKUP_SOURCE_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${BACKUP_SOURCE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "源备份节点 ${BACKUP_SOURCE_ALIAS} 连接正常"
         else
             _error "源备份节点 ${BACKUP_SOURCE_ALIAS} 无法连接，请检查源备份节点硬件是否损坏"
@@ -991,7 +991,7 @@ CheckTransmissionStatus(){
     fi
 
     if [ -n "${BACKUP_DEST_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${BACKUP_DEST_ALIAS}" "echo "">/dev/null 2>&1" >/dev/null 2>&1; then
+        if ssh -o BatchMode=yes "${BACKUP_DEST_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
             _success "目标备份节点 ${BACKUP_DEST_ALIAS} 连接正常"
         else
             _error "目标备份节点 ${BACKUP_DEST_ALIAS} 无法连接，请检查目标备份节点硬件是否损坏"
