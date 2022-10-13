@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="增加颜色信息">
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/source/.nothing" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/src/OptionCheck.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/other/whiptail.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/deploy.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/deploy.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/xxx.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/xxx.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/桌面文件名要英文的.desktop" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/银河麒麟项目调试指南.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/todo_or_idea/conf-parse.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/LICENSE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/hosts-tool.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/hosts-tool.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/setup.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/setup.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/timeout" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/timeout" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/手动配置自动更新hosts教程.md" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/手动配置自动更新hosts教程.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cron.md" beforeDir="false" afterPath="$PROJECT_DIR$/other/cron.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb-for-tomcat/color.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb/color.sh" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CompilerWorkspaceConfiguration">
+    <option name="MAKE_PROJECT_ON_SAVE" value="true" />
+    <option name="PARALLEL_COMPILATION" value="true" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="BashSupport Pro Google Style Guide" />
+        <option value="BashSupport Pro Bash" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="localRepository" value="D:\program\maven\repo" />
+        <option name="mavenHome" value="$PROJECT_DIR$/../../../program/maven/apache-maven-3.6.3" />
+        <option name="userSettingsFile" value="D:\program\maven\apache-maven-3.6.3\conf\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="2G2RcOc0S856F0duNsSxjEgBo3U" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/code/github-project/tools-share&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\code\github-project\anshare\generate-project-update-deb-for-tomcat" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\code\github-project\tools-share\todo_or_idea" />
+      <recent name="D:\code\github-project\anshare\generate-project-update-deb" />
+      <recent name="D:\code\github-project\anshare\other" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="" />
+      <created>1665584771400</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1665584771400</updated>
+      <workItem from="1665584773091" duration="282000" />
+      <workItem from="1665585071517" duration="508000" />
+      <workItem from="1665585595986" duration="567000" />
+      <workItem from="1665586185903" duration="443000" />
+      <workItem from="1665586637716" duration="191000" />
+      <workItem from="1665586844807" duration="61000" />
+      <workItem from="1665586921243" duration="512000" />
+      <workItem from="1665587451188" duration="151000" />
+      <workItem from="1665587618075" duration="25000" />
+      <workItem from="1665587657585" duration="8667000" />
+      <workItem from="1665658909942" duration="1082000" />
+      <workItem from="1665660013379" duration="327000" />
+      <workItem from="1665661812093" duration="2005000" />
+      <workItem from="1665663868938" duration="90000" />
+      <workItem from="1665663962446" duration="51000" />
+    </task>
+    <task id="LOCAL-00001" summary="增加颜色信息">
+      <created>1665652007570</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1665652007570</updated>
+    </task>
+    <task id="LOCAL-00002" summary="增加颜色信息">
+      <created>1665652295165</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1665652295165</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+        <entry key="ddab0b40-3ead-4129-877c-86e8b4d667f9">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="ddab0b40-3ead-4129-877c-86e8b4d667f9" value="TOOL_WINDOW" />
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="增加颜色信息" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加颜色信息" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
