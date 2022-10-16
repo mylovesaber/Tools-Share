@@ -1,8 +1,0 @@
-<component name="InspectionProjectProfileManager">
-  <profile version="1.0">
-    <option name="myName" value="Project Default" />
-    <inspection_tool class="ShellCheck" enabled="true" level="ERROR" enabled_by_default="true" editorAttributes="ERRORS_ATTRIBUTES">
-      <shellcheck_settings value="SC1000,SC1001,SC1003,SC1004,SC1066,SC2223,SC2224,SC2225,SC2226,SC2227,SC2229,SC2230,SC2231,SC2232,SC2233,SC2234,SC2235,SC2236,SC2237,SC2238,SC2239,SC2240,SC2241,SC2242,SC2243,SC2244,SC2245,SC2246,SC2247,SC2249" />
-    </inspection_tool>
-  </profile>
-</component>
