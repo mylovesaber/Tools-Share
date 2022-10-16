@@ -4,32 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="增加颜色信息">
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/source/.nothing" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb/src/OptionCheck.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/other/whiptail.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/deploy.conf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/deploy.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/xxx.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/xxx.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/program/project/桌面文件名要英文的.desktop" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/Non-Root-Deploy/银河麒麟项目调试指南.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo_or_idea/conf-parse.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/hosts-tool.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/hosts-tool.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/setup.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/setup.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/timeout" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/timeout" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auto_update_github_hosts/手动配置自动更新hosts教程.md" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/手动配置自动更新hosts教程.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cron.md" beforeDir="false" afterPath="$PROJECT_DIR$/other/cron.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb-for-tomcat/color.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb/color.sh" afterDir="false" />
+    <list default="true" id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="更新 README 信息">
+      <change afterPath="$PROJECT_DIR$/generate-project-base-deb-mips64el/src/test.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/generate-deb.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/src/GenerateProfile.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/src/OptionCheck.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generate-redis-deb/src/OptionCheck.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codestream.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codestream.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto-update-github-hosts/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto-update-github-hosts/hosts-tool.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/hosts-tool.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auto-update-github-hosts/setup.sh" beforeDir="false" afterPath="$PROJECT_DIR$/auto-update-github-hosts/setup.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/color.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/color.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/source/.nothing" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/source/.nothing" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/src/OptionCheck.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,6 +34,9 @@
     <option name="MAKE_PROJECT_ON_SAVE" value="true" />
     <option name="PARALLEL_COMPILATION" value="true" />
   </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -49,6 +46,12 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--tags" />
+        <option name="title" value="All" />
+      </GitPushTagMode>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MarkdownSettingsMigration">
@@ -75,7 +78,7 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/code/github-project/tools-share&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/code/github-project/tools-share/generate-project-base-deb/src&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
@@ -83,6 +86,8 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\code\github-project\tools-share\generate-project-base-deb\src" />
+      <recent name="D:\code\github-project\tools-share\generate-redis-deb\src" />
       <recent name="D:\code\github-project\anshare\generate-project-update-deb-for-tomcat" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -114,6 +119,10 @@
       <workItem from="1665661812093" duration="2005000" />
       <workItem from="1665663868938" duration="90000" />
       <workItem from="1665663962446" duration="51000" />
+      <workItem from="1665664025225" duration="5754000" />
+      <workItem from="1665707925082" duration="10516000" />
+      <workItem from="1665906661161" duration="165000" />
+      <workItem from="1665906893053" duration="21379000" />
     </task>
     <task id="LOCAL-00001" summary="增加颜色信息">
       <created>1665652007570</created>
@@ -129,7 +138,14 @@
       <option name="project" value="LOCAL" />
       <updated>1665652295165</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="更新 README 信息">
+      <created>1665917018387</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1665917018387</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -178,7 +194,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="增加颜色信息" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加颜色信息" />
+    <MESSAGE value="更新 README 信息" />
+    <option name="LAST_COMMIT_MESSAGE" value="更新 README 信息" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
