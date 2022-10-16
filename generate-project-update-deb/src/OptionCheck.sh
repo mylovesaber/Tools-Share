@@ -1,3 +1,1 @@
-#!$SHEBANG$
-
-$END$
+#!/bin/bash
