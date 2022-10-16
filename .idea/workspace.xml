@@ -4,22 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="更新 auto-update-github-hosts 代码准备测试">
-      <change afterPath="$PROJECT_DIR$/generate-project-base-deb-mips64el/src/test.conf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/generate-deb.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/src/GenerateProfile.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/src/OptionCheck.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/generate-redis-deb/src/OptionCheck.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/color.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/color.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/source/.nothing" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb-mips64el/source/.nothing" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/src/OptionCheck.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-redis-deb/generate-deb.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-redis-deb/src/GenerateProfile.sh" afterDir="false" />
+    <list default="true" id="1a18d157-8a1b-4bc5-9799-b667de83e8ed" name="Changes" comment="修复 auto-update-github-hosts 的定时规则错误">
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/color.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb/color.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb/generate-deb.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" beforeDir="false" afterPath="$PROJECT_DIR$/generate-project-update-deb/src/GenerateProfile.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +37,7 @@
       </GitPushTagMode>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="MIXED" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -63,7 +52,7 @@
     </option>
   </component>
   <component name="ProjectId" id="2G2RcOc0S856F0duNsSxjEgBo3U" />
-  <component name="ProjectLevelVcsManager">
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectViewState">
@@ -119,6 +108,7 @@
       <workItem from="1665707925082" duration="10516000" />
       <workItem from="1665906661161" duration="165000" />
       <workItem from="1665906893053" duration="22893000" />
+      <workItem from="1665943903813" duration="439000" />
     </task>
     <task id="LOCAL-00001" summary="增加颜色信息">
       <created>1665652007570</created>
@@ -148,7 +138,14 @@
       <option name="project" value="LOCAL" />
       <updated>1665941110525</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="修复 auto-update-github-hosts 的定时规则错误">
+      <created>1665944149606</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1665944149606</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -199,7 +196,8 @@
     <MESSAGE value="增加颜色信息" />
     <MESSAGE value="更新 README 信息" />
     <MESSAGE value="更新 auto-update-github-hosts 代码准备测试" />
-    <option name="LAST_COMMIT_MESSAGE" value="更新 auto-update-github-hosts 代码准备测试" />
+    <MESSAGE value="修复 auto-update-github-hosts 的定时规则错误" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复 auto-update-github-hosts 的定时规则错误" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -75,10 +75,10 @@ setup.sh  选项  参数
 
 ```bash
 # GitLab 托管的安装脚本 + 指定 GitLab 为日用脚本安装源
-bash <(curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fsetup%2Esh/raw?ref=dev) -s gitlab
+bash <(curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fsetup%2Esh/raw?ref=main) -s gitlab
 
 # GitHub 托管的安装脚本 + 指定 GitLab 为日用脚本安装源
-bash <(curl -Ls https://raw.githubusercontent.com/mylovesaber/Tools-Share/dev/auto_update_github_hosts/setup.sh) -s gitlab
+bash <(curl -Ls https://raw.githubusercontent.com/mylovesaber/Tools-Share/main/auto-update-github-hosts/setup.sh) -s gitlab
 ```
 
 ## 日用脚本

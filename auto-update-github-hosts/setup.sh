@@ -131,10 +131,10 @@ function PlaceScript(){
         # else
         if [ "${systemType}" = "MacOS" ]; then
             _warning "MacOS 未发现 timeout 命令，将临时下载 timeout 程序"
-            curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Ftimeout/raw?ref=dev -o /usr/local/bin/hosts-tool
+            curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Ftimeout/raw?ref=main -o /usr/local/bin/timeout
             _info "修改权限中..."
-            chown root:admin /usr/local/bin/hosts-tool
-            chmod 755 /usr/local/bin/hosts-tool
+            chown root:admin /usr/local/bin/timeout
+            chmod 755 /usr/local/bin/timeout
             _success "timeout 程序已下载并应用成功"
         else
             _error "暂未适配，请联系作者"
@@ -145,7 +145,7 @@ function PlaceScript(){
         case "${downloadSource}" in
             "gitlab")
                 _info "从 GitLab 下载脚本"
-                timeout 20s curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fhosts%2Dtool%2Esh/raw?ref=dev -o /tmp/hosts-tool
+                timeout 20s curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fhosts%2Dtool%2Esh/raw?ref=main -o /tmp/hosts-tool
                 ;;
             "github")
                 _info "从 GitHub 下载脚本"
@@ -155,7 +155,7 @@ function PlaceScript(){
                     downloadSource="gitlab"
                     continue
                 else
-                    timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/auto_update_github_hosts/master/hosts-tool.sh
+                    timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/Tools-Share/main/auto-update-github-hosts/hosts-tool.sh
                 fi
                 ;;
             *)
