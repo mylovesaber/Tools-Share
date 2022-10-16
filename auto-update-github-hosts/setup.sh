@@ -289,9 +289,9 @@ function SetCron(){
         _success "清理完成"
         _info "添加新定时任务中..."
         {
-            echo "* */1 * * * /usr/local/bin/hosts-tool run"
-            echo "* * */3 * * /usr/local/bin/hosts-tool updatefrom $downloadSource"
-            echo "* * */10 * * /usr/local/bin/hosts-tool rmlog"
+            echo "0 */1 * * * /usr/local/bin/hosts-tool run"
+            echo "0 0 */3 * * /usr/local/bin/hosts-tool updatefrom $downloadSource"
+            echo "0 0 */10 * * /usr/local/bin/hosts-tool rmlog"
         } >> /tmp/cronfile
         crontab /tmp/cronfile
         rm -rf /tmp/cronfile
@@ -317,9 +317,9 @@ function SetCron(){
         _success "清理完成"
         _info "添加新定时任务中..."
         cat >> $hostPath <<EOF
-* */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run
-* * */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $downloadSource
-* * */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog
+0 */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run
+0 0 */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $downloadSource
+0 0 */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog
 EOF
         /usr/local/sbin/update_cron
         _success "新定时任务添加完成"
@@ -329,9 +329,9 @@ EOF
         _success "清理完成"
         _info "添加新定时任务中..."
         {
-            echo "* */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run"
-            echo "* * */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $downloadSource"
-            echo "* * */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog"
+            echo "0 */1 * * * root /usr/bin/bash /usr/bin/hosts-tool run"
+            echo "0 0 */3 * * root /usr/bin/bash /usr/bin/hosts-tool updatefrom $downloadSource"
+            echo "0 0 */10 * * root /usr/bin/bash /usr/bin/hosts-tool rmlog"
         } >> /etc/crontab
         _success "新定时任务添加完成"
     fi
