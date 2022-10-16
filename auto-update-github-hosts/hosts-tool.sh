@@ -108,6 +108,7 @@ function PlaceScript(){
             _success "timeout 程序已下载并应用成功"
         else
             _error "暂未适配，请联系作者"
+            exit 1
         fi
     fi
     local COUNT=1
@@ -217,6 +218,9 @@ function Combine(){
             exit 1
         fi
     done
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
 }
 
 function RefreshDNS(){
