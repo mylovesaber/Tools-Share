@@ -1,6 +1,6 @@
 #!/bin/bash
 GetValue(){
-    awk /^"$1"/'{print $0}' ../generate-deb.conf|cut -d'=' -f 2-
+    awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-
 }
 
 packageDeployPath=$(GetValue package-deploy-path)
@@ -31,29 +31,29 @@ tomcatNewPort=$(GetValue tomcat-new-port)
 tomcatPreviousPort=$(GetValue tomcat-previous-port)
 
 # 以下是测试选项读取情况
-echo "packageDeployPath= $packageDeployPath"
-echo "packageSkip= $packageSkip"
-echo "packageMaintainer= $packageMaintainer"
-echo "packageHomepage= $packageHomepage"
-echo "packageName= $packageName"
-echo "packageArchitecture= $packageArchitecture"
-echo "packageDependsBaseName= $packageDependsBaseName"
-echo "packageDependsBaseVersion= $packageDependsBaseVersion"
-echo "packageMoreDescription= $packageMoreDescription"
-echo "packageVersion= $packageVersion"
-echo "packageSource= $packageSource"
-echo "tomcatSkip= $tomcatSkip"
-echo "tomcatVersion= $tomcatVersion"
-echo "excludeJar= $excludeJar"
-echo "catalinaOption= $catalinaOption"
-echo "mysqlSkip= $mysqlSkip"
-echo "mysqlUsername= $mysqlUsername"
-echo "mysqlPassword= $mysqlPassword"
-echo "mysqlBinPath= $mysqlBinPath"
-echo "sqlFileName= $sqlFileName"
-echo "commonDate= $commonDate"
-echo "needClean= $needClean"
-echo "databaseNewName= $databaseNewName"
-echo "databaseOldName= $databaseOldName"
-echo "tomcatNewPort= $tomcatNewPort"
-echo "tomcatPreviousPort= $tomcatPreviousPort"
+#echo "packageDeployPath= $packageDeployPath"
+#echo "packageSkip= $packageSkip"
+#echo "packageMaintainer= $packageMaintainer"
+#echo "packageHomepage= $packageHomepage"
+#echo "packageName= $packageName"
+#echo "packageArchitecture= $packageArchitecture"
+#echo "packageDependsBaseName= $packageDependsBaseName"
+#echo "packageDependsBaseVersion= $packageDependsBaseVersion"
+#echo "packageMoreDescription= $packageMoreDescription"
+#echo "packageVersion= $packageVersion"
+#echo "packageSource= $packageSource"
+#echo "tomcatSkip= $tomcatSkip"
+#echo "tomcatVersion= $tomcatVersion"
+#echo "excludeJar= $excludeJar"
+#echo "catalinaOption= $catalinaOption"
+#echo "mysqlSkip= $mysqlSkip"
+#echo "mysqlUsername= $mysqlUsername"
+#echo "mysqlPassword= $mysqlPassword"
+#echo "mysqlBinPath= $mysqlBinPath"
+#echo "sqlFileName= $sqlFileName"
+#echo "commonDate= $commonDate"
+#echo "needClean= $needClean"
+#echo "databaseNewName= $databaseNewName"
+#echo "databaseOldName= $databaseOldName"
+#echo "tomcatNewPort= $tomcatNewPort"
+#echo "tomcatPreviousPort= $tomcatPreviousPort"

@@ -1,5 +1,5 @@
 #!/bin/bash
-cat > ../generate-deb.conf << EOF
+cat > generate-deb.conf <<EOF
 # 为防读取配置文件错误，预留的英文双引号别删，等号后面任意位置，除非是写在双引号里面的内容，否则别留空格
 # 如果填写的配置信息内还有双引号，则添加反斜杠，例：
 # 要添加的内容：JAVA_OPTS="-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m"

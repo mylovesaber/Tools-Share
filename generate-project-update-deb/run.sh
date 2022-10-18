@@ -1,4 +1,5 @@
 #!/bin/bash
+CPUArchitecture=""
 source function/color.sh
 if ! ARGS=$(getopt -a -o yh -l confirmYes,help -- "$@")
 then
@@ -81,7 +82,7 @@ PrepareBuildEnv(){
 
 ArchitectureDetect
 if [ ! -f generate-deb.conf ]; then
-    _warning "未发现配置文件，将根据模板文件生成默认配置文件，请修改配置文件以定制脚本功能"
+    _warning "未发现配置文件，将根据模板文件生成默认配置文件"
     if [ -f function/GenerateProfile.sh ]; then
         source function/GenerateProfile.sh
         _success "配置文件生成完成，请修改配置文件以定制脚本功能"
