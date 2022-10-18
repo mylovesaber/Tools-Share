@@ -1,6 +1,6 @@
 #!/bin/bash
 CPUArchitecture=""
-source function/color.sh
+source function/Color.sh
 if ! ARGS=$(getopt -a -o yh -l confirmYes,help -- "$@")
 then
     echo "无效的参数，请查看可用选项"
@@ -38,15 +38,15 @@ Usage(){
 }
 
 ArchitectureDetect(){
-    case $(uname -p) in
-        "mips64") CPUArchitecture="mips64el";;
+    case $(dpkg-architecture |awk -F '=' /DEB_HOST_ARCH=/'{print $2}') in
+        "mips64el") CPUArchitecture="mips64el";;
         *) _error "未知 CPU 架构或暂未适配此 CPU 架构，请检查"; exit 1
     esac
 }
 
 PrepareBuildEnv(){
     _info "开始检查系统依赖包安装情况"
-    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen")
+    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen" "curl")
     local needInstall=0
     for i in "${buildDeps[@]}"; do
         if ! dpkg -l|grep "$i" >/dev/null 2>&1; then
@@ -59,7 +59,7 @@ PrepareBuildEnv(){
         local COUNT=0
         while [ $COUNT -le 5 ]; do
             apt update
-            if ! apt install dh-make build-essential devscripts debhelper tree -yqq; then
+            if ! apt install dh-make build-essential devscripts debhelper tree screen curl -yqq; then
                 _warning "系统源抽风，即将重试"
                 COUNT=$((COUNT + 1))
                 continue
@@ -94,4 +94,5 @@ if [ ! -f generate-deb.conf ]; then
 fi
 
 PrepareBuildEnv
-source function/OptionCheck.sh
+source function/CheckOption.sh
+
