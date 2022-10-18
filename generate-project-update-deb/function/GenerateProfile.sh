@@ -3,7 +3,7 @@ cat > ../generate-deb.conf << EOF
 # 为防读取配置文件错误，预留的英文双引号别删，等号后面任意位置，除非是写在双引号里面的内容，否则别留空格
 # 如果填写的配置信息内还有双引号，则添加反斜杠，例：
 # 要添加的内容：JAVA_OPTS="-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m"
-写进配置文件后：catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
+# 写进配置文件后：catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
 
 [General]
 # 部署的根目录，此工具会将所有要安装的软件均安装到同一个目录下，
@@ -36,8 +36,9 @@ package-depends-base-version=""
 # 对安装包的更多的介绍信息
 package-more-description=""
 
-# 安装包的版本号
-package-version=""
+# 安装包的版本号，此版本号与下面源代码包名组合成为打包目录的名称，系统中可以查到此版本号
+# 因为更新包版本号会不断更新，所以这里注释了用于和下面的源代码包名选项用于释义，把选项放在了下面频繁更新的分类中
+# package-version=""
 
 # 源代码包名，此名称将与安装包的版本号拼接后作为总打包目录名，实际安装包安装时系统中看到的包名不是这个
 package-source=""
@@ -82,11 +83,14 @@ need-clean=0
 # [Mysql] 准备创建的新数据库名称，mysql中查看数据库名称将看到的名字格式：[数据库名][日期]
 database-new-name=""
 
-# [Mysql] 准备备份的数据库名称(这个用于更新包的选项，一体包暂时不考虑)
-# database-old-name=""
+# [Mysql] 准备备份的数据库名称(这个用于更新包的选项，一体包不考虑)
+database-old-name=""
 
 # [Package] 对安装包的简介，命令 dpkg -l 可以看到这个提示信息
 package-description=""
+
+# [Package] 安装包的版本号，系统中可以查到此版本号
+package-version=""
 
 # [Tomcat] 需要新建的 Tomcat 的端口号，例: 8088
 tomcat-new-port=
