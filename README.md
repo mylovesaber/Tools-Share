@@ -21,9 +21,9 @@
 
 | 工具名称                                                                                                    |用途|
 |---------------------------------------------------------------------------------------------------------|---|
-| [auto-generate-key](https://gitlab.com/mylovesaber/anshare/-/tree/main/auto-generate-key) +             |免密环境部署工具，该工具是此仓库中多个自动化工具正常工作的必备前提条件|
-| [multi-sync-backup](https://gitlab.com/mylovesaber/anshare/-/tree/main/multi-sync-backup) *+            |任意多节点之间同步和备份工具(基于scp)|
-| [auto-update-github-hosts](https://gitlab.com/mylovesaber/anshare/-/tree/main/auto-update-github-hosts) |自动更新大陆可以访问 github 的 hosts 节点信息工具|
+| [auto-generate-key](auto-generate-key) +             |免密环境部署工具，该工具是此仓库中多个自动化工具正常工作的必备前提条件|
+| [multi-sync-backup](multi-sync-backup) *+            |任意多节点之间同步和备份工具(基于scp)|
+| [auto-update-github-hosts](auto-update-github-hosts) |自动更新大陆可以访问 github 的 hosts 节点信息工具|
 
 ---
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 CPUArchitecture=""
 confirmYes=0
-source function/Color.sh
+source function/common/Color.sh
 if ! ARGS=$(getopt -a -o yh -l confirmYes,help -- "$@")
 then
     echo "无效的参数，请查看可用选项"
@@ -50,7 +50,7 @@ ArchitectureDetect
 if [ ! -f generate-deb.conf ]; then
     _warning "未发现配置文件，将根据模板文件生成默认配置文件"
     if [ -f function/GenerateProfile.sh ]; then
-        source function/GenerateProfile.sh
+        source function/detection/GenerateProfile.sh
         _success "配置文件生成完成，请修改配置文件以定制脚本功能"
         exit 0
     else
@@ -59,12 +59,12 @@ if [ ! -f generate-deb.conf ]; then
     fi
 fi
 
-source function/PrepareBuildEnv.sh
+source function/common/PrepareBuildEnv.sh
 PrepareBuildEnv
-source function/CheckOption.sh
+source function/detection/CheckOption.sh
 if [ "$confirmYes" -eq 0 ]; then
     _success "选项检查完成，请查看工具收集并预调整或转换的选项参数结果，如果确认无误并执行打包流程，请重新运行工具并增加 -y | --yes 选项"
-    source function/OptionResultOutput.sh
+    source function/detection/OptionResultOutput.sh
     exit 0
 else
     :
