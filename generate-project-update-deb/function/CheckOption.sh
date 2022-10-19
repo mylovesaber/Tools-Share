@@ -146,10 +146,9 @@ if [ "$packageSkip" -eq 0 ]; then
 
     # package-architecture
     # 可供参考: https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-architecture
-    architectureList=("all" "any" "mips64el")
     if [ -z "$packageArchitecture" ]; then
         packageArchitecture=$CPUArchitecture
-    elif [ "$packageArchitecture" = "all" ] || [ "$packageArchitecture" = "$CPUArchitecture" ]; then
+    elif [ "$packageArchitecture" = "all" ] || [ "$packageArchitecture" = "any" ] || [ "$packageArchitecture" = "$CPUArchitecture" ]; then
         :
     else
         _error "适应的架构填写错误，可填写的值为:"
@@ -246,11 +245,11 @@ if [ "$tomcatSkip" -eq 0 ]; then
     fi
     # tomcat-previous-port
     if [[ ! "$tomcatPreviousPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
-        _error "上一版本更新包的 Tomcat 端口号超出范围"
+        _error "上一个版本更新包的 Tomcat 端口号超出范围"
         exit 1
     fi
     if [ "$tomcatNewPort" = "$tomcatPreviousPort" ]; then
-        _error "需要新建的 Tomcat 端口号不能和上一版本更新包的端口号相同"
+        _error "需要新建的 Tomcat 端口号不能和上一个版本更新包的端口号相同"
         exit 1
     fi
 fi
@@ -331,30 +330,3 @@ if [ "$mysqlSkip" -eq 0 ]; then
         fi
     fi
 fi
-# 以下是测试选项读取情况
-#echo "packageDeployPath= $packageDeployPath"
-#echo "packageSkip= $packageSkip"
-#echo "packageMaintainer= $packageMaintainer"
-#echo "packageHomepage= $packageHomepage"
-#echo "packageName= $packageName"
-#echo "packageArchitecture= $packageArchitecture"
-#echo "packageDepends= $packageDepends"
-#echo "packageDescription= $packageDescription"
-#echo "packageMoreDescription= $packageMoreDescription"
-#echo "packageVersion= $packageVersion"
-#echo "packageSource= $packageSource"
-#echo "tomcatSkip= $tomcatSkip"
-#echo "tomcatVersion= $tomcatVersion"
-#echo "excludeJar= $excludeJar"
-#echo "catalinaOption= $catalinaOption"
-#echo "mysqlSkip= $mysqlSkip"
-#echo "mysqlUsername= $mysqlUsername"
-#echo "mysqlPassword= $mysqlPassword"
-#echo "mysqlBinPath= $mysqlBinPath"
-#echo "sqlFileName= $sqlFileName"
-#echo "commonDate= $commonDate"
-#echo "needClean= $needClean"
-#echo "databaseNewName= $databaseNewName"
-#echo "databaseOldName= $databaseOldName"
-#echo "tomcatNewPort= $tomcatNewPort"
-#echo "tomcatPreviousPort= $tomcatPreviousPort"
