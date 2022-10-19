@@ -242,7 +242,6 @@ if [ "$tomcatSkip" -eq 0 ]; then
                     else
                         _error "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验，退出中"
                         deleteTomcatArchive=1
-                        exit 1
                     fi
                 else
                     _error "无法获取指定版本 Tomcat 的校验值，请检查版本号是否指定错误"
