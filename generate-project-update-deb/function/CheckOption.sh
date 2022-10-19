@@ -334,7 +334,7 @@ if [ "$mysqlSkip" -eq 0 ]; then
         fi
 
         # databaseOldName and databaseNewName
-        if [ "$databaseOldName" -eq "$databaseNewName" ]; then
+        if [ "$databaseOldName" = "$databaseNewName" ]; then
             _error "需要备份的数据库名不能和将创建的数据库名相同"
             exit 1
         fi
