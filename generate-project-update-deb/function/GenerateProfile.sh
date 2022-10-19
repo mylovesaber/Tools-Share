@@ -38,10 +38,10 @@ package-architecture=""
 # 对于更新包而言，暂时只需要依赖基础包(内含 java/tomcat/redis/mysql)即可，工具会自动生成对应的完整依赖格式并在打包时应用
 package-depends=""
 
-# 对安装包的介绍信息(不超过64字节)
-package-description=""
+# 对安装包的介绍信息(不超过64字节)因为此选项会不断更新，所以这里注释了，仅用于和下面的对安装包的更多介绍信息选项配合理解功能性
+#package-description=""
 # 对安装包的更多介绍信息
-package-more-description=""
+#package-more-description=""
 
 # 安装包的版本号，此版本号与下面源代码包名组合成为打包目录的名称，系统中可以查到此版本号
 # 因为更新包版本号会不断更新，所以这里注释了，仅用于和下面的源代码包名选项配合理解功能性
@@ -109,6 +109,8 @@ database-old-name=""
 
 # [Package] 对安装包的简介，命令 dpkg -l 可以看到这个提示信息
 package-description=""
+# [Package] 对安装包的更多介绍信息
+package-more-description=""
 
 # [Package] 安装包的版本号，系统中可以查到此版本号
 package-version=""

@@ -161,6 +161,11 @@ if [ "$packageSkip" -eq 0 ]; then
         "
         exit 1
     fi
+
+    # package-more-description
+    if [ -n "$packageMoreDescription" ]; then
+        packageMoreDescription=$(sed "s/^$packageMoreDescription/ $packageMoreDescription" <<< "$packageMoreDescription")
+    fi
 fi
 
 # [Tomcat]
