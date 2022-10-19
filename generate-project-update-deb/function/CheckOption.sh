@@ -139,7 +139,7 @@ if [ "$packageSkip" -eq 0 ]; then
 
     # package-depends
     if [ -z "$packageDepends" ]; then
-        packageDepends="\${shlibs:Depends}, \${misc:Depends}"
+        packageDepends="\\${shlibs:Depends}, \\${misc:Depends}"
     else
         packageDepends=$(sed 's/^/\\\${shlibs:Depends}, \\\${misc:Depends}, /g' <<< "$packageDepends")
     fi
@@ -164,7 +164,7 @@ if [ "$packageSkip" -eq 0 ]; then
 
     # package-more-description
     if [ -n "$packageMoreDescription" ]; then
-        packageMoreDescription=$(sed "s/^$packageMoreDescription/ $packageMoreDescription" <<< "$packageMoreDescription")
+        packageMoreDescription=$(sed "s/^$packageMoreDescription/ $packageMoreDescription/g" <<< "$packageMoreDescription")
     fi
 fi
 
