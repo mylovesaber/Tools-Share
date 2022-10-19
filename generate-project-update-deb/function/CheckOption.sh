@@ -234,6 +234,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
                 _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
                 if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" == 200 ]; then
                     _success "指定版本的 Tomcat 可供校验完整性"
+                    _info "正在获取 Tomcat 官网对应版本压缩包的校验值并与本地压缩包对比"
                     remoteSHA512Sum=$(curl -Ls https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
                     localSHA512Sum=$(sha512sum build/apache-tomcat-"$tomcatVersion".tar.gz|cut -d' ' -f1)
                     if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
