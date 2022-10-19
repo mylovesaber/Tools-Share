@@ -240,7 +240,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
                     if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
                         _success "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验通过"
                     else
-                        _error "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验，退出中"
+                        _warning "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验"
                         deleteTomcatArchive=1
                     fi
                 else
