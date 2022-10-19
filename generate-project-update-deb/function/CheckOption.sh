@@ -224,6 +224,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
         if [ "$tomcatIntegrityCheckSkip" == 0 ]; then
             _info "已开启 Tomcat 资源包完整性检查"
+            deleteTomcatArchive=
             _info "开始检查与 Tomcat 官网的连接性"
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
                 _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
@@ -233,12 +234,13 @@ if [ "$tomcatSkip" -eq 0 ]; then
                 _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
                 if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" == 200 ]; then
                     _success "指定版本的 Tomcat 可供校验完整性"
-                    remoteSHA512Sum=$(curl -LIs https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
+                    remoteSHA512Sum=$(curl -Ls https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
                     localSHA512Sum=$(sha512sum build/apache-tomcat-"$tomcatVersion".tar.gz|cut -d' ' -f1)
                     if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
                         _success "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验通过"
                     else
                         _error "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验，退出中"
+                        deleteTomcatArchive=1
                         exit 1
                     fi
                 else

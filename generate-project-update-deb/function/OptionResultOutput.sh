@@ -24,6 +24,9 @@ if [ "$tomcatSkip" -eq 0 ]; then
     echo "tomcatNewPort= $tomcatNewPort"
     echo "tomcatPreviousPort= $tomcatPreviousPort"
     echo "tomcatIntegrityCheckSkip= $tomcatIntegrityCheckSkip"
+    if [ "$tomcatIntegrityCheckSkip" -eq 0 ] && [ "$deleteTomcatArchive" -eq 1 ]; then
+        echo "deleteTomcatArchive= $deleteTomcatArchive"
+    fi
 fi
 echo ""
 echo "mysqlSkip= $mysqlSkip"
