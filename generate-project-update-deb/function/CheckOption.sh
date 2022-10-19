@@ -334,5 +334,13 @@ if [ "$mysqlSkip" -eq 0 ]; then
             _error "需要备份的数据库名不能和将创建的数据库名相同"
             exit 1
         fi
+    elif [ "$dependenciesInstalled" -eq 0 ]; then
+        _warning "用于依赖环境参考的基础包未安装，将跳过检查以下选项:"
+        _warningnoblank "
+        mysql-username 本地连接mysql有权限操作数据库的用户名
+        mysql-password 本地连接mysql有权限操作数据库的账户的密码
+        mysql-bin-path mysql整个程序总目录的绝对路径
+        database-base-name 准备创建的新数据库的基本名称
+        database-old-name 准备备份的数据库名称"|column -t
     fi
 fi
