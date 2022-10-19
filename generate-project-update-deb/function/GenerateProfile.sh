@@ -65,7 +65,7 @@ tomcat-integrity-check-skip=1
 # 需要添加的 jar 包排除项，多个 jar 包请用空格隔开(不限制空格数量)，单个则无需添加逗号，例: aaa.jar bbb.jar ccc.jar
 exclude-jar=""
 
-# 其他 catalina 调试选项
+# 其他 catalina 调试选项，多个选项之间用 \n 隔开
 catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
 
 
@@ -77,12 +77,21 @@ mysql-skip=0
 mysql-username=""
 mysql-password=""
 
-# mysql 的绝对路径(即整个程序的总目录，此路径下有 bin/include/lib 等其他子文件夹)
+# mysql 整个程序总目录的绝对路径(此路径下有 bin/include/lib 等其他子文件夹)
 # 不填写则默认已设置过 mysql 的环境变量，进行数据库操作时将直接以 mysql 为命令进行连接操作
 mysql-bin-path=""
 
-# sql 文件的名称
+# 要导入的 sql 文件名
 sql-file-name=""
+
+# 为检查 mysql 绝对路径、用户名密码和新老数据库是否正确，需要先把依赖包安装上，0 是未安装，1 是已安装
+# 值为 1 时将启用以下选项可用性的检查:
+# mysql-bin-path
+# mysql-username
+# mysql-password
+# database-new-name
+# database-old-name
+dependencies-installed=0
 
 
 [Frequently Changing Options]
@@ -92,8 +101,8 @@ common-date=""
 # [General] 是否清空打包环境，0 不清空，1 清空所有，2 保留下载的 Tomcat 压缩包和解压包
 need-clean=0
 
-# [Mysql] 准备创建的新数据库名称，mysql中查看数据库名称将看到的名字格式：[数据库名][日期]
-database-new-name=""
+# [Mysql] 准备创建的新数据库的基本名称，mysql中查看数据库名称将看到的名字格式：[新数据库基本名称][日期]
+database-base-name=""
 
 # [Mysql] 准备备份的数据库名称(这个用于更新包的选项，一体包不考虑)
 database-old-name=""

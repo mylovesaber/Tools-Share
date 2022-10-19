@@ -26,9 +26,10 @@ mysqlUsername=$(GetValue "mysql-username")
 mysqlPassword=$(GetValue "mysql-password")
 mysqlBinPath=$(GetValue "mysql-bin-path")
 sqlFileName=$(GetValue "sql-file-name")
+dependenciesInstalled=$(GetValue "dependencies-installed")
 commonDate=$(GetValue "common-date")
 needClean=$(GetValue "need-clean")
-databaseNewName=$(GetValue "database-new-name")
+databaseBaseName=$(GetValue "database-base-name")
 databaseOldName=$(GetValue "database-old-name")
 tomcatNewPort=$(GetValue "tomcat-new-port")
 tomcatPreviousPort=$(GetValue "tomcat-previous-port")
@@ -173,7 +174,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
     [ -z "$tomcatNewPort" ] ||
     [ -z "$tomcatPreviousPort" ] ||
     [ -z "$tomcatIntegrityCheckSkip" ]; then
-        _error "启用打包功能后，以下选项必须填写对应参数："
+        _error "启用配置 Tomcat 功能后，以下选项必须填写对应参数："
         _warningnoblank "
         tomcat-version 需要配置或下载的Tomcat的版本号
         exclude-jar 需要添加的jar包排除项
@@ -232,13 +233,103 @@ if [ "$tomcatSkip" -eq 0 ]; then
         fi
     fi
 
-    # exclude-jar
+    # exclude-jar(整形成 sed 可以直接用的写法)
+    excludeJar=$(sed -e 's/^/\\n/g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
 
     # catalina-option
+    catalinaOption=$(sed -e "s/^\'//g; s/\'$//g;" <<< "$catalinaOption")
 
     # tomcat-new-port
-
+    if [[ ! "$tomcatNewPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
+        _error "需要新建的 Tomcat 端口号超出范围"
+        exit 1
+    fi
     # tomcat-previous-port
+    if [[ ! "$tomcatPreviousPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
+        _error "上一版本更新包的 Tomcat 端口号超出范围"
+        exit 1
+    fi
+    if [ "$tomcatNewPort" = "$tomcatPreviousPort" ]; then
+        _error "需要新建的 Tomcat 端口号不能和上一版本更新包的端口号相同"
+        exit 1
+    fi
+fi
+
+# [Mysql]
+# mysql-skip
+if [ "$mysqlSkip" -eq 0 ]; then
+    if
+    [ -z "$dependenciesInstalled" ] ||
+    [ -z "$sqlFileName" ]; then
+        _error "启用配置 Mysql 功能后，以下选项必须填写对应参数："
+        _warningnoblank "
+        dependencies-installed 更新包所依赖的基础包是否安装
+        sql-file-name 要导入的sql文件名"|column -t
+        _error "退出中"
+        exit 1
+    fi
+
+    # sql-file-name
+    if [ ! -f source/"$sqlFileName" ]; then
+        _error "SQL 文件不存在，请将 SQL 文件放到 source 文件夹下"
+        exit 1
+    fi
+
+    # dependencies-installed
+    if [ "$dependenciesInstalled" -eq 1 ]; then
+        if
+        [ -z "$mysqlUsername" ] ||
+        [ -z "$mysqlPassword" ] ||
+        [ -z "$databaseOldName" ] ||
+        [ -z "$databaseBaseName" ]; then
+            _error "根据依赖包安装后的环境，启用检测数据库导入导出功能后，以下选项必须填写对应参数："
+            _warningnoblank "
+            mysql-username 本地连接mysql有权限操作数据库的用户名
+            mysql-password 本地连接mysql有权限操作数据库的账户的密码
+            mysql-bin-path mysql整个程序总目录的绝对路径
+            database-base-name 准备创建的新数据库的基本名称
+            database-old-name 准备备份的数据库名称"|column -t
+            _error "退出中"
+            exit 1
+        fi
+        # mysql-bin-path
+        if [ -n "$mysqlBinPath" ]; then
+            if [ ! -f "$mysqlBinPath"/bin/mysql ]; then
+                _error "MySQL 不存在，请确认更新包工具依赖的基础包已安装或 MySQL 软件的绝对路径设置正确"
+                exit 1
+            fi
+        elif [ -z "$mysqlBinPath" ]; then
+            if ! which mysql >/dev/null 2>&1; then
+                _error "系统环境变量中不存在 MySQL 程序，请确认依赖的基础包已安装或基础包中已将 MySQL 添加进环境变量"
+                exit 1
+            fi
+        fi
+
+        # mysql-username
+        # mysql-password
+        if [ -n "$mysqlBinPath" ]; then
+            mysqlRealCommand="$mysqlBinPath/bin/mysql"
+        elif [ -z "$mysqlBinPath" ]; then
+            mysqlRealCommand=$(which mysql)
+        fi
+        if ! "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "exit" >/dev/null 2>&1; then
+            _error "无法连接已安装的 MySQL，提供的账号密码错误，请重新确认"
+            exit 1
+        fi
+
+        # database-old-name
+        if ! "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseOldName;" >/dev/null 2>&1; then
+            _error "MySQL 不存在此名称的老版本数据库，请重新确认"
+            exit 1
+        fi
+
+        # database-base-name
+        databaseNewName="$databaseBaseName$commonDate"
+        if "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseNewName;" >/dev/null 2>&1; then
+            _error "MySQL 存在同名新版本数据库，请指定不同名称的新数据库用于创建(名称格式: [新数据库基本名称][日期])"
+            exit 1
+        fi
+    fi
 fi
 # 以下是测试选项读取情况
 #echo "packageDeployPath= $packageDeployPath"
