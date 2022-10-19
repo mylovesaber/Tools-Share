@@ -224,7 +224,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
         if [ "$tomcatIntegrityCheckSkip" == 0 ]; then
             _info "已开启 Tomcat 资源包完整性检查"
-            deleteTomcatArchive=
+            deleteTomcatArchive=0
             _info "开始检查与 Tomcat 官网的连接性"
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
                 _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
