@@ -98,8 +98,8 @@ dependencies-installed=0
 # [General] 日期格式只接受纯数字，例: 20221231，此时间将拼接在tomcat和mysql数据库名称中
 common-date=""
 
-# [General] 是否清空打包环境，0 不清空，1 清空所有，2 保留下载的 Tomcat 压缩包和解压包
-need-clean=0
+# [General] 在打包前是否清空打包环境，0 不清空，1 清空所有，2 保留下载的 Tomcat 压缩包和解压包
+need-clean=2
 
 # [Mysql] 准备创建的新数据库的基本名称，mysql中查看数据库名称将看到的名字格式：[新数据库基本名称][日期]
 database-base-name=""

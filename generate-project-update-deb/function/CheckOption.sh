@@ -51,7 +51,7 @@ fi
 
 # need-clean
 if [ "$needClean" != 0 ] && [ "$needClean" != 1 ] && [ "$needClean" != 2 ]; then
-    _error "是否清空打包环境参数填写错误，请根据以下介绍重新填写:"
+    _error "在打包前是否清空打包环境参数填写错误，请根据以下介绍重新填写:"
     _warningnoblank "
     0 不清空
     1 清空所有
