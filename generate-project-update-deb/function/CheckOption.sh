@@ -229,6 +229,8 @@ if [ "$tomcatSkip" -eq 0 ]; then
             _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
             exit 1
         else
+            _success "可连接 Tomcat 官网"
+            _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
             if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz)" == 200 ]; then
                 _success "指定版本的 Tomcat 可供下载"
             else
