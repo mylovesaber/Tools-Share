@@ -307,9 +307,12 @@ if [ "$mysqlSkip" -eq 0 ]; then
         # mysql-username
         # mysql-password
         if [ -n "$mysqlBinPath" ]; then
+            mysqlBinPath=$(sed 's/\/$//g' <<< "$mysqlBinPath")
             mysqlRealCommand="$mysqlBinPath/bin/mysql"
+            mysqldumpRealCommand="$mysqlBinPath/bin/mysqldump"
         elif [ -z "$mysqlBinPath" ]; then
             mysqlRealCommand=$(which mysql)
+            mysqldumpRealCommand=$(which mysqldump)
         fi
         if ! "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "exit" >/dev/null 2>&1; then
             _error "无法连接已安装的 MySQL，提供的账号密码错误，请重新确认"

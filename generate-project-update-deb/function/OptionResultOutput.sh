@@ -27,4 +27,8 @@ echo "mysqlPassword= $mysqlPassword"
 echo "databaseOldName= $databaseOldName"
 echo "databaseBaseName= $databaseBaseName"
 echo "mysqlBinPath= $mysqlBinPath"
+if [ -n "$mysqlBinPath" ]; then
+    echo "mysqlRealCommand= $mysqlRealCommand"
+    echo "mysqldumpRealCommand= $mysqldumpRealCommand"
+fi
 
