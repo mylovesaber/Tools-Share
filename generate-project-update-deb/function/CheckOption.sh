@@ -174,22 +174,45 @@ fi
 if [ "$tomcatSkip" -eq 0 ]; then
     if
     [ -z "$tomcatVersion" ] ||
-    [ -z "$excludeJar" ] ||
-    [ -z "$catalinaOption" ] ||
     [ -z "$tomcatNewPort" ] ||
     [ -z "$tomcatPreviousPort" ] ||
     [ -z "$tomcatIntegrityCheckSkip" ]; then
         _error "启用配置 Tomcat 功能后，以下选项必须填写对应参数："
         _warningnoblank "
         tomcat-version 需要配置或下载的Tomcat的版本号
-        exclude-jar 需要添加的jar包排除项
-        catalina-option 其他catalina调试选项
         tomcat-new-port 需要新建的Tomcat端口号
         tomcat-previous-port 上一版本的Tomcat端口号
         tomcat-integrity-check-skip 联网校验Tomcat压缩包的完整性"|column -t
         _error "退出中"
         exit 1
     fi
+
+    # tomcat-new-port
+    if [[ ! "$tomcatNewPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
+        _error "需要新建的 Tomcat 端口号超出范围"
+        exit 1
+    fi
+    # tomcat-previous-port
+    if [[ ! "$tomcatPreviousPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
+        _error "上一个版本更新包的 Tomcat 端口号超出范围"
+        exit 1
+    fi
+    # tomcat 新老端口比较
+    if [ "$tomcatNewPort" = "$tomcatPreviousPort" ]; then
+        _error "需要新建的 Tomcat 端口号不能和上一个版本更新包的端口号相同"
+        exit 1
+    fi
+
+    # exclude-jar(整形成 sed 可以直接用的写法，如果没有则跳过)
+    if [ -n "$excludeJar" ]; then
+        excludeJar=$(sed -e 's/^/\\n/g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
+    fi
+
+    # catalina-option 如果没有则跳过
+    if [ -n "$catalinaOption" ]; then
+        catalinaOption=$(sed -e "s/^\'//g; s/\'$//g;" <<< "$catalinaOption")
+    fi
+
     # tomcat-version
     # tomcat-integrity-check-skip
     tomcatFirstVersionNumber=$(awk -F '.' '{print $1}' <<< "$tomcatVersion")
@@ -200,14 +223,17 @@ if [ "$tomcatSkip" -eq 0 ]; then
     if [ -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
         if [ "$tomcatIntegrityCheckSkip" == 0 ]; then
+            _info "已开启 Tomcat 资源包完整性检查"
             _info "开始检查与 Tomcat 官网的连接性"
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
                 _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
                 exit 1
             else
+                _success "可连接 Tomcat 官网"
+                _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
                 if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" == 200 ]; then
                     _success "指定版本的 Tomcat 可供校验完整性"
-                    remoteSHA512Sum=$(curl https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
+                    remoteSHA512Sum=$(curl -LIs https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
                     localSHA512Sum=$(sha512sum build/apache-tomcat-"$tomcatVersion".tar.gz|cut -d' ' -f1)
                     if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
                         _success "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验通过"
@@ -221,8 +247,7 @@ if [ "$tomcatSkip" -eq 0 ]; then
                 fi
             fi
         fi
-    fi
-    if [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
+    elif [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _warning "未下载此版本的 Tomcat 压缩包，将从网络中获取"
         _info "开始检查与 Tomcat 官网的连接性"
         if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
@@ -238,27 +263,6 @@ if [ "$tomcatSkip" -eq 0 ]; then
                 exit 1
             fi
         fi
-    fi
-
-    # exclude-jar(整形成 sed 可以直接用的写法)
-    excludeJar=$(sed -e 's/^/\\n/g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
-
-    # catalina-option
-    catalinaOption=$(sed -e "s/^\'//g; s/\'$//g;" <<< "$catalinaOption")
-
-    # tomcat-new-port
-    if [[ ! "$tomcatNewPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
-        _error "需要新建的 Tomcat 端口号超出范围"
-        exit 1
-    fi
-    # tomcat-previous-port
-    if [[ ! "$tomcatPreviousPort" =~ ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$ ]]; then
-        _error "上一个版本更新包的 Tomcat 端口号超出范围"
-        exit 1
-    fi
-    if [ "$tomcatNewPort" = "$tomcatPreviousPort" ]; then
-        _error "需要新建的 Tomcat 端口号不能和上一个版本更新包的端口号相同"
-        exit 1
     fi
 fi
 

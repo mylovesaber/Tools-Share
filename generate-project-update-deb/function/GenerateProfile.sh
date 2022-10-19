@@ -66,8 +66,8 @@ tomcat-integrity-check-skip=1
 exclude-jar=""
 
 # 其他 catalina 调试选项，多个选项之间用 \n 隔开
-catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
-
+#catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
+catalina-option=""
 
 [Mysql]
 # 是否跳过配置 Mysql 的开关选项，1 是跳过，0 是不跳过，如果更新包不需要更新数据库内容的话就可以跳过，生成的包不会对数据库做任何更新
