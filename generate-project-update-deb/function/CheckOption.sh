@@ -1,6 +1,6 @@
 #!/bin/bash
 GetValue(){
-    awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-
+    awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^"//g;s/"$//g'
 }
 
 packageDeployPath=$(GetValue "package-deploy-path")
