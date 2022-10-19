@@ -328,5 +328,11 @@ if [ "$mysqlSkip" -eq 0 ]; then
             _error "MySQL 存在同名新版本数据库，请指定不同名称的新数据库用于创建(名称格式: [新数据库基本名称][日期])"
             exit 1
         fi
+
+        # databaseOldName and databaseNewName
+        if [ "$databaseOldName" -eq "$databaseNewName" ]; then
+            _error "需要备份的数据库名不能和将创建的数据库名相同"
+            exit 1
+        fi
     fi
 fi
