@@ -49,7 +49,7 @@ ArchitectureDetect(){
 ArchitectureDetect
 if [ ! -f generate-deb.conf ]; then
     _warning "未发现配置文件，将根据模板文件生成默认配置文件"
-    if [ -f function/GenerateProfile.sh ]; then
+    if [ -f function/detection/GenerateProfile.sh ]; then
         source function/detection/GenerateProfile.sh
         _success "配置文件生成完成，请修改配置文件以定制脚本功能"
         exit 0
