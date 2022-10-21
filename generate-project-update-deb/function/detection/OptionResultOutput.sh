@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "packageDeployPath= $packageDeployPath"
+echo "packageInsidePath= $packageInsidePath"
 echo "commonDate= $commonDate"
 echo "needClean= $needClean"
 echo ""

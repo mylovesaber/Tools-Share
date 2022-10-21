@@ -41,6 +41,7 @@ if [ -z "$packageDeployPath" ]; then
     exit 1
 else
     packageDeployPath=$(sed 's/\/$//g' <<< "$packageDeployPath")
+    packageInsidePath=$(sed 's/^\///g' <<< "$packageDeployPath")
 fi
 
 # common-date
