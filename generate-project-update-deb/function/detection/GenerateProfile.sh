@@ -65,8 +65,10 @@ tomcat-integrity-check-skip=1
 # 需要添加的 jar 包排除项，多个 jar 包请用空格隔开(不限制空格数量)，单个则无需添加逗号，例: aaa.jar bbb.jar ccc.jar
 exclude-jar=""
 
-# 其他 catalina 调试选项，多个选项之间用 \n 隔开
-#catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
+# 其他 catalina 调试选项，如果写在双引号中的选项本身存在双引号，则在这些双引号前面加上反斜杠以防止读取错误 <\">，例：
+# catalina-option="JAVA_OPTS=\"-Xms1024m -Xmx1024m -Xss2048K -XX:PermSize=512m -XX:MaxPermSize=1024m\""
+# 多个选项都写在最外侧的双引号中，选项之间用组合符号 ˇωˇ 隔开，此符号足够非主流以避免跟正常选项中的字符存在冲突
+#  ˇωˇ 符号建议直接复制，它和前后选项之间有无空格无所谓，此工具会对选项进行整形以删掉空格
 catalina-option=""
 
 

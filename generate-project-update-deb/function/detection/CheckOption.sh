@@ -216,7 +216,12 @@ if [ "$tomcatSkip" -eq 0 ]; then
 
     # catalina-option 如果没有则跳过
     if [ -n "$catalinaOption" ]; then
-        catalinaOption=$(sed -e "s/^\'//g; s/\'$//g;" <<< "$catalinaOption")
+        catalinaOptionList=()
+        catalinaOption=$(sed -e "s/^\"//g; s/\"$//g;" <<< "$catalinaOption")
+        catalinaOptionLine=$(awk -F 'ˇωˇ' '{print NF}' <<< "$catalinaOption")
+        for (( i=1; i<="$catalinaOptionLine"; i++ )); do
+            mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(awk -F 'ˇωˇ' '{print $i}')
+        done
     fi
 
     # tomcat-version

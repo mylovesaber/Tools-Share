@@ -21,13 +21,15 @@ echo "tomcatSkip= $tomcatSkip"
 if [ "$tomcatSkip" -eq 0 ]; then
     echo "tomcatVersion= $tomcatVersion"
     echo "excludeJar= $excludeJar"
-    echo "catalinaOption= $catalinaOption"
     echo "tomcatNewPort= $tomcatNewPort"
     echo "tomcatPreviousPort= $tomcatPreviousPort"
     echo "tomcatIntegrityCheckSkip= $tomcatIntegrityCheckSkip"
     if [ "$tomcatIntegrityCheckSkip" -eq 0 ] && [ "$deleteTomcatArchive" -eq 1 ]; then
         echo "deleteTomcatArchive= $deleteTomcatArchive"
     fi
+    for i in "${!catalinaOptionList[@]}" ; do
+        echo "catalinaOption$i= ${catalinaOptionList[$i]}"
+    done
 fi
 echo ""
 echo "mysqlSkip= $mysqlSkip"
