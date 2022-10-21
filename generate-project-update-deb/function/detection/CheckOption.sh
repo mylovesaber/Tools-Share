@@ -45,8 +45,13 @@ else
 fi
 
 # common-date
-if ! date -d "$commonDate" +%Y%m%d >/dev/null 2>&1; then
-    _error "日期格式错误，请重新输入，例: 20220101"
+if [ -n "$commonDate" ]; then
+    if ! date -d "$commonDate" +%Y%m%d >/dev/null 2>&1; then
+        _error "日期格式错误，请重新输入，例: 20220101"
+        exit 1
+    fi
+elif [ -z "$commonDate" ]; then
+    _error "必须指定打包或配置日期"
     exit 1
 fi
 
