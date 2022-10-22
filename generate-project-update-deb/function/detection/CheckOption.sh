@@ -1,6 +1,6 @@
 #!/bin/bash
 GetValue(){
-    awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^"//g;s/"$//g'
+    awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
 
 packageDeployPath=$(GetValue "package-deploy-path")
@@ -216,11 +216,12 @@ if [ "$tomcatSkip" -eq 0 ]; then
 
     # catalina-option 如果没有则跳过
     if [ -n "$catalinaOption" ]; then
-        catalinaOptionList=()
-        catalinaOption=$(sed -e "s/^\"//g; s/\"$//g;" <<< "$catalinaOption")
         catalinaOptionLine=$(awk -F 'ˇωˇ' '{print NF}' <<< "$catalinaOption")
+        catalinaOptionList=()
         for (( i=1; i<="$catalinaOptionLine"; i++ )); do
-            mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(awk -F 'ˇωˇ' -v i="$i" '{print $i}' <<< "$catalinaOption")
+            cutCatalinaOption=$(awk -F 'ˇωˇ' -v i="$i" '{print $i}' <<< "$catalinaOption")
+            cutCatalinaOption=$(sed -e 's/^[ \t]*//g;s/[ \t]*$//g' <<< "$cutCatalinaOption")
+            mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(echo "$cutCatalinaOption")
 #            mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(awk -F 'ˇωˇ' "{print \$$i}" <<< "$catalinaOption")  # 两种写法结果相同
         done
     fi
