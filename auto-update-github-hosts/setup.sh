@@ -10,7 +10,7 @@ systemType=
 _norm="\033[39m"
 _red="\033[31m"
 _green="\033[32m"
-_tan="\033[33m"     
+_tan="\033[33m"
 _cyan="\033[36m"
 # else
 #     _norm=$(tput sgr0)
@@ -70,7 +70,7 @@ function CheckSys(){
     # elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
     #     systemType="unRAID"
     else
-        _error "暂未适配该系统，退出..."
+        _error "暂未适配该系统，请联系作者适配，退出中..."
         exit 1
     fi
     _success "当前系统为： ${systemType} 此脚本支持该系统！"
@@ -98,8 +98,9 @@ fi
 eval set -- "${ARGS}"
 while true; do
     case "$1" in
+
     -s | --source)
-        if [[ "$2" =~ "gitlab"|"github" ]]; then
+        if [[ "$2" =~ "gitlab"|"github"|"dev" ]]; then
             downloadSource="$2"
         else
             _error "参数输入错误，请参照以下使用说明"
@@ -159,6 +160,10 @@ function PlaceScript(){
                     timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/Tools-Share/main/auto-update-github-hosts/hosts-tool.sh
                 fi
                 ;;
+            "dev")
+                _info "从 GitLab dev 分支下载脚本"
+                timeout 20s curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fhosts%2Dtool%2Esh/raw?ref=dev -o /tmp/hosts-tool
+                ;;
             *)
                 _error "参数输入错误，请参照以下使用说明"
                 Usage
@@ -166,11 +171,14 @@ function PlaceScript(){
         esac
         if [ -f /tmp/hosts-tool ] && [ -n "$(cat /tmp/hosts-tool)" ];then
             _success "已下载，开始转移到系统程序路径"
+            if [ "$downloadSource" = "dev" ]; then
+                sed -i '/^downloadSource=/c\downloadSource="dev"' /tmp/hosts-tool
+            fi
             break
         else
             sleep 1
             COUNT=$(( COUNT + 1 ))
-            _error "下载的 hosts-tool 不存在，开始尝试第 ${COUNT} 次下载..."
+            _warning "下载的 hosts-tool 不存在，开始尝试第 ${COUNT} 次下载..."
         fi
         if [ "${COUNT}" -gt 5 ]; then
             _error "hosts-tool 下载失败，请择日再运行此脚本，退出中..."
@@ -229,7 +237,7 @@ function Combine(){
     _info "下载最新 GitHub hosts 信息中..."
     local newIP
     local COUNT=0
-    while true; do
+    if ! while true; do
         newIP=$(curl -Ls https://raw.hellogithub.com/hosts|sed '/^</d')
         if [ -n "${newIP}" ]; then
             _success "下载完成"
@@ -247,8 +255,7 @@ function Combine(){
             _error "获取失败，退出中"
             exit 1
         fi
-    done
-    if [ $? -ne 0 ]; then
+    done; then
         exit 1
     fi
 }
@@ -264,13 +271,42 @@ function RefreshDNS(){
     #     restart_dns
     # elif [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
     if [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+        # 麒麟没有 resolvectl 且 systemd-resolve 为文件，只能用选项 flush-caches
+
+        # ubuntu 老版本有 systemd-resolve 软链接指向 resolvectl
+        # 但 systemd-resolve 可以用选项 --flush-caches 而指向的 resolvectl 只能用 flush-caches
+
+        # ubuntu 新版本没有 systemd-resolve 软链接，但有文件 resolvectl 且只能用选项 flush-caches
+
+        # 软链接也是文件的一种
         if [ "$(systemctl is-active NetworkManager)" = "active" ] && [ "$(systemctl is-enabled systemd-resolved.service)" = "disabled" ]; then
             systemctl enable systemd-resolved --now 1>& /dev/null
         fi
-        systemd-resolve --flush-caches
-    elif [[ "${systemType}" == "MacOS" ]]; then
+        if [ -f /usr/bin/resolvectl ]; then
+            /usr/bin/resolvectl flush-caches
+        elif [ ! -L /usr/bin/systemd-resolve ]; then
+            /usr/bin/systemd-resolve flush-caches
+        else
+            _error "存在意外情况，请将以下双虚线(====...)之间的信息发送给作者"
+            echo "======================"
+            echo "1.----------------------"
+            ls -l /usr/bin/resolvectl
+            echo "2.----------------------"
+            ls -l /usr/bin/systemd-resolve
+            echo "3.----------------------"
+            resolvectl flush-caches
+            echo "4.----------------------"
+            resolvectl --flush-caches
+            echo "5.----------------------"
+            ls -l systemd-resolve flush-caches
+            echo "6.----------------------"
+            ls -l systemd-resolve --flush-caches
+            echo "end----------------------"
+            echo "======================"
+        fi
+    elif [ "${systemType}" = "MacOS" ]; then
         killall -HUP mDNSResponder
-    elif [[ "${systemType}" == "CentOS" ]]; then
+    elif [ "${systemType}" = "CentOS" ]; then
         if ! which nscd > /dev/null 2>&1; then
             if ! which dnf > /dev/null 2>&1; then
                 yum install -y nscd
@@ -279,7 +315,7 @@ function RefreshDNS(){
             fi
         fi
         systemctl restart nscd
-    elif [[ "${systemType}" == "Synology" ]]; then
+    elif [ "${systemType}" = "Synology" ]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
     _success "DNS 缓存刷新完成"
