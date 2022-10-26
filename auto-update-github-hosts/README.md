@@ -10,10 +10,13 @@
 
 本工具已具备 DNS 刷新功能，所以取消通用性，暂时指定支持以下系统：
 
-- Debian 9+
-- Ubuntu 18.04+
-- CentOS 7+
-- RHEL 7+
+- **Debian 系**
+- - Debian 9+
+- - Ubuntu 18.04+
+- - 银河麒麟 V10+
+- **RedHat 系**
+- - CentOS 7+
+- - RHEL 7+
 - Synology(群晖)
 - MacOS (Menterey 测试通过，理论上文件系统是 APFS 的新一代系统应该都支持)
 
@@ -124,6 +127,62 @@ hosts-tool update
 # 立即根据指定的更新源更新此工具本身（以下有两种源，择一运行即可），推荐上面那个更新命令
 hosts-tool updatefrom gitlab
 hosts-tool updatefrom github
+
+# 完全卸载工具
+hosts-tool remove
+```
+
+---
+
+# 测试
+
+以下选项仅供作者测试用，所有更新源头均从 GitLab 获取，日用请用上面的稳定版
+
+## 安装脚本
+
+安装命令：
+
+```bash
+# GitLab 托管的安装脚本 + 指定 GitLab 的 dev 分支为日用脚本安装源
+bash <(curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fsetup%2Esh/raw?ref=dev) -s dev
+
+```
+
+## 日用脚本
+
+自带的帮助信息如下：
+
+```bash
+GitHub hosts 自动部署和更新工具
+
+命令格式: 
+hosts-tool  选项1  (选项2)
+
+选项:
+run                        立即更新hosts
+
+update                     默认从 GitLab 的 dev 分支升级该工具
+
+updatefrom dev             需指定下载源才能升级该工具
+                           可选选项为 dev
+                           
+remove                     该选项将将此工具和生成的各种文件从系统中移除并还原 host 文件内容
+
+help                       显示帮助信息并退出
+
+```
+
+命令：
+
+```bash
+# 即时更新 hosts（同时会立即备份 /etc/hosts 中用户自行增加的各种dns解析规则）
+hosts-tool run
+
+# 默认从 GitLab 立即更新此工具本身
+hosts-tool update
+
+# 立即根据指定的更新源更新更新此工具本身
+hosts-tool updatefrom dev
 
 # 完全卸载工具
 hosts-tool remove

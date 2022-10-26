@@ -55,6 +55,8 @@ function CheckSys(){
             systemType="Debian"
         elif [[ ${systemName} =~ "Ubuntu" ]]; then
             systemType="Ubuntu"
+        elif [[ ${systemName} =~ "Kylin" ]]; then
+            systemType="Kylin"
         fi
     elif [ -f /etc/redhat-release ]; then
         systemName=$(cat /etc/redhat-release 2>/dev/null)
@@ -70,7 +72,7 @@ function CheckSys(){
     # elif [[ $(find / -name *unRAID* 2>/dev/null |xargs) =~ "unRAID" ]]; then
     #     systemType="unRAID"
     else
-        _error "暂未适配该系统，退出..."
+        _error "暂未适配该系统，请联系作者适配，退出中..."
         exit 1
     fi
     _success "当前系统为： ${systemType} 此脚本支持该系统！"
@@ -98,8 +100,9 @@ fi
 eval set -- "${ARGS}"
 while true; do
     case "$1" in
+
     -s | --source)
-        if [[ "$2" =~ "gitlab"|"github" ]]; then
+        if [[ "$2" =~ "gitlab"|"github"|"dev" ]]; then
             downloadSource="$2"
         else
             _error "参数输入错误，请参照以下使用说明"
@@ -159,6 +162,10 @@ function PlaceScript(){
                     timeout 5s wget -qO /tmp/hosts-tool https://raw.githubusercontent.com/mylovesaber/Tools-Share/main/auto-update-github-hosts/hosts-tool.sh
                 fi
                 ;;
+            "dev")
+                _info "从 GitLab dev 分支下载脚本"
+                timeout 20s curl -Ls https://gitlab.com/api/v4/projects/37571126/repository/files/auto%2Dupdate%2Dgithub%2Dhosts%2Fhosts%2Dtool%2Esh/raw?ref=dev -o /tmp/hosts-tool
+                ;;
             *)
                 _error "参数输入错误，请参照以下使用说明"
                 Usage
@@ -166,6 +173,9 @@ function PlaceScript(){
         esac
         if [ -f /tmp/hosts-tool ] && [ -n "$(cat /tmp/hosts-tool)" ];then
             _success "已下载，开始转移到系统程序路径"
+            if [ "$downloadSource" = "dev" ]; then
+                sed -i '/downloadSource=/c\downloadSource="dev"' /tmp/hosts-tool
+            fi
             break
         else
             sleep 1
@@ -263,11 +273,40 @@ function RefreshDNS(){
     #     fi
     #     restart_dns
     # elif [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
-    if [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
+    if [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat"|"Kylin" ]]; then
+        # 麒麟没有 resolvectl 且 systemd-resolve 为文件，只能用选项 flush-caches
+
+        # ubuntu 老版本有 systemd-resolve 软链接指向 resolvectl
+        # 但 systemd-resolve 可以用选项 --flush-caches 而指向的 resolvectl 只能用 flush-caches
+
+        # ubuntu 新版本没有 systemd-resolve 软链接，但有文件 resolvectl 且只能用选项 flush-caches
+
+        # 软链接也是文件的一种
         if [ "$(systemctl is-active NetworkManager)" = "active" ] && [ "$(systemctl is-enabled systemd-resolved.service)" = "disabled" ]; then
             systemctl enable systemd-resolved --now 1>& /dev/null
         fi
-        systemd-resolve --flush-caches
+        if [ -f /usr/bin/resolvectl ]; then
+            /usr/bin/resolvectl flush-caches
+        elif [ ! -L /usr/bin/systemd-resolve ]; then
+            /usr/bin/systemd-resolve flush-caches
+        else
+            _error "存在意外情况，请将以下双虚线(====...)之间的信息发送给作者"
+            echo "======================"
+            echo "1.----------------------"
+            ls -l /usr/bin/resolvectl
+            echo "2.----------------------"
+            ls -l /usr/bin/systemd-resolve
+            echo "3.----------------------"
+            resolvectl flush-caches
+            echo "4.----------------------"
+            resolvectl --flush-caches
+            echo "5.----------------------"
+            ls -l systemd-resolve flush-caches
+            echo "6.----------------------"
+            ls -l systemd-resolve --flush-caches
+            echo "end----------------------"
+            echo "======================"
+        fi
     elif [[ "${systemType}" == "MacOS" ]]; then
         killall -HUP mDNSResponder
     elif [[ "${systemType}" == "CentOS" ]]; then
