@@ -378,61 +378,106 @@ function Remove(){
 }
 
 function RmLog(){
+    _info "开始清理过期日志"
     local logFile
     logFile=$(find /var/log/hosts-tool/ -name "exec*.log" -mtime +10)
     for a in $logFile
     do
         rm -f "${a}"
     done
+    _success "过期日志清理完成"
 }
 
 CheckSys
 
-if [ "$options" = "update" ]; then
-    LogInfo
-    PlaceScript | tee -a "${execLog}"
-    SetCron | tee -a "${execLog}"
-fi
+#if [ "$options" = "update" ]; then
+#    LogInfo
+#    PlaceScript | tee -a "${execLog}"
+#    SetCron | tee -a "${execLog}"
+#fi
+#
+#if [ "$options" = "updatefrom" ]; then
+#	extraArg=${*:2}
+#	if [[ $extraArg != "gitlab" && $extraArg != "github" && $extraArg != "dev" && -z $extraArg ]]; then
+#		_error "请正确输入自动更新工具下载源名称对应括号内的英文选项："
+#		_warning "GitLab (gitlab)"
+#		_warning "GitLab (dev)"
+#		_warning "GitHub (github)"
+#		_error "输入命令: \"hosts-tool update\" 将默认从 GitLab 更新工具"
+#	else
+#        downloadSource=$extraArg
+#        LogInfo
+#        PlaceScript | tee -a "${execLog}"
+#        SetCron | tee -a "${execLog}"
+#	fi
+#fi
+#
+#if [ "$options" = "remove" ]; then
+#	Remove
+#    RefreshDNS
+#fi
+#
+#if [ "$options" = "help" ]; then
+#	Usage
+#	exit 0
+#fi
+#
+#if [ "$options" = "run" ]; then
+#    LogInfo
+#    BackupHosts | tee -a "${execLog}"
+#    Combine | tee -a "${execLog}"
+#    RefreshDNS | tee -a "${execLog}"
+#fi
+#
+#if [ "$options" = "rmlog" ]; then
+#    RmLog
+#fi
 
-if [ "$options" = "updatefrom" ]; then
-	extraArg=${*:2}
-	if [[ $extraArg != "gitlab" && $extraArg != "github" && $extraArg != "dev" && -z $extraArg ]]; then
-		_error "请正确输入自动更新工具下载源名称对应括号内的英文选项："
-		_warning "GitLab (gitlab)"
-		_warning "GitLab (dev)"
-		_warning "GitHub (github)"
-		_error "输入命令: \"hosts-tool update\" 将默认从 GitLab 更新工具"
-	else
-        downloadSource=$extraArg
+#if [ ! $options = ("update"|"updatefrom"|"remove"|"help"|"run"|"rmlog") ]; then
+#	_error "选项不存在"
+#	Usage
+#	exit 1
+#fi
+case $options in
+    "update")
         LogInfo
         PlaceScript | tee -a "${execLog}"
         SetCron | tee -a "${execLog}"
-	fi
-fi
-
-if [ "$options" = "remove" ]; then
-	Remove
-    RefreshDNS
-fi
-
-if [ "$options" = "help" ]; then
-	Usage
-	exit 0
-fi
-
-if [ "$options" = "run" ]; then
-    LogInfo
-    BackupHosts | tee -a "${execLog}"
-    Combine | tee -a "${execLog}"
-    RefreshDNS | tee -a "${execLog}"
-fi
-
-if [ "$options" = "rmlog" ]; then
-    RmLog
-fi
-
-if [[ ! $options =~ ("update"|"updatefrom"|"remove"|"help"|"run"|"rmlog") ]]; then
-	_error "选项不存在"
-	Usage
-	exit 1
-fi
+    ;;
+    "updatefrom")
+        extraArg=${*:2}
+        if [[ $extraArg != "gitlab" && $extraArg != "github" && $extraArg != "dev" && -z $extraArg ]]; then
+            _error "请正确输入自动更新工具下载源名称对应括号内的英文选项："
+            _warning "GitLab (gitlab)"
+            _warning "GitLab (dev)"
+            _warning "GitHub (github)"
+            _error "输入命令: \"hosts-tool update\" 将默认从 GitLab 更新工具"
+        else
+            downloadSource=$extraArg
+            LogInfo
+            PlaceScript | tee -a "${execLog}"
+            SetCron | tee -a "${execLog}"
+        fi
+    ;;
+    "remove")
+        Remove
+        RefreshDNS
+    ;;
+    "help")
+        Usage
+        exit 0
+    ;;
+    "run")
+        LogInfo
+        BackupHosts | tee -a "${execLog}"
+        Combine | tee -a "${execLog}"
+        RefreshDNS | tee -a "${execLog}"
+    ;;
+    "rmlog")
+        RmLog
+    ;;
+    *)
+        _error "选项不存在"
+        Usage
+        exit 1
+esac
