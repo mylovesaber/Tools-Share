@@ -10,7 +10,7 @@ downloadSource="gitlab"
 _norm="\033[39m"
 _red="\033[31m"
 _green="\033[32m"
-_tan="\033[33m"     
+_tan="\033[33m"
 _cyan="\033[36m"
 # else
 #     _norm=$(tput sgr0)
@@ -69,8 +69,6 @@ function CheckSys(){
             systemType="Debian"
         elif [[ ${systemName} =~ "Ubuntu" ]]; then
             systemType="Ubuntu"
-        elif [[ ${systemName} =~ "Kylin" ]]; then
-            systemType="Kylin"
         fi
     elif [ -f /etc/redhat-release ]; then
         systemName=$(cat /etc/redhat-release 2>/dev/null)
@@ -143,7 +141,7 @@ function PlaceScript(){
         if [ -f /tmp/hosts-tool ] && [ -n "$(cat /tmp/hosts-tool)" ];then
             _success "已下载，开始转移到系统程序路径"
             if [ "$downloadSource" = "dev" ]; then
-                sed -i '/downloadSource=/c\downloadSource="dev"' /tmp/hosts-tool
+                sed -i '/^downloadSource=/c\downloadSource="dev"' /tmp/hosts-tool
             fi
             break
         else
@@ -242,7 +240,7 @@ function RefreshDNS(){
     #     fi
     #     restart_dns
     # elif [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
-    if [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat"|"Kylin" ]]; then
+    if [[ "${systemType}" =~ "Ubuntu"|"Debian"|"RedHat" ]]; then
         # 麒麟没有 resolvectl 且 systemd-resolve 为文件，只能用选项 flush-caches
 
         # ubuntu 老版本有 systemd-resolve 软链接指向 resolvectl

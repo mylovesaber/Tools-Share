@@ -13,7 +13,6 @@
 - **Debian 系**
 - - Debian 9+
 - - Ubuntu 18.04+
-- - 银河麒麟 V10+
 - **RedHat 系**
 - - CentOS 7+
 - - RHEL 7+
