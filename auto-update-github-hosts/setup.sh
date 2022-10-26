@@ -237,7 +237,7 @@ function Combine(){
     _info "下载最新 GitHub hosts 信息中..."
     local newIP
     local COUNT=0
-    while true; do
+    if ! while true; do
         newIP=$(curl -Ls https://raw.hellogithub.com/hosts|sed '/^</d')
         if [ -n "${newIP}" ]; then
             _success "下载完成"
@@ -255,8 +255,7 @@ function Combine(){
             _error "获取失败，退出中"
             exit 1
         fi
-    done
-    if [ $? -ne 0 ]; then
+    done; then
         exit 1
     fi
 }
@@ -305,9 +304,9 @@ function RefreshDNS(){
             echo "end----------------------"
             echo "======================"
         fi
-    elif [[ "${systemType}" == "MacOS" ]]; then
+    elif [ "${systemType}" = "MacOS" ]; then
         killall -HUP mDNSResponder
-    elif [[ "${systemType}" == "CentOS" ]]; then
+    elif [ "${systemType}" = "CentOS" ]; then
         if ! which nscd > /dev/null 2>&1; then
             if ! which dnf > /dev/null 2>&1; then
                 yum install -y nscd
@@ -316,7 +315,7 @@ function RefreshDNS(){
             fi
         fi
         systemctl restart nscd
-    elif [[ "${systemType}" == "Synology" ]]; then
+    elif [ "${systemType}" = "Synology" ]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
     _success "DNS 缓存刷新完成"

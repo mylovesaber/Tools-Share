@@ -206,7 +206,7 @@ function Combine(){
     _info "下载最新 GitHub hosts 信息中..."
     local newIP
     local COUNT=0
-    while true; do
+    if ! while true; do
         newIP=$(curl -Ls https://raw.hellogithub.com/hosts|sed '/^</d')
         if [ -n "${newIP}" ]; then
             _success "下载完成"
@@ -224,8 +224,7 @@ function Combine(){
             _error "获取失败，退出中"
             exit 1
         fi
-    done
-    if [ $? -ne 0 ]; then
+    done; then
         exit 1
     fi
 }
@@ -274,9 +273,9 @@ function RefreshDNS(){
             echo "end----------------------"
             echo "======================"
         fi
-    elif [[ "${systemType}" == "MacOS" ]]; then
+    elif [ "${systemType}" = "MacOS" ]; then
         killall -HUP mDNSResponder
-    elif [[ "${systemType}" == "CentOS" ]]; then
+    elif [ "${systemType}" = "CentOS" ]; then
         if ! which nscd > /dev/null 2>&1; then
             if ! which dnf > /dev/null 2>&1; then
                 yum install -y nscd
@@ -285,7 +284,7 @@ function RefreshDNS(){
             fi
         fi
         systemctl restart nscd
-    elif [[ "${systemType}" == "Synology" ]]; then
+    elif [ "${systemType}" = "Synology" ]; then
         /var/packages/DNSServer/target/script/flushcache.sh
     fi
     _success "DNS 缓存刷新完成"
@@ -390,54 +389,6 @@ function RmLog(){
 
 CheckSys
 
-#if [ "$options" = "update" ]; then
-#    LogInfo
-#    PlaceScript | tee -a "${execLog}"
-#    SetCron | tee -a "${execLog}"
-#fi
-#
-#if [ "$options" = "updatefrom" ]; then
-#	extraArg=${*:2}
-#	if [[ $extraArg != "gitlab" && $extraArg != "github" && $extraArg != "dev" && -z $extraArg ]]; then
-#		_error "请正确输入自动更新工具下载源名称对应括号内的英文选项："
-#		_warning "GitLab (gitlab)"
-#		_warning "GitLab (dev)"
-#		_warning "GitHub (github)"
-#		_error "输入命令: \"hosts-tool update\" 将默认从 GitLab 更新工具"
-#	else
-#        downloadSource=$extraArg
-#        LogInfo
-#        PlaceScript | tee -a "${execLog}"
-#        SetCron | tee -a "${execLog}"
-#	fi
-#fi
-#
-#if [ "$options" = "remove" ]; then
-#	Remove
-#    RefreshDNS
-#fi
-#
-#if [ "$options" = "help" ]; then
-#	Usage
-#	exit 0
-#fi
-#
-#if [ "$options" = "run" ]; then
-#    LogInfo
-#    BackupHosts | tee -a "${execLog}"
-#    Combine | tee -a "${execLog}"
-#    RefreshDNS | tee -a "${execLog}"
-#fi
-#
-#if [ "$options" = "rmlog" ]; then
-#    RmLog
-#fi
-
-#if [ ! $options = ("update"|"updatefrom"|"remove"|"help"|"run"|"rmlog") ]; then
-#	_error "选项不存在"
-#	Usage
-#	exit 1
-#fi
 case $options in
     "update")
         LogInfo
