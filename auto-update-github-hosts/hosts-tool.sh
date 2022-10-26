@@ -147,7 +147,7 @@ function PlaceScript(){
         else
             sleep 1
             COUNT=$(( COUNT + 1 ))
-            _error "下载的 hosts-tool 不存在，开始尝试第 ${COUNT} 次下载..."
+            _warning "下载的 hosts-tool 不存在，开始尝试第 ${COUNT} 次下载..."
         fi
         if [ "${COUNT}" -gt 5 ]; then
             _error "hosts-tool 下载失败，请择日再运行此脚本，退出中..."
