@@ -16,6 +16,7 @@ Usage(){
 ArchitectureDetect(){
     case $(dpkg-architecture |awk -F '=' /DEB_HOST_ARCH=/'{print $2}') in
         "mips64el") CPUArchitecture="mips64el";;
+        "amd64") CPUArchitecture="amd64";echo "暂未测试可用性，请自行测试";;
         *) _error "未知 CPU 架构或暂未适配此 CPU 架构，请检查"; exit 1
     esac
 }
@@ -64,10 +65,6 @@ PrepareBuildEnv(){
         done ; then
             exit 1
         fi
-
-#        if [ "$?" -ne 0 ]; then
-#            exit 1
-#        fi
     else
         _success "已安装打包所需的必要依赖包"
     fi

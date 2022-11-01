@@ -17,8 +17,14 @@ packageMoreDescription=$(GetValue "package-more-description")
 packageVersion=$(GetValue "package-version")
 packageSource=$(GetValue "package-source")
 tomcatSkip=$(GetValue "tomcat-skip")
+javaHomeName=$(GetValue "java-home-name")
+tomcatFrontendName=$(GetValue "tomcat-frontend-name")
+tomcatBackendName=$(GetValue "tomcat-backend-name")
+tomcatNewPort=$(GetValue "tomcat-new-port")
+tomcatPreviousPort=$(GetValue "tomcat-previous-port")
 tomcatIntegrityCheckSkip=$(GetValue "tomcat-integrity-check-skip")
 tomcatVersion=$(GetValue "tomcat-version")
+tomcatLatestRunningVersion=$(GetValue "tomcat-latest-running-version")
 excludeJar=$(GetValue "exclude-jar")
 catalinaOption=$(GetValue "catalina-option")
 mysqlSkip=$(GetValue "mysql-skip")
@@ -26,13 +32,11 @@ mysqlUsername=$(GetValue "mysql-username")
 mysqlPassword=$(GetValue "mysql-password")
 mysqlBinPath=$(GetValue "mysql-bin-path")
 sqlFileName=$(GetValue "sql-file-name")
-dependenciesInstalled=$(GetValue "dependencies-installed")
 commonDate=$(GetValue "common-date")
 needClean=$(GetValue "need-clean")
 databaseBaseName=$(GetValue "database-base-name")
 databaseOldName=$(GetValue "database-old-name")
-tomcatNewPort=$(GetValue "tomcat-new-port")
-tomcatPreviousPort=$(GetValue "tomcat-previous-port")
+dependenciesInstalled=$(GetValue "dependencies-installed")
 
 # [General]
 # package-deploy-path
@@ -41,7 +45,6 @@ if [ -z "$packageDeployPath" ]; then
     exit 1
 else
     packageDeployPath=$(sed 's/\/$//g' <<< "$packageDeployPath")
-    packageInsidePath=$(sed 's/^\///g' <<< "$packageDeployPath")
 fi
 
 # common-date
@@ -67,7 +70,8 @@ fi
 
 # [Package]
 # package-skip
-if [ "$packageSkip" -eq 0 ]; then
+case "$packageSkip" in
+0)
     if
     [ -z "$packageSection" ] ||
     [ -z "$packagePriority" ] ||
@@ -173,24 +177,82 @@ if [ "$packageSkip" -eq 0 ]; then
     if [ -n "$packageMoreDescription" ]; then
         packageMoreDescription=$(sed "s/^$packageMoreDescription/ $packageMoreDescription/g" <<< "$packageMoreDescription")
     fi
-fi
+;;
+1)
+    :
+;;
+*)
+    _error "package-skip 选项只能是 0(不跳过) 或 1(跳过)，退出中"
+    exit 1
+esac
 
 # [Tomcat]
+# tomcatLatestRunningVersion 变量判断有效性基于依赖包的安装，放在 MySQL 选项中进行处理
 # tomcat-skip
-if [ "$tomcatSkip" -eq 0 ]; then
+case "$tomcatSkip" in
+0)
     if
     [ -z "$tomcatVersion" ] ||
     [ -z "$tomcatNewPort" ] ||
     [ -z "$tomcatPreviousPort" ] ||
+    [ -z "$javaHomeName" ] ||
     [ -z "$tomcatIntegrityCheckSkip" ]; then
         _error "启用配置 Tomcat 功能后，以下选项必须填写对应参数："
         _warningnoblank "
+        java-home-name 需要依赖的 java 环境名称
         tomcat-version 需要配置或下载的Tomcat的版本号
         tomcat-new-port 需要新建的Tomcat端口号
         tomcat-previous-port 上一版本的Tomcat端口号
         tomcat-integrity-check-skip 联网校验Tomcat压缩包的完整性"|column -t
         _error "退出中"
         exit 1
+    fi
+
+    if [ "$dependenciesInstalled" -eq 1 ]; then
+        if [ -z "$tomcatLatestRunningVersion" ] ||
+        [ -z "$javaHomeName" ]; then
+            _error "启用配置 Tomcat 功能后，以下 Tomcat 选项必须填写对应参数："
+            _warningnoblank "
+            java-home-name 需要依赖的 java 环境名称
+            tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的 Tomcat 版本号
+            "|column -t
+            _error "退出中"
+            exit 1
+        else
+            # tomcat-latest-running-version
+            if [ ! -d "$packageDeployPath"/tomcat-"$tomcatLatestRunningVersion"-"$tomcatPreviousPort" ]; then
+                _error "环境中不存在已安装的指定版本 Tomcat，请检查"
+                exit 1
+            fi
+            # java-home-name
+            if [ ! -d "$packageDeployPath/$javaHomeName" ]; then
+                _error "环境中不存在已安装的 Java 环境，请检查"
+                exit 1
+            fi
+        fi
+    fi
+
+    # tomcat-frontend-name
+    if [ -n "$tomcatFrontendName" ] && [ ! -d build/"$tomcatFrontendName" ]; then
+        _error "指定的前端文件夹不存在，请确认文件夹名填写正确或将前端文件夹放到 source 文件夹下，退出中"
+        exit 1
+    fi
+
+    # tomcat-backend-name
+    if [ -n "$tomcatBackendName" ] && [ ! -d build/"$tomcatBackendName" ]; then
+        _error "指定的后端文件夹不存在，请确认文件夹名填写正确或将后端文件夹放到 source 文件夹下，退出中"
+        exit 1
+    fi
+
+    # 判断前后端双指定/不指定/单指定前端/单指定后端方案并返回方案名给主程序做调用
+    if [ -n "$tomcatFrontendName" ] && [ -n "$tomcatBackendName" ]; then
+        tomcatPlan="double"
+    elif [ -z "$tomcatFrontendName" ] && [ -z "$tomcatBackendName" ]; then
+        tomcatPlan="none"
+    elif [ -n "$tomcatFrontendName" ]; then
+        tomcatPlan="frontend"
+    elif [ -n "$tomcatBackendName" ]; then
+        tomcatPlan="backend"
     fi
 
     # tomcat-new-port
@@ -279,45 +341,49 @@ if [ "$tomcatSkip" -eq 0 ]; then
             fi
         fi
     fi
-fi
+;;
+1)
+    :
+;;
+*)
+    _error "tomcat-skip 选项只能是 0(不跳过) 或 1(跳过)，退出中"
+    exit 1
+esac
 
 # [Mysql]
 # mysql-skip
-if [ "$mysqlSkip" -eq 0 ]; then
+case "$mysqlSkip" in
+0)
     if
     [ -z "$dependenciesInstalled" ] ||
-    [ -z "$sqlFileName" ]; then
+    [ -z "$sqlFileName" ] ||
+    [ -z "$mysqlUsername" ] ||
+    [ -z "$mysqlPassword" ] ||
+    [ -z "$databaseOldName" ]; then
         _error "启用配置 Mysql 功能后，以下选项必须填写对应参数："
         _warningnoblank "
         dependencies-installed 更新包所依赖的基础包是否安装
-        sql-file-name 要导入的sql文件名"|column -t
+        sql-file-name 要导入的sql文件名
+        mysql-username 本地连接mysql有权限操作数据库的用户名
+        mysql-password 本地连接mysql有权限操作数据库的账户的密码
+        database-old-name 准备备份的数据库名称"|column -t
         _error "退出中"
         exit 1
     fi
 
     # sql-file-name
+    if [[ "$sqlFileName" == *".sql" ]]; then
+        :
+    else
+        sqlFileName="${sqlFileName}.sql"
+    fi
     if [ ! -f source/"$sqlFileName" ]; then
-        _error "SQL 文件不存在，请将 SQL 文件放到 source 文件夹下"
+        _error "SQL 文件不存在，请确认文件名填写正确或将 SQL 文件放到 source 文件夹下"
         exit 1
     fi
 
     # dependencies-installed
     if [ "$dependenciesInstalled" -eq 1 ]; then
-        if
-        [ -z "$mysqlUsername" ] ||
-        [ -z "$mysqlPassword" ] ||
-        [ -z "$databaseOldName" ] ||
-        [ -z "$databaseBaseName" ]; then
-            _error "根据依赖包安装后的环境，启用检测数据库导入导出功能后，以下选项必须填写对应参数："
-            _warningnoblank "
-            mysql-username 本地连接mysql有权限操作数据库的用户名
-            mysql-password 本地连接mysql有权限操作数据库的账户的密码
-            mysql-bin-path mysql整个程序总目录的绝对路径
-            database-base-name 准备创建的新数据库的基本名称
-            database-old-name 准备备份的数据库名称"|column -t
-            _error "退出中"
-            exit 1
-        fi
         # mysql-bin-path
         if [ -n "$mysqlBinPath" ]; then
             if [ ! -f "$mysqlBinPath"/bin/mysql ]; then
@@ -352,18 +418,27 @@ if [ "$mysqlSkip" -eq 0 ]; then
             _error "MySQL 不存在此名称的老版本数据库，请重新确认"
             exit 1
         fi
+        if [ "$tomcatSkip" -eq 0 ]; then
+            if [ -z "$databaseBaseName" ]; then
+                _error "启用配置 Tomcat 功能后，以下 MySQL 选项必须填写对应参数："
+                _warningnoblank "
+                database-base-name 准备创建的新数据库的基本名称"|column -t
+                _error "退出中"
+                exit 1
+            else
+                # database-base-name
+                databaseNewName="$databaseBaseName$commonDate"
+                if "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseNewName;" >/dev/null 2>&1; then
+                    _error "MySQL 存在同名新版本数据库，请指定不同名称的新数据库用于创建(名称格式: [新数据库基本名称][日期])"
+                    exit 1
+                fi
 
-        # database-base-name
-        databaseNewName="$databaseBaseName$commonDate"
-        if "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseNewName;" >/dev/null 2>&1; then
-            _error "MySQL 存在同名新版本数据库，请指定不同名称的新数据库用于创建(名称格式: [新数据库基本名称][日期])"
-            exit 1
-        fi
-
-        # databaseOldName and databaseNewName
-        if [ "$databaseOldName" = "$databaseNewName" ]; then
-            _error "需要备份的数据库名不能和将创建的数据库名相同"
-            exit 1
+                # databaseOldName and databaseNewName
+                if [ "$databaseOldName" = "$databaseNewName" ]; then
+                    _error "需要备份的数据库名不能和将创建的数据库名相同"
+                    exit 1
+                fi
+            fi
         fi
     elif [ "$dependenciesInstalled" -eq 0 ]; then
         _warning "用于依赖环境参考的基础包未安装，将跳过检查以下选项:"
@@ -374,4 +449,11 @@ if [ "$mysqlSkip" -eq 0 ]; then
         database-base-name 准备创建的新数据库的基本名称
         database-old-name 准备备份的数据库名称"|column -t
     fi
-fi
+;;
+1)
+    :
+;;
+*)
+    _error "mysql-skip 选项只能是 0(不跳过) 或 1(跳过)，退出中"
+    exit 1
+esac

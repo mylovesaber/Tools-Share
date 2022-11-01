@@ -54,8 +54,10 @@ elif [ "$confirmYes" -eq 1 ]; then
         _error "清理构建目录时出现未知情况，请检查"
         exit 1
     esac
-    if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/"$packageInsidePath" ]; then
-        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/"$packageInsidePath"
+    if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp ]; then
+        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
+        mkdir -p build/"$packageSource"/combine
     fi
     if [ "$tomcatSkip" -eq 0 ]; then
         source function/execution/TomcatConfigure.sh
@@ -66,7 +68,12 @@ elif [ "$confirmYes" -eq 1 ]; then
     fi
 
     if [ "$packageSkip" -eq 0 ]; then
-        source function/execution/GenerateDeb.sh
+        if [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
+            _error "Tomcat 或 MySQL 的配置不能同时跳过，退出中"
+            exit 1
+        else
+            source function/execution/GenerateDeb.sh
+        fi
     fi
 fi
 

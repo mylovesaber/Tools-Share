@@ -1,8 +1,8 @@
 #!/bin/bash
 echo "packageDeployPath= $packageDeployPath"
-echo "packageInsidePath= $packageInsidePath"
 echo "commonDate= $commonDate"
 echo "needClean= $needClean"
+echo "dependenciesInstalled= $dependenciesInstalled"
 echo ""
 echo "packageSkip= $packageSkip"
 if [ "$packageSkip" -eq 0 ]; then
@@ -20,6 +20,9 @@ echo ""
 echo "tomcatSkip= $tomcatSkip"
 if [ "$tomcatSkip" -eq 0 ]; then
     echo "tomcatVersion= $tomcatVersion"
+    if [ "$dependenciesInstalled" -eq 1 ]; then
+        echo "tomcatLatestRunningVersion= $tomcatLatestRunningVersion"
+    fi
     echo "excludeJar= $excludeJar"
     echo "tomcatNewPort= $tomcatNewPort"
     echo "tomcatPreviousPort= $tomcatPreviousPort"
@@ -34,13 +37,12 @@ fi
 echo ""
 echo "mysqlSkip= $mysqlSkip"
 if [ "$mysqlSkip" -eq 0 ]; then
-    echo "dependenciesInstalled= $dependenciesInstalled"
+    echo "sqlFileName= $sqlFileName"
+    echo "mysqlUsername= $mysqlUsername"
+    echo "mysqlPassword= $mysqlPassword"
+    echo "databaseOldName= $databaseOldName"
+    echo "databaseBaseName= $databaseBaseName"
     if [ "$dependenciesInstalled" -eq 1 ]; then
-        echo "sqlFileName= $sqlFileName"
-        echo "mysqlUsername= $mysqlUsername"
-        echo "mysqlPassword= $mysqlPassword"
-        echo "databaseOldName= $databaseOldName"
-        echo "databaseBaseName= $databaseBaseName"
         echo "mysqlBinPath= $mysqlBinPath"
         if [ -n "$mysqlBinPath" ]; then
             echo "mysqlRealCommand= $mysqlRealCommand"

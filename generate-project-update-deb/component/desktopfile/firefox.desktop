@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=Firefox 网络浏览器
+Comment=Browse the World Wide Web
+Comment[zh_CN]=访问网络
+GenericName=Web Browser
+GenericName[zh_CN]=网页浏览器
+X-GNOME-FullName=Firefox Web Browser
+X-GNOME-FullName[zh_CN]=Firefox 网络浏览器
+Exec=/usr/lib/firefox/firefox %u
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=firefox
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/vnd.mozilla.xul+xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=Firefox
+StartupNotify=true

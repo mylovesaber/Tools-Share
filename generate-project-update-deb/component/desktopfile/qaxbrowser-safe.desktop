@@ -1,0 +1,32 @@
+[Desktop Entry]
+Version=1.0
+Name=奇安信可信浏览器
+# Only KDE 4 seems to use GenericName, so we reuse the KDE strings.
+# From Ubuntu's language-pack-kde-XX-base packages, version 9.04-20090413.
+GenericName=Web Browser
+GenericName[en_GB]=Web Browser
+GenericName[zh_CN]=网页浏览器
+# Gnome and KDE 3 uses Comment.
+Comment=Access the Internet
+Comment[en_GB]=Access the Internet
+Comment[zh_CN]=网络
+Exec=/usr/bin/qaxbrowser-safe-stable %U
+StartupNotify=false
+Terminal=false
+Icon=qaxbrowser-safe
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml_xml;image/webp;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Name[en_GB]=New Window
+Name[zh_CN]=新建窗口
+Exec=/usr/bin/qaxbrowser-safe-stable
+
+[Desktop Action new-private-window]
+Name=New Incognito Window
+Name[en_GB]=New Incognito window
+Name[zh_CN]=新建隐身窗口
+Exec=/usr/bin/qaxbrowser-safe-stable --incognito
