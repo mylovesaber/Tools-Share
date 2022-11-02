@@ -47,6 +47,10 @@ if [ -z "$packageDeployPath" ]; then
     exit 1
 else
     packageDeployPath=$(sed 's/\/$//g' <<< "$packageDeployPath")
+    if [ "$dependenciesInstalled" -eq 1 ] && [ ! -d "$packageDeployPath" ]; then
+        _error "部署到的项目所在家目录不存在，路径可能填写错误或依赖未安装，退出中"
+        exit 1
+    fi
 fi
 
 # common-date
@@ -66,7 +70,7 @@ if [ "$needClean" != 0 ] && [ "$needClean" != 1 ] && [ "$needClean" != 2 ]; then
     _warningnoblank "
     0 不清空
     1 清空所有
-    2 保留下载的Tomcat压缩包和解压包"|column -t
+    2 保留下载的Tomcat压缩包"|column -t
     exit 1
 fi
 
