@@ -1,7 +1,6 @@
 #!/bin/bash
 CPUArchitecture=""
 confirmYes=0
-printUsage=0
 if ! ARGS=$(getopt -a -o yh -l confirmYes,help -- "$@")
 then
     echo "无效的参数，请查看可用选项"
@@ -15,7 +14,6 @@ while true; do
         confirmYes=1
         ;;
     -h | --help)
-        printUsage=1
         source function/common/CommonFunction.sh
         Usage
         ;;
