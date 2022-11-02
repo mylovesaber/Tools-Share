@@ -200,6 +200,7 @@ esac
 case "$tomcatSkip" in
 0)
     if
+    [ -z "$dependenciesInstalled" ] ||
     [ -z "$javaHomeName" ] ||
     [ -z "$projectName" ] ||
     [ -z "$projectIconName" ] ||
@@ -221,8 +222,7 @@ case "$tomcatSkip" in
     fi
 
     if [ "$dependenciesInstalled" -eq 1 ]; then
-        if [ -z "$tomcatLatestRunningVersion" ] ||
-        [ -z "$javaHomeName" ]; then
+        if [ -z "$tomcatLatestRunningVersion" ] || [ -z "$javaHomeName" ]; then
             _error "启用配置 Tomcat 功能并设置项目底包已安装完成后，以下 Tomcat 选项必须填写对应参数："
             _warningnoblank "
             java-home-name 需要依赖的java环境名称
@@ -242,6 +242,13 @@ case "$tomcatSkip" in
                 exit 1
             fi
         fi
+    elif [ "$dependenciesInstalled" -eq 0 ]; then
+        _warning "dependencies-installed 选项未设置为已安装，将跳过检查以下选项:"
+        _warningnoblank "
+        java-home-name 需要依赖的java环境名称
+        tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号"|column -t
+    else
+        _error "dependencies-installed 选项只能是 0(未安装) 或 1(已安装)，退出中"
     fi
 
     # project-name 暂无检查的需求
@@ -345,7 +352,7 @@ case "$tomcatSkip" in
             fi
         fi
     elif [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
-        _warning "未下载此版本的 Tomcat 压缩包，将从网络中获取"
+        _warning "未下载此版本的 Tomcat 压缩包(仅限识别apache-tomcat-x.x.x.tar.gz)，将从网络中获取"
         _info "开始检查与 Tomcat 官网的连接性(官网可能抽风，如果失败可尝试反复运行)"
         if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
             _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
@@ -382,7 +389,6 @@ case "$mysqlSkip" in
     [ -z "$databaseOldName" ]; then
         _error "启用配置 Mysql 功能后，以下选项必须填写对应参数："
         _warningnoblank "
-        dependencies-installed 更新包所依赖的基础包是否安装
         sql-file-name 要导入的sql文件名
         mysql-username 本地连接mysql有权限操作数据库的用户名
         mysql-password 本地连接mysql有权限操作数据库的账户的密码
@@ -461,13 +467,16 @@ case "$mysqlSkip" in
             fi
         fi
     elif [ "$dependenciesInstalled" -eq 0 ]; then
-        _warning "用于依赖环境参考的基础包未安装，将跳过检查以下选项:"
+        _warning "dependencies-installed 选项未设置为已安装，将跳过检查以下选项:"
         _warningnoblank "
         mysql-username 本地连接mysql有权限操作数据库的用户名
         mysql-password 本地连接mysql有权限操作数据库的账户的密码
         mysql-bin-path mysql整个程序总目录的绝对路径
         database-base-name 准备创建的新数据库的基本名称
         database-old-name 准备备份的数据库名称"|column -t
+    else
+        _error "dependencies-installed 选项只能是 0(未安装) 或 1(已安装)，退出中"
+        exit 1
     fi
 ;;
 1)

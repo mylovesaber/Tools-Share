@@ -19,10 +19,12 @@ fi
 echo ""
 echo "tomcatSkip: $tomcatSkip"
 if [ "$tomcatSkip" -eq 0 ]; then
+    echo "projectIconName: $projectIconName"
+    echo "projectName: $projectName"
     echo "tomcatVersion: $tomcatVersion"
-    if [ "$dependenciesInstalled" -eq 1 ]; then
-        echo "tomcatLatestRunningVersion: $tomcatLatestRunningVersion"
-    fi
+    echo "javaHomeName: $javaHomeName"
+    echo "tomcatLatestRunningVersion: $tomcatLatestRunningVersion"
+
     echo "excludeJar: $excludeJar"
     echo "tomcatNewPort: $tomcatNewPort"
     echo "tomcatPreviousPort: $tomcatPreviousPort"
@@ -33,6 +35,20 @@ if [ "$tomcatSkip" -eq 0 ]; then
     for i in "${!catalinaOptionList[@]}" ; do
         echo "catalinaOption$i: ${catalinaOptionList[$i]}"
     done
+    if [ -n "$tomcatFrontendName" ] && [ -n "$tomcatBackendName" ]; then
+        tomcatPlan="double"
+        echo "tomcatFrontendName: $tomcatFrontendName"
+        echo "tomcatBackendName: $tomcatBackendName"
+    elif [ -z "$tomcatFrontendName" ] && [ -z "$tomcatBackendName" ]; then
+        tomcatPlan="none"
+    elif [ -n "$tomcatFrontendName" ]; then
+        tomcatPlan="frontend"
+        echo "tomcatFrontendName: $tomcatFrontendName"
+    elif [ -n "$tomcatBackendName" ]; then
+        tomcatPlan="backend"
+        echo "tomcatBackendName: $tomcatBackendName"
+    fi
+
 fi
 echo ""
 echo "mysqlSkip: $mysqlSkip"

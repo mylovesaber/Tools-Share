@@ -10,7 +10,7 @@ cat > generate-deb.conf <<EOF
 # 比如将 tomcat/mysql/redis 等安装在 /opt/project 目录下，则 /opt/project 为部署的项目所在家目录
 package-deploy-path=""
 
-# 为检查 mysql 绝对路径、用户名密码和新老数据库是否正确、指定正在运行的最新版项目所用 tomcat 版本是否存在，需要先把依赖包安装上，0 是未安装，1 是已安装
+# 为检查 mysql 绝对路径、用户名密码和新老数据库是否正确、指定正在运行的最新版项目所用 tomcat 版本是否存在，需要先把依赖底包安装上，0 是未安装，1 是已安装
 dependencies-installed=1
 
 
