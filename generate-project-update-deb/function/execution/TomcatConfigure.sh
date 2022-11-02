@@ -3,6 +3,18 @@ repeatPath="build/$packageSource/$packageSource-$packageVersion/tmp/tomcat-$tomc
 NewTomcatBaseConfigure(){
     mkdir -p "$repeatPath"
     echo "$commonDate" > "$repeatPath"/build-date
+    if [ "$deleteTomcatArchive" -eq 1 ]; then
+        rm -rf build/apache-tomcat-"$tomcatVersion".tar.gz
+    fi
+    if [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
+        _info "开始下载指定版本的 Tomcat(官网可能抽风，如果失败可尝试反复运行)"
+        if wget https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz >/dev/null 2>&1; then
+            _success "Tomcat v$tomcatVersion 下载成功"
+        else
+            _error "下载失败，请重新尝试，退出中"
+            exit 1
+        fi
+    fi
     tar -zxf build/apache-tomcat-"$tomcatVersion".tar.gz --strip-components 1 -C "$repeatPath"
     sed -i "s/<Connector port=\"8080/<Connector port=\"$tomcatNewPort/g" "$repeatPath"/conf/server.xml
     if [ -n "$excludeJar" ]; then

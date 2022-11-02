@@ -75,6 +75,21 @@ if [ "$needClean" != 0 ] && [ "$needClean" != 1 ] && [ "$needClean" != 2 ]; then
     exit 1
 fi
 
+if [ -z "$packageVersion" ] || [ -z "$packageSource" ]; then
+    _error "启用任何功能，以下选项必须填写对应参数："
+    _warningnoblank "
+    package-version 安装包的版本号
+    package-source 源代码包名"|column -t
+    _error "退出中"
+    exit 1
+fi
+
+# package-version
+if [[ ! "$packageVersion" =~ ^[0-9.]*\.[0-9]$ ]]; then
+    _error "版本号格式出错，只允许数字和英文点组合"
+    exit 1
+fi
+
 
 # [Package]
 # package-skip
@@ -87,9 +102,7 @@ case "$packageSkip" in
     [ -z "$packageHomepage" ] ||
     [ -z "$packageName" ] ||
     [ -z "$packageDescription" ] ||
-    [ -z "$packageMoreDescription" ] ||
-    [ -z "$packageVersion" ] ||
-    [ -z "$packageSource" ]; then
+    [ -z "$packageMoreDescription" ]; then
         _error "启用打包功能后，以下选项必须填写对应参数："
         _warningnoblank "
         package-section debian包的分类名
@@ -98,9 +111,7 @@ case "$packageSkip" in
         package-homepage 打包者的网址
         package-name 安装后的系统包名
         package-description 对安装包的介绍信息
-        package-more-description 对安装包的更多介绍信息
-        package-version 安装包的版本号
-        package-source 源代码包名"|column -t
+        package-more-description 对安装包的更多介绍信息"|column -t
         _error "退出中"
         exit 1
     fi
@@ -145,7 +156,6 @@ case "$packageSkip" in
     # package-name
     # package-description
     # package-more-description
-    # package-source
     # 以上这些选项参数好像没什么合适的检查规则
 
 

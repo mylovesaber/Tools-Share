@@ -52,7 +52,8 @@ package-depends=""
 # package-version=""
 
 # 源代码包名，此名称将与安装包的版本号拼接后作为总打包目录名，实际安装包安装时系统中看到的包名不是这个
-package-source=""
+# 因为 Tomcat 和 MySQL 配置的时候一定要创建工作目录，故此选项放在通用部分，此处注释
+#package-source=""
 
 
 [Tomcat]
@@ -122,6 +123,8 @@ package-more-description=""
 
 # [Package] 安装包的版本号，系统中可以查到此版本号
 package-version=""
+# 源代码包名，此名称将与安装包的版本号拼接后作为总打包目录名，实际安装包安装时系统中看到的包名不是这个
+package-source=""
 
 # [Tomcat] 需要新建的 Tomcat 端口号，例: 8088
 tomcat-new-port=

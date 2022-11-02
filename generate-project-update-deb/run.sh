@@ -40,6 +40,8 @@ if [ "$confirmYes" -eq 0 ]; then
     source function/detection/OptionResultOutput.sh
     exit 0
 elif [ "$confirmYes" -eq 1 ]; then
+    _warningnoblank "============================"
+    _info "开始执行打包流程"
     case $needClean in
     2)
         rm -rf build/"$packageSource"
