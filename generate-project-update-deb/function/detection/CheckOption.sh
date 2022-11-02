@@ -311,13 +311,13 @@ case "$tomcatSkip" in
     # tomcat-version
     # tomcat-integrity-check-skip
     tomcatFirstVersionNumber=$(awk -F '.' '{print $1}' <<< "$tomcatVersion")
-    if [ "$tomcatIntegrityCheckSkip" != 0 ] && [ "$tomcatIntegrityCheckSkip" != 1 ]; then
+    if [ "$tomcatIntegrityCheckSkip" -ne 0 ] && [ "$tomcatIntegrityCheckSkip" -ne 1 ]; then
         _error "联网校验 Tomcat 压缩包完整性选项的参数设置错误，0 为校验，1 为不校验"
         exit 1
     fi
     if [ -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
-        if [ "$tomcatIntegrityCheckSkip" == 0 ]; then
+        if [[ "$tomcatIntegrityCheckSkip" -eq 0 ]]; then
             _info "已开启 Tomcat 资源包完整性检查"
             deleteTomcatArchive=0
             _info "开始检查与 Tomcat 官网的连接性"
