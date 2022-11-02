@@ -27,12 +27,8 @@ if [ "$tomcatSkip" -eq 0 ]; then
     echo "tomcatNewPort: $tomcatNewPort"
     echo "tomcatPreviousPort: $tomcatPreviousPort"
     echo "tomcatIntegrityCheckSkip: $tomcatIntegrityCheckSkip"
-    if [ "$tomcatIntegrityCheckSkip" -eq 0 ];then
-        echo "上面是tomcatIntegrityCheckSkip"
-        if [ "$deleteTomcatArchive" -eq 1 ]; then
-            echo "进入 deleteTomcatArchive"
-            echo "deleteTomcatArchive: $deleteTomcatArchive"
-        fi
+    if [ "$tomcatIntegrityCheckSkip" -eq 0 ] && [ "$deleteTomcatArchive" -eq 1 ]; then
+        echo "deleteTomcatArchive: $deleteTomcatArchive"
     fi
     for i in "${!catalinaOptionList[@]}" ; do
         echo "catalinaOption$i: ${catalinaOptionList[$i]}"

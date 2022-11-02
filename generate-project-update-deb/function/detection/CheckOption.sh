@@ -3,7 +3,7 @@ GetValue(){
     awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
 # 检测通过的不会有任何提醒，不通过的一律报错退出
-_info "开始解析选项，若检测无误将 直接打印检测结果以供检查，任何环节检测不通过一律报错退出"
+_info "开始解析选项，若检测无误将直接打印检测结果以供检查，任何环节检测不通过一律报错退出"
 projectName=$(GetValue "project-name")
 projectIconName=$(GetValue "project-icon-name")
 packageDeployPath=$(GetValue "package-deploy-path")
@@ -315,11 +315,11 @@ case "$tomcatSkip" in
         _error "联网校验 Tomcat 压缩包完整性选项的参数设置错误，0 为校验，1 为不校验"
         exit 1
     fi
+    deleteTomcatArchive=0
     if [ -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
         if [ "$tomcatIntegrityCheckSkip" -eq 0 ]; then
             _info "已开启 Tomcat 资源包完整性检查"
-            deleteTomcatArchive=0
             _info "开始检查与 Tomcat 官网的连接性"
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
                 _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
