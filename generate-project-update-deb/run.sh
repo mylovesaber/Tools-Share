@@ -1,6 +1,7 @@
 #!/bin/bash
 CPUArchitecture=""
 confirmYes=0
+printUsage=0
 if ! ARGS=$(getopt -a -o yh -l confirmYes,help -- "$@")
 then
     echo "无效的参数，请查看可用选项"
@@ -14,8 +15,7 @@ while true; do
         confirmYes=1
         ;;
     -h | --help)
-        source function/common/CommonFunction.sh
-        Usage
+        printUsage=1
         ;;
     --)
         shift
@@ -28,6 +28,7 @@ done
 # Main
 source function/common/Color.sh
 source function/common/CommonFunction.sh
+[ "$printUsage" -eq 1 ] && Usage
 ArchitectureDetect
 CheckProfile
 PrepareBuildEnv
