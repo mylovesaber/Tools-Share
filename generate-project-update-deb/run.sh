@@ -56,6 +56,7 @@ elif [ "$confirmYes" -eq 1 ]; then
     if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp ]; then
         mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
         mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
+        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/applications
         mkdir -p build/"$packageSource"/combine
     fi
     if [ "$tomcatSkip" -eq 0 ]; then

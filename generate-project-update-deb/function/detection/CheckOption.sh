@@ -2,7 +2,8 @@
 GetValue(){
     awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
-_info "开始解析"
+# 检测通过的不会有任何提醒，不通过的一律报错退出
+_info "开始解析选项，若检测无误将 直接打印检测结果以供检查，任何环节检测不通过一律报错退出"
 projectName=$(GetValue "project-name")
 projectIconName=$(GetValue "project-icon-name")
 packageDeployPath=$(GetValue "package-deploy-path")
@@ -199,14 +200,18 @@ esac
 case "$tomcatSkip" in
 0)
     if
+    [ -z "$javaHomeName" ] ||
+    [ -z "$projectName" ] ||
+    [ -z "$projectIconName" ] ||
     [ -z "$tomcatVersion" ] ||
     [ -z "$tomcatNewPort" ] ||
     [ -z "$tomcatPreviousPort" ] ||
-    [ -z "$javaHomeName" ] ||
     [ -z "$tomcatIntegrityCheckSkip" ]; then
         _error "启用配置 Tomcat 功能后，以下选项必须填写对应参数："
         _warningnoblank "
         java-home-name 需要依赖的 java 环境名称
+        project-name 桌面快捷方式会显示的名称(可中文)
+        project-icon-name 桌面快捷方式会调用的 svg 图标名称
         tomcat-version 需要配置或下载的Tomcat的版本号
         tomcat-new-port 需要新建的Tomcat端口号
         tomcat-previous-port 上一版本的Tomcat端口号
@@ -239,15 +244,11 @@ case "$tomcatSkip" in
         fi
     fi
 
-    # project-name
-    if [ -z "$projectName" ]; then
-        _error "项目名称必须填写，否则无法为新端口号的 Tomcat 生成对应的桌面快捷方式文件"
-        exit 1
-    fi
+    # project-name 暂无检查的需求
 
     # project-icon-name
-    if [ -z "$projectIconName" ]; then
-        _error "项目图标名称必须填写，否则无法为新端口号的 Tomcat 生成对应的桌面快捷方式文件"
+    if [ ! -f source/"$projectIconName" ]; then
+        _error "source 文件夹下无此名称的图标文件，请确认名称是否写错或忘记放置图标文件"
         exit 1
     fi
 
