@@ -293,7 +293,7 @@ case "$tomcatSkip" in
 
     # exclude-jar(整形成 sed 可以直接用的写法，如果没有则跳过)
     if [ -n "$excludeJar" ]; then
-        excludeJar=$(sed -e 's/^/\\n/g; s/[ ]*$//g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
+        excludeJar=$(sed -e 's/^[ \t]*//g; s/^/\\n/g; s/[ \t]*$//g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
     fi
 
     # catalina-option 如果没有则跳过
@@ -302,7 +302,7 @@ case "$tomcatSkip" in
         catalinaOptionList=()
         for (( i=1; i<="$catalinaOptionLine"; i++ )); do
             cutCatalinaOption=$(awk -F 'ˇωˇ' -v i="$i" '{print $i}' <<< "$catalinaOption")
-            cutCatalinaOption=$(sed -e 's/^[ \t]*//g;s/[ \t]*$//g' <<< "$cutCatalinaOption")
+            cutCatalinaOption=$(sed -e 's/^[ \t]*//g; s/[ \t]*$//g' <<< "$cutCatalinaOption")
             mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(echo "$cutCatalinaOption")
 #            mapfile -t -O "${#catalinaOptionList[@]}" catalinaOptionList < <(awk -F 'ˇωˇ' "{print \$$i}" <<< "$catalinaOption")  # 两种写法结果相同
         done
@@ -317,7 +317,7 @@ case "$tomcatSkip" in
     fi
     if [ -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _success "已找到 $tomcatVersion 版本的 Tomcat 压缩包"
-        if [[ "$tomcatIntegrityCheckSkip" -eq 0 ]]; then
+        if [ "$tomcatIntegrityCheckSkip" -eq 0 ]; then
             _info "已开启 Tomcat 资源包完整性检查"
             deleteTomcatArchive=0
             _info "开始检查与 Tomcat 官网的连接性"
@@ -327,7 +327,7 @@ case "$tomcatSkip" in
             else
                 _success "可连接 Tomcat 官网"
                 _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
-                if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" == 200 ]; then
+                if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" -eq 200 ]; then
                     _success "指定版本的 Tomcat 可供校验完整性"
                     _info "正在获取 Tomcat 官网对应版本压缩包的校验值并与本地压缩包对比"
                     remoteSHA512Sum=$(curl -Ls https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
@@ -353,7 +353,7 @@ case "$tomcatSkip" in
         else
             _success "可连接 Tomcat 官网"
             _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
-            if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz)" == 200 ]; then
+            if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz)" -eq 200 ]; then
                 _success "指定版本的 Tomcat 可供下载"
             else
                 _error "无法获取指定版本的 Tomcat，请检查版本号是否指定错误"
