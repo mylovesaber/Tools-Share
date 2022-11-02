@@ -19,16 +19,10 @@ Icon=browser360-cn
 Type=Application
 Categories=Network;WebBrowser;
 MimeType=application/pdf;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xhtml_xml;application/xml;image/gif;image/jpeg;image/png;image/webp;text/html;text/xml;x-scheme-handler/ftp;x-scheme-handler/http;x-scheme-handler/https;
-Actions=new-window;new-private-window;
+Actions=new-window;
 
 [Desktop Action new-window]
 Name=New Window
 Name[en_GB]=New Window
 Name[zh_CN]=新建窗口
 Exec=/usr/bin/browser360-cn-stable
-
-[Desktop Action new-private-window]
-Name=New Incognito Window
-Name[en_GB]=New Incognito window
-Name[zh_CN]=新建隐身窗口
-Exec=/usr/bin/browser360-cn-stable --incognito

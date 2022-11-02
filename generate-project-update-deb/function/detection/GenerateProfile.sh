@@ -19,6 +19,7 @@ package-deploy-path=""
 # database-old-name
 dependencies-installed=0
 
+
 [Package]
 # 跳过打包的开关选项，1 是跳过，0 是不跳过
 package-skip=0
@@ -81,6 +82,13 @@ catalina-option=""
 # 此名称和 package-deploy-path 选项的结果强制绑定，即上面的结果基于 package-deploy-path="/opt/java-1.8.0"
 java-home-name=""
 
+# 图标名称，一定是 svg 图标，不能是png，没有对多分辨率做适配，例: xxx.svg
+project-icon-name=""
+
+# 项目名称(可以中文，会写入桌面快捷方式的文件中)
+project-name=""
+
+
 [Mysql]
 # 是否跳过配置 Mysql 的开关选项，1 是跳过，0 是不跳过，如果更新包不需要更新数据库内容的话就可以跳过，生成的包不会对数据库做任何更新
 mysql-skip=0
@@ -134,8 +142,10 @@ tomcat-previous-port=
 tomcat-frontend-name=""
 tomcat-backend-name=""
 
-# 需要配置或下载的 Tomcat 的版本号，例: 9.0.12，如果本地存在压缩包则进入校验压缩包完整性的流程，如果不跳过则需要联网
+# [Tomcat] 需要配置或下载的 Tomcat 的版本号，例: 9.0.12，如果本地存在压缩包则进入校验压缩包完整性的流程
+# 如果不跳过则需要联网
 tomcat-version=""
-# 已在目标系统中运行的最新版本项目所用的 Tomcat 版本号
+
+# [Tomcat] 已在目标系统中运行的最新版本项目所用的 Tomcat 版本号
 tomcat-latest-running-version=""
 EOF

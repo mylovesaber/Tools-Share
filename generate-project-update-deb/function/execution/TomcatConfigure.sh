@@ -90,11 +90,6 @@ GenerateTomcatPostInst(){
     esac
 }
 
-PlaceDesktopFile(){
-    cp -a component/desktopfile/* build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/applications
-    cp -a source/ build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
-}
-
 NewTomcatBaseConfigure
 NewTomcatSetProject
 GenerateTomcatPostInst

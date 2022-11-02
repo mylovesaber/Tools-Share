@@ -3,6 +3,8 @@ GetValue(){
     awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
 
+projectName=$(GetValue "project-name")
+projectIconName=$(GetValue "project-icon-name")
 packageDeployPath=$(GetValue "package-deploy-path")
 packageSkip=$(GetValue "package-skip")
 packageSection=$(GetValue "package-section")
@@ -67,6 +69,7 @@ if [ "$needClean" != 0 ] && [ "$needClean" != 1 ] && [ "$needClean" != 2 ]; then
     2 保留下载的Tomcat压缩包和解压包"|column -t
     exit 1
 fi
+
 
 # [Package]
 # package-skip
@@ -230,6 +233,18 @@ case "$tomcatSkip" in
                 exit 1
             fi
         fi
+    fi
+
+    # project-name
+    if [ -z "$projectName" ]; then
+        _error "项目名称必须填写，否则无法为新端口号的 Tomcat 生成对应的桌面快捷方式文件"
+        exit 1
+    fi
+
+    # project-icon-name
+    if [ -z "$projectIconName" ]; then
+        _error "项目图标名称必须填写，否则无法为新端口号的 Tomcat 生成对应的桌面快捷方式文件"
+        exit 1
     fi
 
     # tomcat-frontend-name
