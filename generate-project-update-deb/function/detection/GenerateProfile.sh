@@ -11,18 +11,12 @@ cat > generate-deb.conf <<EOF
 package-deploy-path=""
 
 # 为检查 mysql 绝对路径、用户名密码和新老数据库是否正确、指定正在运行的最新版项目所用 tomcat 版本是否存在，需要先把依赖包安装上，0 是未安装，1 是已安装
-# 值为 1 时将启用以下选项可用性的检查:
-# mysql-bin-path
-# mysql-username
-# mysql-password
-# database-new-name
-# database-old-name
-dependencies-installed=0
+dependencies-installed=1
 
 
 [Package]
 # 跳过打包的开关选项，1 是跳过，0 是不跳过
-package-skip=0
+package-skip=1
 
 # debian 包的分类名，可选值: "admin" "cli-mono" "comm" "database" "debug" "devel" "doc" "editors" "education" "electronics" "embedded" "fonts" "games" "gnome" "gnu-r" "gnustep" "graphics" "hamradio" "haskell" "httpd" "interpreters" "introspection" "java" "javascript" "kde" "kernel" "libdevel" "libs" "lisp" "localization" "mail" "math" "metapackages" "misc" "net" "news" "ocaml" "oldlibs" "otherosfs" "perl" "php" "python" "ruby" "rust" "science" "shells" "sound" "tasks" "tex" "text" "utils" "vcs" "video" "web" "x11" "xfce" "zope"
 package-section=""
@@ -63,12 +57,12 @@ package-source=""
 
 [Tomcat]
 # 跳过下载配置 Tomcat 的开关选项，1 是跳过，0 是不跳过
-tomcat-skip=0
+tomcat-skip=1
 
 # 对比官网提供的 sha512 校验下载的 Tomcat 压缩包的完整性，需要联网，0 为校验，1 为不校验
-tomcat-integrity-check-skip=1
+tomcat-integrity-check-skip=0
 
-# 需要添加的 jar 包排除项，多个 jar 包请用空格隔开(不限制空格数量)，单个则无需添加逗号，例: aaa.jar bbb.jar ccc.jar
+# 需要添加的 jar 包排除项，多个 jar 包请用空格隔开(不限制空格数量)，单个则无需添加逗号，例: aaa.jar bbb.jar ccc.jar bcprov*.jar
 exclude-jar=""
 
 # 其他 catalina 调试选项，如果写在双引号中的选项本身存在双引号，则在这些双引号前面加上反斜杠以防止读取错误 <\">，例：
@@ -91,7 +85,7 @@ project-name=""
 
 [Mysql]
 # 是否跳过配置 Mysql 的开关选项，1 是跳过，0 是不跳过，如果更新包不需要更新数据库内容的话就可以跳过，生成的包不会对数据库做任何更新
-mysql-skip=0
+mysql-skip=1
 
 # 本地连接 mysql 有权限操作数据库的账户比如 root 账户
 mysql-username=""

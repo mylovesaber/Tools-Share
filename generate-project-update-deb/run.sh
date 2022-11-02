@@ -34,8 +34,9 @@ CheckProfile
 PrepareBuildEnv
 source function/detection/CheckOption.sh
 if [ "$confirmYes" -eq 0 ]; then
+    _warningnoblank "============================"
     _success "选项检查完成，请查看工具收集并预调整或转换的选项参数结果"
-    _success "如果确认无误并执行打包流程，请重新运行工具并增加 -y | --yes 选项"
+    _successnoblank "  如果确认无误并执行打包流程，请重新运行工具并增加 -y | --yes 选项"
     source function/detection/OptionResultOutput.sh
     exit 0
 elif [ "$confirmYes" -eq 1 ]; then

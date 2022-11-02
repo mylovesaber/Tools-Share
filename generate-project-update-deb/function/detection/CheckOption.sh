@@ -209,9 +209,9 @@ case "$tomcatSkip" in
     [ -z "$tomcatIntegrityCheckSkip" ]; then
         _error "启用配置 Tomcat 功能后，以下选项必须填写对应参数："
         _warningnoblank "
-        java-home-name 需要依赖的 java 环境名称
+        java-home-name 需要依赖的java环境名称
         project-name 桌面快捷方式会显示的名称(可中文)
-        project-icon-name 桌面快捷方式会调用的 svg 图标名称
+        project-icon-name 桌面快捷方式会调用的svg图标名称
         tomcat-version 需要配置或下载的Tomcat的版本号
         tomcat-new-port 需要新建的Tomcat端口号
         tomcat-previous-port 上一版本的Tomcat端口号
@@ -223,10 +223,10 @@ case "$tomcatSkip" in
     if [ "$dependenciesInstalled" -eq 1 ]; then
         if [ -z "$tomcatLatestRunningVersion" ] ||
         [ -z "$javaHomeName" ]; then
-            _error "启用配置 Tomcat 功能后，以下 Tomcat 选项必须填写对应参数："
+            _error "启用配置 Tomcat 功能并设置项目底包已安装完成后，以下 Tomcat 选项必须填写对应参数："
             _warningnoblank "
-            java-home-name 需要依赖的 java 环境名称
-            tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的 Tomcat 版本号
+            java-home-name 需要依赖的java环境名称
+            tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号
             "|column -t
             _error "退出中"
             exit 1
@@ -293,7 +293,7 @@ case "$tomcatSkip" in
 
     # exclude-jar(整形成 sed 可以直接用的写法，如果没有则跳过)
     if [ -n "$excludeJar" ]; then
-        excludeJar=$(sed -e 's/^/\\n/g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
+        excludeJar=$(sed -e 's/^/\\n/g; s/[ ]*$//g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
     fi
 
     # catalina-option 如果没有则跳过
@@ -346,7 +346,7 @@ case "$tomcatSkip" in
         fi
     elif [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _warning "未下载此版本的 Tomcat 压缩包，将从网络中获取"
-        _info "开始检查与 Tomcat 官网的连接性"
+        _info "开始检查与 Tomcat 官网的连接性(官网可能抽风，如果失败可尝试反复运行)"
         if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
             _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
             exit 1
