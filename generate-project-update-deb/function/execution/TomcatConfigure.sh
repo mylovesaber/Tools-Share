@@ -8,7 +8,7 @@ NewTomcatBaseConfigure(){
     fi
     if [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
         _info "开始下载指定版本的 Tomcat(官网可能抽风，如果失败可尝试反复运行)"
-        if wget https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz >/dev/null 2>&1; then
+        if wget -P build https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz >/dev/null 2>&1; then
             _success "Tomcat v$tomcatVersion 下载成功"
         else
             _error "下载失败，请重新尝试，退出中"
