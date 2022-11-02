@@ -16,7 +16,8 @@ while true; do
         ;;
     -h | --help)
         printUsage=1
-        exit 0
+        source function/common/CommonFunction.sh
+        Usage
         ;;
     --)
         shift
@@ -29,7 +30,6 @@ done
 # Main
 source function/common/Color.sh
 source function/common/CommonFunction.sh
-[ "$printUsage" -eq 1 ] && Usage
 ArchitectureDetect
 CheckProfile
 PrepareBuildEnv

@@ -2,7 +2,7 @@
 GetValue(){
     awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
-
+_info "开始解析"
 projectName=$(GetValue "project-name")
 projectIconName=$(GetValue "project-icon-name")
 packageDeployPath=$(GetValue "package-deploy-path")
