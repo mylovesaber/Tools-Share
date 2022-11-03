@@ -51,7 +51,7 @@ if [ -z "$packageDeployPath" ]; then
 else
     packageDeployPath=$(sed 's/\/$//g' <<< "$packageDeployPath")
     if [ "$dependenciesInstalled" -eq 1 ] && [ ! -d "$packageDeployPath" ]; then
-        _error "部署到的项目所在家目录不存在，路径可能填写错误或依赖未安装，退出中"
+        _error "部署的项目所在家目录不存在，路径可能填写错误或依赖未安装，退出中"
         exit 1
     fi
 fi
@@ -237,11 +237,16 @@ case "$tomcatSkip" in
         exit 1
     fi
 
+    # java-home-name
+    if [ ! -d "$packageDeployPath/$javaHomeName" ]; then
+        _error "部署的项目所在家目录中不存在已安装的 Java 环境，请检查"
+        exit 1
+    fi
+
     if [ "$dependenciesInstalled" -eq 1 ]; then
-        if [ -z "$tomcatLatestRunningVersion" ] || [ -z "$javaHomeName" ]; then
+        if [ -z "$tomcatLatestRunningVersion" ]; then
             _error "启用配置 Tomcat 功能并设置项目底包已安装完成后，以下 Tomcat 选项必须填写对应参数："
             _warningnoblank "
-            java-home-name 需要依赖的java环境名称
             tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号
             "|column -t
             _error "退出中"
@@ -252,16 +257,10 @@ case "$tomcatSkip" in
                 _error "环境中不存在已安装的指定版本 Tomcat，请检查"
                 exit 1
             fi
-            # java-home-name
-            if [ ! -d "$packageDeployPath/$javaHomeName" ]; then
-                _error "环境中不存在已安装的 Java 环境，请检查"
-                exit 1
-            fi
         fi
     elif [ "$dependenciesInstalled" -eq 0 ]; then
         _warning "dependencies-installed 选项未设置为已安装，将跳过检查以下选项:"
         _warningnoblank "
-        java-home-name 需要依赖的java环境名称
         tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号"|column -t
     else
         _error "dependencies-installed 选项只能是 0(未安装) 或 1(已安装)，退出中"

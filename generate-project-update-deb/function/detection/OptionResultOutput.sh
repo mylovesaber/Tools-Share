@@ -24,10 +24,11 @@ if [ "$tomcatSkip" -eq 0 ]; then
     echo "projectName: $projectName"
     echo "tomcatVersion: $tomcatVersion"
     echo "tomcatNewPort: $tomcatNewPort"
-
-    echo "tomcatLatestRunningVersion: $tomcatLatestRunningVersion"
     echo "tomcatPreviousPort: $tomcatPreviousPort"
     echo "tomcatIntegrityCheckSkip: $tomcatIntegrityCheckSkip"
+    if [ "$tomcatIntegrityCheckSkip" -eq 0 ]; then
+        echo "tomcatLatestRunningVersion: $tomcatLatestRunningVersion"
+    fi
     if [ "$tomcatIntegrityCheckSkip" -eq 0 ] && [ "$deleteTomcatArchive" -eq 1 ]; then
         echo "deleteTomcatArchive: $deleteTomcatArchive"
     fi
