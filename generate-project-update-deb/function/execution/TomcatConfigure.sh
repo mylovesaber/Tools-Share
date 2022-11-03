@@ -83,12 +83,12 @@ GenerateTomcatPostInst(){
         cp -af component/scripts/StartProjectDirectly.sh build/"$packageSource"/combine
         local SHPath="build/$packageSource/combine/StartProjectDirectly.sh"
         sed -i '1d' "$SHPath"
-        sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$SHPath"
-        sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
-        sed -i "s/TOMCAT_LATEST_RUNNING_VERSION/$tomcatLatestRunningVersion/g" "$SHPath"
-        sed -i "s/TOMCAT_PREVIOUS_PORT/$tomcatPreviousPort/g" "$SHPath"
+        sed -i 's/TOMCAT_NEW_PORT/'"$tomcatNewPort"'/g' "$SHPath"
+        sed -i 's/TOMCAT_VERSION/'"$tomcatVersion"'/g' "$SHPath"
+        sed -i 's/TOMCAT_LATEST_RUNNING_VERSION/'"$tomcatLatestRunningVersion"'/g' "$SHPath"
+        sed -i 's/TOMCAT_PREVIOUS_PORT/'"$tomcatPreviousPort"'/g' "$SHPath"
         sed -i 's/PACKAGE_DEPLOY_PATH/'"$packageDeployPath"'/g' "$SHPath"
-        sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
+        sed -i 's/JAVA_HOME_NAME/'"$javaHomeName"'/g' "$SHPath"
     ;;
     "frontend")
         _info "正在为指定前端的方案设置所需钩子脚本"
@@ -132,4 +132,3 @@ GenerateTomcatPostInst(){
 NewTomcatBaseConfigure
 NewTomcatSetProject
 GenerateTomcatPostInst
-_success "指定项目所需的 Tomcat 模块配置完成"
