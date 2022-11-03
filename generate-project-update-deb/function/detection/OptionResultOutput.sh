@@ -58,7 +58,9 @@ if [ "$mysqlSkip" -eq 0 ]; then
     echo "mysqlUsername: $mysqlUsername"
     echo "mysqlPassword: $mysqlPassword"
     echo "databaseOldName: $databaseOldName"
-    echo "databaseBaseName: $databaseBaseName"
+    if [ "$tomcatSkip" -eq 0 ]; then
+        echo "databaseBaseName: $databaseBaseName"
+    fi
     if [ "$dependenciesInstalled" -eq 1 ]; then
         echo "mysqlBinPath: $mysqlBinPath"
         if [ -n "$mysqlBinPath" ]; then

@@ -62,6 +62,10 @@ if [ -n "$commonDate" ]; then
         _error "日期格式错误，请重新输入，例: 20220101"
         exit 1
     fi
+    if [[ ! "$commonDate" =~ ^[0-9]{8}$ ]]; then
+        _error "必须是年(yyyy)月(mm)日(dd)共8位纯数字的日期，请检查"
+        exit 1
+    fi
 elif [ -z "$commonDate" ]; then
     _error "必须指定打包或配置日期"
     exit 1
@@ -416,7 +420,7 @@ case "$mysqlSkip" in
         sql-file-name 要导入的sql文件名
         mysql-username 本地连接mysql有权限操作数据库的用户名
         mysql-password 本地连接mysql有权限操作数据库的账户的密码
-        database-old-name 准备备份的数据库名称"|column -t
+        database-old-name 准备备份或需要被导入的数据库名称"|column -t
         _error "退出中"
         exit 1
     fi
@@ -454,6 +458,8 @@ case "$mysqlSkip" in
             mysqlRealCommand="$mysqlBinPath/bin/mysql"
             mysqldumpRealCommand="$mysqlBinPath/bin/mysqldump"
         elif [ -z "$mysqlBinPath" ]; then
+            _warning "未指定 MySQL 程序目录，工具将自动搜索 MySQL 目录并作为后续其他检测项的默认路径"
+            _warning "请在执行前确认该路径是否为需要的路径"
             mysqlRealCommand=$(which mysql)
             mysqldumpRealCommand=$(which mysqldump)
             mysqlBinPath=$(sed 's/\/bin\/mysql//g' <<< "$mysqlRealCommand")
