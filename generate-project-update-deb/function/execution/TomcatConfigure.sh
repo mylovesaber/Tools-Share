@@ -38,8 +38,8 @@ NewTomcatBaseConfigure(){
                 echo "${catalinaOptionList[$i]}"|sed 's/\\//g' > "$repeatPath"/bin/setenv.sh
             fi
         done
+        chmod +x "$repeatPath"/bin/setenv.sh
     fi
-    chmod +x "$repeatPath"/bin/setenv.sh
     _success "Tomcat 初始化完成"
 }
 
