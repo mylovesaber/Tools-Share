@@ -75,7 +75,7 @@ GenerateTomcatPostInst(){
     case "$tomcatPlan" in
     "none"|"double")
         cp -af component/scripts/StartProjectDirectly.sh build/"$packageSource"/combine
-        local SHPath="build/combine/StartProjectDirectly.sh"
+        local SHPath="build/$packageSource/combine/StartProjectDirectly.sh"
         sed -i '1d' "$SHPath"
         sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$SHPath"
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
@@ -87,7 +87,7 @@ GenerateTomcatPostInst(){
     "frontend")
         local withoutMigrateFolderName="$tomcatFrontendName"
         cp -af component/scripts/MigrateProject.sh build/"$packageSource"/combine
-        local SHPath="build/combine/MigrateProject.sh"
+        local SHPath="build/$packageSource/combine/MigrateProject.sh"
         sed -i '1d' "$SHPath"
         sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$SHPath"
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
@@ -100,7 +100,7 @@ GenerateTomcatPostInst(){
     "backend")
         local withoutMigrateFolderName="$tomcatBackendName"
         cp -af component/scripts/MigrateProject.sh build/"$packageSource"/combine
-        local SHPath="build/combine/MigrateProject.sh"
+        local SHPath="build/$packageSource/combine/MigrateProject.sh"
         sed -i '1d' "$SHPath"
         sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$SHPath"
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
