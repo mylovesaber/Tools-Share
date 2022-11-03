@@ -77,7 +77,10 @@ catalina-option=""
 # 此名称和 package-deploy-path 选项的结果强制绑定，即上面的结果基于 package-deploy-path="/opt/java-1.8.0"
 java-home-name=""
 
-# 图标名称，一定是 svg 图标，不能是png，没有对多分辨率做适配，例: xxx.svg
+# 图标名称，一定是 svg 图标，能根据桌面需求自适应
+# 不能是png，没有对多分辨率做适配且使用此工具需要做的准备工作也很复杂
+# 图标文件名称是否带有后缀无所谓，如果不写会自动加上
+# 例: xxx.svg 或 xxx
 project-icon-name=""
 
 # 项目名称(可以中文，会写入桌面快捷方式的文件中)

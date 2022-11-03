@@ -270,6 +270,11 @@ case "$tomcatSkip" in
     # project-name 暂无检查的需求
 
     # project-icon-name
+    if [[ "$projectIconName" == *".svg" ]]; then
+        :
+    else
+        projectIconName="${projectIconName}.svg"
+    fi
     if [ ! -f source/"$projectIconName" ]; then
         _error "source 文件夹下无此名称的图标文件，请确认名称是否写错或忘记放置图标文件"
         exit 1
