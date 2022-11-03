@@ -44,12 +44,17 @@ elif [ "$confirmYes" -eq 1 ]; then
     _info "开始执行打包流程"
     case $needClean in
     2)
+        _info "开始清理指定项目的总打包目录"
         rm -rf build/"$packageSource"
+        _success "已清理完成"
         ;;
     1)
+        _info "开始彻底清空构建目录"
         rm -rf build/*
+        _success "已清理完成"
         ;;
     0)
+        _success "跳过清理环境流程"
         :
         ;;
     *)

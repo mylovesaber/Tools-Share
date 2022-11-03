@@ -113,5 +113,5 @@ GenerateTomcatPostInst(){
 }
 
 NewTomcatBaseConfigure
-#NewTomcatSetProject
-#GenerateTomcatPostInst
+NewTomcatSetProject
+GenerateTomcatPostInst
