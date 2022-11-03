@@ -1,4 +1,5 @@
 #!/bin/bash
+# 变量
 tomcatNewPort="TOMCAT_NEW_PORT"
 tomcatVersion="TOMCAT_VERSION"
 tomcatNewName="tomcat-$tomcatVersion-$tomcatNewPort"
@@ -9,6 +10,8 @@ packageDeployPath="PACKAGE_DEPLOY_PATH"
 javaHomeName="JAVA_HOME_NAME"
 defaultWebappsFolderNameLine="docs\|examples\|host-manager\|manager\|ROOT"
 withoutMigrateFolderName="WITHOUT_MIGRATE_FOLDER_NAME"
+
+
 cp -a /tmp/$tomcatNewName $packageDeployPath
 mapfile -t needMigrateFolderNameList < <(find $packageDeployPath -maxdepth 1 -type d|grep -v "$defaultWebappsFolderNameLine\|$withoutMigrateFolderName")
 for i in "${needMigrateFolderNameList[@]}";do

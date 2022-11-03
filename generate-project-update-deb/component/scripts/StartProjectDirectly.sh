@@ -1,4 +1,5 @@
 #!/bin/bash
+# 变量
 tomcatNewPort="TOMCAT_NEW_PORT"
 tomcatVersion="TOMCAT_VERSION"
 tomcatNewName="tomcat-$tomcatVersion-$tomcatNewPort"
@@ -8,8 +9,8 @@ tomcatRunningName="tomcat-$tomcatLatestRunningVersion-$tomcatPreviousPort"
 packageDeployPath="PACKAGE_DEPLOY_PATH"
 javaHomeName="JAVA_HOME_NAME"
 
-cp -a /tmp/$tomcatNewName $packageDeployPath
 
+cp -a /tmp/$tomcatNewName $packageDeployPath
 echo ""
 echo "开始配置新版项目的 Tomcat 服务"
 cat > /etc/systemd/system/$tomcatNewName.service << EOF
