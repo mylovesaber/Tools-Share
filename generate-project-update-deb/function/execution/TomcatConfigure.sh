@@ -18,7 +18,9 @@ NewTomcatBaseConfigure(){
     tar -zxf build/apache-tomcat-"$tomcatVersion".tar.gz --strip-components 1 -C "$repeatPath"
     sed -i "s/<Connector port=\"8080/<Connector port=\"$tomcatNewPort/g" "$repeatPath"/conf/server.xml
     if [ -n "$excludeJar" ]; then
-        sed -i "s/jarsToSkip=\\/jarsToSkip=\\$excludeJar/g" "$repeatPath"/conf/catalina.properties
+        for i in "${excludeJarList[@]}"; do
+            sed -i 's/jarsToSkip=\\/jarsToSkip=\\\n'"$i"',\\/g' "$repeatPath"/conf/catalina.properties
+        done
     fi
 
     if [ -n "$catalinaOption" ]; then
@@ -103,5 +105,5 @@ GenerateTomcatPostInst(){
 }
 
 NewTomcatBaseConfigure
-NewTomcatSetProject
-GenerateTomcatPostInst
+#NewTomcatSetProject
+#GenerateTomcatPostInst

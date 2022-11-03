@@ -2,6 +2,8 @@
 GetValue(){
     awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g'
 }
+#GetValue(){ awk /^"$1"/'{print $0}' generate-deb.conf|cut -d'=' -f 2-|sed -e 's/^\"//g;s/\"$//g';}
+
 # 检测通过的不会有任何提醒，不通过的一律报错退出
 _info "开始解析选项，若检测无误将直接打印检测结果以供检查，任何环节检测不通过一律报错退出"
 projectName=$(GetValue "project-name")
@@ -308,9 +310,16 @@ case "$tomcatSkip" in
         exit 1
     fi
 
-    # exclude-jar(整形成 sed 可以直接用的写法，如果没有则跳过)
+    # exclude-jar(在这做整形会在调用的时候报错，这里只收集成数组，后面再整形成 sed 可以直接用的写法，如果没有则跳过)
     if [ -n "$excludeJar" ]; then
-        excludeJar=$(sed -e 's/^[ \t]*//g; s/^/\\n/g; s/[ \t]*$//g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
+        excludeJarNumber=$(awk -F ' ' '{print NF}' <<< "$excludeJar")
+        excludeJarList=()
+        for (( i=1; i<="$excludeJarNumber"; i++ )); do
+            cutExcludeJar=$(awk -F ' ' -v i="$i" '{print $i}' <<< "$excludeJar")
+            cutExcludeJar=$(sed -e 's/^[ \t]*//g; s/[ \t]*$//g' <<< "$cutExcludeJar")
+            mapfile -t -O "${#excludeJarList[@]}" excludeJarList < <(echo "$cutExcludeJar")
+        done
+        #excludeJar=$(sed -e 's/^[ \t]*//g; s/^/\\n/g; s/[ \t]*$//g; s/$/,\\\\/g; s/ /,\\\\ \\n/g' <<< "$excludeJar")
     fi
 
     # catalina-option 如果没有则跳过

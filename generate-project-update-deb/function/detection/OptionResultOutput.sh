@@ -31,7 +31,9 @@ if [ "$tomcatSkip" -eq 0 ]; then
     if [ "$tomcatIntegrityCheckSkip" -eq 0 ] && [ "$deleteTomcatArchive" -eq 1 ]; then
         echo "deleteTomcatArchive: $deleteTomcatArchive"
     fi
-    echo "excludeJar: $excludeJar"
+    for i in "${!excludeJarList[@]}" ; do
+        echo "excludeJar$i: ${excludeJarList[$i]}"
+    done
     for i in "${!catalinaOptionList[@]}" ; do
         echo "catalinaOption$i: ${catalinaOptionList[$i]}"
     done
