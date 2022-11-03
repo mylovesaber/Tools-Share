@@ -1,7 +1,7 @@
 #!/bin/bash
 ImportNewSQLFileToOldDB(){
-    cp -a component/scripts/ImportNewSQLFileToOldDB.sh build/"$packageSource"/combine
     cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+    cp -a component/scripts/ImportNewSQLFileToOldDB.sh build/"$packageSource"/combine
     local SHPath="build/$packageSource/combine/ImportNewSQLFileToOldDB.sh"
     sed -i '1d' "$SHPath"
     sed -i "s|MYSQL_REAL_COMMAND|$mysqlRealCommand|g" "$SHPath"
@@ -26,7 +26,11 @@ MigrateDatabase(){
 }
 
 if [ "$tomcatSkip" -eq 1 ] || [ "$tomcatPlan" = "frontend" ]; then
+    _info "开始设置 MySQL 的导入方案的文件配置和钩子脚本处理"
     ImportNewSQLFileToOldDB
+    _success "导入方案处理完成"
 elif [[ "$tomcatPlan" =~ "backend"|"double"|"none" ]]; then
+    _info "开始设置 MySQL 的迁移方案的文件配置和钩子脚本处理"
     MigrateDatabase
+    _success "迁移方案处理完成"
 fi
