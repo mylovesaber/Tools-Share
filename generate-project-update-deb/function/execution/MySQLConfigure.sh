@@ -2,9 +2,9 @@
 ImportNewSQLFileToOldDB(){
     cp -a component/scripts/ImportNewSQLFileToOldDB.sh build/"$packageSource"/combine
     cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
-    local SHPath="build/combine/ImportNewSQLFileToOldDB.sh"
+    local SHPath="build/$packageSource/combine/ImportNewSQLFileToOldDB.sh"
     sed -i '1d' "$SHPath"
-    sed -i "s/MYSQL_REAL_COMMAND/$mysqlRealCommand/g" "$SHPath"
+    sed -i "s|MYSQL_REAL_COMMAND|$mysqlRealCommand|g" "$SHPath"
     sed -i "s/MYSQL_USERNAME/$mysqlUsername/g" "$SHPath"
     sed -i "s/MYSQL_PASSWORD/$mysqlPassword/g" "$SHPath"
     sed -i "s/DATABASE_OLD_NAME/$databaseOldName/g" "$SHPath"
@@ -13,10 +13,10 @@ ImportNewSQLFileToOldDB(){
 
 MigrateDatabase(){
     cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
-    local SHPath="build/combine/MigrateDatabase.sh"
+    local SHPath="build/$packageSource/combine/MigrateDatabase.sh"
     sed -i '1d' "$SHPath"
-    sed -i "s/MYSQL_REAL_COMMAND/$mysqlRealCommand/g" "$SHPath"
-    sed -i "s/MYSQLDUMP_REAL_COMMAND/$mysqldumpRealCommand/g" "$SHPath"
+    sed -i "s|MYSQL_REAL_COMMAND|$mysqlRealCommand|g" "$SHPath"
+    sed -i "s|MYSQLDUMP_REAL_COMMAND|$mysqldumpRealCommand|g" "$SHPath"
     sed -i "s/MYSQL_USERNAME/$mysqlUsername/g" "$SHPath"
     sed -i "s/MYSQL_PASSWORD/$mysqlPassword/g" "$SHPath"
     sed -i "s/DATABASE_OLD_NAME/$databaseOldName/g" "$SHPath"
