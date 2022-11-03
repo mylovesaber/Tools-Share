@@ -44,7 +44,7 @@ NewTomcatBaseConfigure(){
 }
 
 NewTomcatSetProject(){
-    case "$tomcatPlan" in
+    if case "$tomcatPlan" in
     "none")
         _info "未指定前后端，正在将 source 文件夹中的所有内容复制到 Tomcat 中..."
         mapfile -t folderList < <(find source -maxdepth 1 -type d)
@@ -68,12 +68,18 @@ NewTomcatSetProject(){
     *)
         _error "复制项目出现意外情况，请检查"
         exit 1
-    esac
+    esac; then
+        _success "资源导入构建目录完成"
+    else
+        _error "资源导入构建目录失败，退出中"
+        exit 1
+    fi
 }
 
 GenerateTomcatPostInst(){
-    case "$tomcatPlan" in
+    if case "$tomcatPlan" in
     "none"|"double")
+        _info "正在为指定前后端或不指定的方案设置所需钩子脚本"
         cp -af component/scripts/StartProjectDirectly.sh build/"$packageSource"/combine
         local SHPath="build/$packageSource/combine/StartProjectDirectly.sh"
         sed -i '1d' "$SHPath"
@@ -81,10 +87,11 @@ GenerateTomcatPostInst(){
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
         sed -i "s/TOMCAT_LATEST_RUNNING_VERSION/$tomcatLatestRunningVersion/g" "$SHPath"
         sed -i "s/TOMCAT_PREVIOUS_PORT/$tomcatPreviousPort/g" "$SHPath"
-        sed -i "s/PACKAGE_DEPLOY_PATH/$packageDeployPath/g" "$SHPath"
+        sed -i 's/PACKAGE_DEPLOY_PATH/'"$packageDeployPath"'/g' "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
     ;;
     "frontend")
+        _info "正在为指定前端的方案设置所需钩子脚本"
         local withoutMigrateFolderName="$tomcatFrontendName"
         cp -af component/scripts/MigrateProject.sh build/"$packageSource"/combine
         local SHPath="build/$packageSource/combine/MigrateProject.sh"
@@ -98,6 +105,7 @@ GenerateTomcatPostInst(){
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
     ;;
     "backend")
+        _info "正在为指定后端的方案设置所需钩子脚本"
         local withoutMigrateFolderName="$tomcatBackendName"
         cp -af component/scripts/MigrateProject.sh build/"$packageSource"/combine
         local SHPath="build/$packageSource/combine/MigrateProject.sh"
@@ -111,11 +119,17 @@ GenerateTomcatPostInst(){
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
     ;;
     *)
-        _error "复制项目出现意外情况，请检查"
+        _error "设置项目所需钩子脚本出现意外，请检查"
         exit 1
-    esac
+    esac; then
+        _success "设置项目所需钩子脚本完成"
+    else
+        _error "设置项目所需钩子脚本失败，请检查"
+        exit 1
+    fi
 }
 
 NewTomcatBaseConfigure
 NewTomcatSetProject
 GenerateTomcatPostInst
+_success "指定项目所需的 Tomcat 模块配置完成"
