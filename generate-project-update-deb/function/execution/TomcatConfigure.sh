@@ -83,12 +83,13 @@ GenerateTomcatPostInst(){
         cp -af component/scripts/StartProjectDirectly.sh build/"$packageSource"/combine
         local SHPath="build/$packageSource/combine/StartProjectDirectly.sh"
         sed -i '1d' "$SHPath"
-        sed -i 's/TOMCAT_NEW_PORT/'"$tomcatNewPort"'/g' "$SHPath"
-        sed -i 's/TOMCAT_VERSION/'"$tomcatVersion"'/g' "$SHPath"
-        sed -i 's/TOMCAT_LATEST_RUNNING_VERSION/'"$tomcatLatestRunningVersion"'/g' "$SHPath"
-        sed -i 's/TOMCAT_PREVIOUS_PORT/'"$tomcatPreviousPort"'/g' "$SHPath"
-        sed -i 's/PACKAGE_DEPLOY_PATH/'"$packageDeployPath"'/g' "$SHPath"
-        sed -i 's/JAVA_HOME_NAME/'"$javaHomeName"'/g' "$SHPath"
+        sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$SHPath"
+        sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
+        sed -i "s/TOMCAT_LATEST_RUNNING_VERSION/$tomcatLatestRunningVersion/g" "$SHPath"
+        sed -i "s/TOMCAT_PREVIOUS_PORT/$tomcatPreviousPort/g" "$SHPath"
+        # 传入的变量中有斜杠，导致被sed错误利用，需要使用其他符号替代
+        sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
+        sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
     ;;
     "frontend")
         _info "正在为指定前端的方案设置所需钩子脚本"
