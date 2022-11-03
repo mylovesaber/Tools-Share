@@ -46,19 +46,23 @@ NewTomcatBaseConfigure(){
 NewTomcatSetProject(){
     case "$tomcatPlan" in
     "none")
-        local mapfile -t folderList < <(find source -maxdepth 1 -type d)
+        _info "未指定前后端，正在将 source 文件夹中的所有内容复制到 Tomcat 中..."
+        mapfile -t folderList < <(find source -maxdepth 1 -type d)
         for i in "${folderList[@]}";do
             cp -a "$i" "$repeatPath"/webapps
         done
     ;;
     "double")
+        _info "已指定前后端，正在将 source 文件夹中的前后端包复制到 Tomcat 中..."
         cp -a source/"$tomcatFrontendName" "$repeatPath"/webapps
         cp -a source/"$tomcatBackendName" "$repeatPath"/webapps
     ;;
     "frontend")
+        _info "已指定前端，正在将 source 文件夹中的前端包复制到 Tomcat 中..."
         cp -a source/"$tomcatFrontendName" "$repeatPath"/webapps
     ;;
     "backend")
+        _info "已指定后端，正在将 source 文件夹中的后端包复制到 Tomcat 中..."
         cp -a source/"$tomcatBackendName" "$repeatPath"/webapps
     ;;
     *)
