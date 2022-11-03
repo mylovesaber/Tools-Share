@@ -63,9 +63,11 @@ elif [ "$confirmYes" -eq 1 ]; then
     esac
     if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp ]; then
         mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
-        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
-        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/applications
         mkdir -p build/"$packageSource"/combine
+        if [ "$tomcatSkip" -eq 0 ]; then
+            mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
+            mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/applications
+        fi
     fi
     if [ "$tomcatSkip" -eq 0 ]; then
         source function/execution/TomcatConfigure.sh
