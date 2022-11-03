@@ -15,7 +15,14 @@ NewTomcatBaseConfigure(){
             exit 1
         fi
     fi
-    tar -zxf build/apache-tomcat-"$tomcatVersion".tar.gz --strip-components 1 -C "$repeatPath"
+    _info "开始解压下载的 Tomcat v$tomcatVersion 压缩包"
+    if tar -zxf build/apache-tomcat-"$tomcatVersion".tar.gz --strip-components 1 -C "$repeatPath"; then
+        _success "解压完成"
+    else
+        _error "解压失败，请检查，退出中"
+        exit 1
+    fi
+    _info "开始初始化 Tomcat"
     sed -i "s/<Connector port=\"8080/<Connector port=\"$tomcatNewPort/g" "$repeatPath"/conf/server.xml
     if [ -n "$excludeJar" ]; then
         for i in "${excludeJarList[@]}"; do
@@ -26,13 +33,14 @@ NewTomcatBaseConfigure(){
     if [ -n "$catalinaOption" ]; then
         for i in "${!catalinaOptionList[@]}" ; do
             if [ "$i" -gt 0 ]; then
-                echo "${catalinaOptionList[$i]}" >> "$repeatPath"/bin/setenv.sh
+                echo "${catalinaOptionList[$i]}"|sed 's/\\//g' >> "$repeatPath"/bin/setenv.sh
             elif [ "$i" -eq 0 ]; then
-                echo "${catalinaOptionList[$i]}" > "$repeatPath"/bin/setenv.sh
+                echo "${catalinaOptionList[$i]}"|sed 's/\\//g' > "$repeatPath"/bin/setenv.sh
             fi
         done
     fi
     chmod +x "$repeatPath"/bin/setenv.sh
+    _success "Tomcat 初始化完成"
 }
 
 NewTomcatSetProject(){

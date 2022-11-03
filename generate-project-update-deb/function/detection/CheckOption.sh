@@ -350,24 +350,29 @@ case "$tomcatSkip" in
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
                 _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
                 exit 1
-            else
-                _success "可连接 Tomcat 官网"
-                _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
-                if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" -eq 200 ]; then
-                    _success "指定版本的 Tomcat 可供校验完整性"
-                    _info "正在获取 Tomcat 官网对应版本压缩包的校验值并与本地压缩包对比"
-                    remoteSHA512Sum=$(curl -Ls https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
-                    localSHA512Sum=$(sha512sum build/apache-tomcat-"$tomcatVersion".tar.gz|cut -d' ' -f1)
-                    if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
-                        _success "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验通过"
-                    else
-                        _warning "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验"
-                        deleteTomcatArchive=1
+            fi
+            _success "可连接 Tomcat 官网"
+            _info "开始检查 Tomcat 官网是否存在指定版本的 Tomcat"
+            if [ "$(curl -LIs -o /dev/null -w "%{http_code}" https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512)" -eq 200 ]; then
+                _success "指定版本的 Tomcat 可供校验完整性"
+                _info "正在获取 Tomcat 官网对应版本压缩包的校验值并与本地压缩包对比"
+                remoteSHA512Sum=$(curl -Ls https://archive.apache.org/dist/tomcat/tomcat-"$tomcatFirstVersionNumber"/v"$tomcatVersion"/bin/apache-tomcat-"$tomcatVersion".tar.gz.sha512|cut -d' ' -f1)
+                localSHA512Sum=$(sha512sum build/apache-tomcat-"$tomcatVersion".tar.gz|cut -d' ' -f1)
+                if [ "$remoteSHA512Sum" = "$localSHA512Sum" ]; then
+                    _success "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验通过"
+                    if [ "$needClean" -eq 1 ]; then
+                        _warning "本地存在已通过完整性校验的指定版本 Tomcat 压缩包，指定 need-clean=1 将在执行时删掉此压缩包并重新下载"
+                        _warning "如果确认此压缩包想要被删除，则忽略此警告信息，否则请将选项 need-clean 参数设置为以下任意一种情况:"
+                        _warning "0(构建目录全清空)"
+                        _warning "2(只清空构建目录内的指定项目名称的总目录)"
                     fi
                 else
-                    _error "无法获取指定版本 Tomcat 的校验值，请检查版本号是否指定错误"
-                    exit 1
+                    _warning "本地存在的 $tomcatVersion 版本 Tomcat 压缩包完整性校验失败，将删除本地压缩包并在下次确认打包时重新下载校验"
+                    deleteTomcatArchive=1
                 fi
+            else
+                _error "无法获取指定版本 Tomcat 的校验值，请检查版本号是否指定错误"
+                exit 1
             fi
         fi
     elif [ ! -f build/apache-tomcat-"$tomcatVersion".tar.gz ]; then
