@@ -272,13 +272,13 @@ case "$tomcatSkip" in
     fi
 
     # tomcat-frontend-name
-    if [ -n "$tomcatFrontendName" ] && [ ! -d build/"$tomcatFrontendName" ]; then
+    if [ -n "$tomcatFrontendName" ] && [ ! -d source/"$tomcatFrontendName" ]; then
         _error "指定的前端文件夹不存在，请确认文件夹名填写正确或将前端文件夹放到 source 文件夹下，退出中"
         exit 1
     fi
 
     # tomcat-backend-name
-    if [ -n "$tomcatBackendName" ] && [ ! -d build/"$tomcatBackendName" ]; then
+    if [ -n "$tomcatBackendName" ] && [ ! -d source/"$tomcatBackendName" ]; then
         _error "指定的后端文件夹不存在，请确认文件夹名填写正确或将后端文件夹放到 source 文件夹下，退出中"
         exit 1
     fi
