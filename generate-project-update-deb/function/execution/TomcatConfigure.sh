@@ -101,7 +101,7 @@ GenerateTomcatPostInst(){
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
         sed -i "s/TOMCAT_LATEST_RUNNING_VERSION/$tomcatLatestRunningVersion/g" "$SHPath"
         sed -i "s/TOMCAT_PREVIOUS_PORT/$tomcatPreviousPort/g" "$SHPath"
-        sed -i "s/PACKAGE_DEPLOY_PATH/$packageDeployPath/g" "$SHPath"
+        sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
     ;;
@@ -115,7 +115,7 @@ GenerateTomcatPostInst(){
         sed -i "s/TOMCAT_VERSION/$tomcatVersion/g" "$SHPath"
         sed -i "s/TOMCAT_LATEST_RUNNING_VERSION/$tomcatLatestRunningVersion/g" "$SHPath"
         sed -i "s/TOMCAT_PREVIOUS_PORT/$tomcatPreviousPort/g" "$SHPath"
-        sed -i "s/PACKAGE_DEPLOY_PATH/$packageDeployPath/g" "$SHPath"
+        sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
     ;;
