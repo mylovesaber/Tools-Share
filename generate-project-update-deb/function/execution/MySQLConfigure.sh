@@ -13,6 +13,7 @@ ImportNewSQLFileToOldDB(){
 
 MigrateDatabase(){
     cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+    cp -a component/scripts/MigrateDatabase.sh build/"$packageSource"/combine
     local SHPath="build/$packageSource/combine/MigrateDatabase.sh"
     sed -i '1d' "$SHPath"
     sed -i "s|MYSQL_REAL_COMMAND|$mysqlRealCommand|g" "$SHPath"
