@@ -8,9 +8,10 @@ tomcatPreviousPort="TOMCAT_PREVIOUS_PORT"
 tomcatRunningName="tomcat-$tomcatLatestRunningVersion-$tomcatPreviousPort"
 packageDeployPath="PACKAGE_DEPLOY_PATH"
 javaHomeName="JAVA_HOME_NAME"
+packageSource="PACKAGE_SOURCE"
 
 
-cp -a /tmp/$tomcatNewName $packageDeployPath
+cp -a /tmp/"$packageSource"/$tomcatNewName $packageDeployPath
 echo ""
 echo "开始配置新版项目的 Tomcat 服务"
 cat > /etc/systemd/system/$tomcatNewName.service << EOF

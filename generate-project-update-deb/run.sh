@@ -61,8 +61,8 @@ elif [ "$confirmYes" -eq 1 ]; then
         _error "清理构建目录时出现未知情况，请检查"
         exit 1
     esac
-    if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp ]; then
-        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+    if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource" ]; then
+        mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"
         mkdir -p build/"$packageSource"/combine
         if [ "$tomcatSkip" -eq 0 ]; then
             mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable

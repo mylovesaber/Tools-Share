@@ -1,5 +1,5 @@
 #!/bin/bash
-repeatPath="build/$packageSource/$packageSource-$packageVersion/tmp/tomcat-$tomcatVersion-$tomcatNewPort"
+repeatPath="build/$packageSource/$packageSource-$packageVersion/tmp/$packageSource/tomcat-$tomcatVersion-$tomcatNewPort"
 NewTomcatBaseConfigure(){
     mkdir -p "$repeatPath"
     echo "$commonDate" > "$repeatPath"/build-date
@@ -46,7 +46,7 @@ NewTomcatBaseConfigure(){
 NewTomcatSetProject(){
     if case "$tomcatPlan" in
     "none")
-        _info "未指定前后端，正在将 source 文件夹中的所有内容复制到 Tomcat 中..."
+        _info "未指定前后端，正在将 source 文件夹中的所有文件夹复制到 Tomcat 中(暂不支持war包文件)..."
         mapfile -t folderList < <(find source -maxdepth 1 -type d)
         for i in "${folderList[@]}";do
             cp -a "$i" "$repeatPath"/webapps
@@ -90,6 +90,7 @@ GenerateTomcatPostInst(){
         # 传入的变量中有斜杠，导致被sed错误利用，需要使用其他符号替代
         sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
+        sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
     ;;
     "frontend")
         _info "正在为指定前端的方案设置所需钩子脚本"
@@ -104,6 +105,7 @@ GenerateTomcatPostInst(){
         sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
+        sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
     ;;
     "backend")
         _info "正在为指定后端的方案设置所需钩子脚本"
@@ -118,6 +120,7 @@ GenerateTomcatPostInst(){
         sed -i "s|PACKAGE_DEPLOY_PATH|$packageDeployPath|g" "$SHPath"
         sed -i "s/JAVA_HOME_NAME/$javaHomeName/g" "$SHPath"
         sed -i "s/WITHOUT_MIGRATE_FOLDER_NAME/$withoutMigrateFolderName/g" "$SHPath"
+        sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
     ;;
     *)
         _error "设置项目所需钩子脚本出现意外，请检查"

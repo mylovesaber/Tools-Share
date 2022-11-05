@@ -1,6 +1,6 @@
 #!/bin/bash
 ImportNewSQLFileToOldDB(){
-    cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+    cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"
     cp -a component/scripts/ImportNewSQLFileToOldDB.sh build/"$packageSource"/combine
     local SHPath="build/$packageSource/combine/ImportNewSQLFileToOldDB.sh"
     sed -i '1d' "$SHPath"
@@ -12,7 +12,7 @@ ImportNewSQLFileToOldDB(){
 }
 
 MigrateDatabase(){
-    cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp
+    cp -a source/"$sqlFileName" build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"
     cp -a component/scripts/MigrateDatabase.sh build/"$packageSource"/combine
     local SHPath="build/$packageSource/combine/MigrateDatabase.sh"
     sed -i '1d' "$SHPath"
