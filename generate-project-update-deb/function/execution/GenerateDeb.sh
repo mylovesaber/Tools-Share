@@ -6,6 +6,7 @@ GenerateOrigArchive(){
 }
 
 ModifyDebianFolder(){
+    _info "开始设置安装包必要参数"
     cat > debian/control <<EOF
 Source: $packageSource
 Section: $packageSection
@@ -37,9 +38,11 @@ EOF
 tmp/$packageSource /opt
 usr/share/icons/hicolor/scalable/$projectIconName /usr/share/icons/hicolor/scalable
 EOF
+    _success "安装包必要参数设置完成"
 }
 
 HookScriptsCombine(){
+    _info "开始整合钩子脚本"
     touch debian/postinst
     chmod +x debian/postinst
     echo -e "#!/bin/bash\n" > debian/postinst
@@ -99,6 +102,7 @@ HookScriptsCombine(){
         cat ../combine/ImportNewSQLFileToOldDB.sh >> debian/postinst
         _success "MySQL 导入方案的钩子脚本合并完成"
     fi
+    _success "钩子脚本整合完成"
 }
 
 GenerateFinalDeb(){

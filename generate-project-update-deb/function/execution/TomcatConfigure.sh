@@ -134,6 +134,7 @@ GenerateTomcatPostInst(){
 }
 
 PlaceDesktopFile(){
+    _info "开始配置程序列表和桌面图标信息"
     cp -a source/"$projectIconName" build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
     cp -a component/desktopfile/* build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"/desktopfile
     local desktopPath="build/$packageSource/$packageSource-$packageVersion/tmp/$packageSource/desktopfile"
@@ -150,6 +151,7 @@ PlaceDesktopFile(){
     sed -i '1d' "$SHPath"
     sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
     sed -i "s/DESKTOP_FILE_NAME/$desktopFileName/g" "$SHPath"
+    _success "程序列表和桌面图标信息配置完成"
 }
 
 NewTomcatBaseConfigure
