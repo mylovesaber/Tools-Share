@@ -133,6 +133,26 @@ GenerateTomcatPostInst(){
     fi
 }
 
+PlaceDesktopFile(){
+    cp -a source/"$projectIconName" build/"$packageSource"/"$packageSource"-"$packageVersion"/usr/share/icons/hicolor/scalable
+    cp -a component/desktopfile/* build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"/desktopfile
+    local desktopPath="build/$packageSource/$packageSource-$packageVersion/tmp/$packageSource/desktopfile"
+    mapfile -t desktopFileList < <(find "$desktopPath" -maxdepth 1 -type f)
+    for i in "${desktopFileList[@]}";do
+        sed -i "s/PROJECT_NAME/$projectName/g" "$i"
+        sed -i "s/PROJECT_ICON_NAME/$projectIconName/g" "$i"
+        sed -i "s/TOMCAT_NEW_PORT/$tomcatNewPort/g" "$i"
+        sed -i "s/REQUEST_MAPPING_NAME/$requestMappingName/g" "$i"
+    done
+
+    cp -af component/scripts/PlaceDesktopFile.sh build/"$packageSource"/combine
+    local SHPath="build/$packageSource/combine/PlaceDesktopFile.sh"
+    sed -i '1d' "$SHPath"
+    sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
+    sed -i "s/DESKTOP_FILE_NAME/$desktopFileName/g" "$SHPath"
+}
+
 NewTomcatBaseConfigure
 NewTomcatSetProject
 GenerateTomcatPostInst
+PlaceDesktopFile

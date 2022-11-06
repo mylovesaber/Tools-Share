@@ -8,6 +8,8 @@ GetValue(){
 _info "开始解析选项，若检测无误将直接打印检测结果以供检查，任何环节检测不通过一律报错退出"
 projectName=$(GetValue "project-name")
 projectIconName=$(GetValue "project-icon-name")
+desktopFileName=$(GetValue "desktop-file-name")
+requestMappingName=$(GetValue "request-mapping-name")
 packageDeployPath=$(GetValue "package-deploy-path")
 packageSkip=$(GetValue "package-skip")
 packageSection=$(GetValue "package-section")
@@ -220,6 +222,8 @@ case "$tomcatSkip" in
     [ -z "$javaHomeName" ] ||
     [ -z "$projectName" ] ||
     [ -z "$projectIconName" ] ||
+    [ -z "$desktopFileName" ] ||
+    [ -z "$requestMappingName" ] ||
     [ -z "$tomcatVersion" ] ||
     [ -z "$tomcatNewPort" ] ||
     [ -z "$tomcatPreviousPort" ] ||
@@ -229,6 +233,8 @@ case "$tomcatSkip" in
         java-home-name 需要依赖的java环境名称
         project-name 桌面快捷方式会显示的名称(可中文)
         project-icon-name 桌面快捷方式会调用的svg图标名称
+        desktop-file-name 桌面快捷方式图标文件名
+        request-mapping-name 链接拼接名
         tomcat-version 需要配置或下载的Tomcat的版本号
         tomcat-new-port 需要新建的Tomcat端口号
         tomcat-previous-port 上一版本的Tomcat端口号
@@ -241,29 +247,6 @@ case "$tomcatSkip" in
     if [ ! -d "$packageDeployPath/$javaHomeName" ]; then
         _error "部署的项目所在家目录中不存在已安装的 Java 环境，请检查"
         exit 1
-    fi
-
-    if [ "$dependenciesInstalled" -eq 1 ]; then
-        if [ -z "$tomcatLatestRunningVersion" ]; then
-            _error "启用配置 Tomcat 功能并设置项目底包已安装完成后，以下 Tomcat 选项必须填写对应参数："
-            _warningnoblank "
-            tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号
-            "|column -t
-            _error "退出中"
-            exit 1
-        else
-            # tomcat-latest-running-version
-            if [ ! -d "$packageDeployPath"/tomcat-"$tomcatLatestRunningVersion"-"$tomcatPreviousPort" ]; then
-                _error "环境中不存在已安装的指定版本 Tomcat，请检查"
-                exit 1
-            fi
-        fi
-    elif [ "$dependenciesInstalled" -eq 0 ]; then
-        _warning "dependencies-installed 选项未设置为已安装，将跳过检查以下选项:"
-        _warningnoblank "
-        tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号"|column -t
-    else
-        _error "dependencies-installed 选项只能是 0(未安装) 或 1(已安装)，退出中"
     fi
 
     # project-name 暂无检查的需求
@@ -300,6 +283,47 @@ case "$tomcatSkip" in
         tomcatPlan="frontend"
     elif [ -n "$tomcatBackendName" ]; then
         tomcatPlan="backend"
+    fi
+
+    # request-mapping-name
+    requestMappingName=$(sed -e 's/^\///g; s/\/$//g' <<< "$requestMappingName")
+
+    if [ "$dependenciesInstalled" -eq 1 ]; then
+        if [ -z "$tomcatLatestRunningVersion" ]; then
+            _error "启用配置 Tomcat 功能并设置项目底包已安装完成后，以下 Tomcat 选项必须填写对应参数："
+            _warningnoblank "
+            tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号
+            "|column -t
+            _error "退出中"
+            exit 1
+        else
+            # tomcat-latest-running-version
+            if [ ! -d "$packageDeployPath"/tomcat-"$tomcatLatestRunningVersion"-"$tomcatPreviousPort" ]; then
+                _error "环境中不存在已安装的指定版本 Tomcat，请检查"
+                exit 1
+            fi
+        fi
+
+        # desktop-file-name
+        if [ -n "$desktopFileName" ];then
+            if [[ "$desktopFileName" == *".desktop" ]]; then
+                :
+            else
+                desktopFileName="$desktopFileName.desktop"
+            fi
+            if [ ! -f /usr/share/applications/"$desktopFileName" ]; then
+                _error "在已安装底包的环境中未发现此名称的桌面图标文件，假设能执行的话，将出现系统程序列表的老版本残留问题"
+                _error "因此请检查是否写错名称或底包未成功安装"
+                exit 1
+            fi
+        fi
+    elif [ "$dependenciesInstalled" -eq 0 ]; then
+        _warning "dependencies-installed 选项未设置为已安装，将跳过检查以下选项:"
+        _warningnoblank "
+        tomcat-latest-running-version 已在目标系统中运行的最新版本项目所用的Tomcat版本号
+        desktop-file-name 桌面快捷方式图标文件名"|column -t
+    else
+        _error "dependencies-installed 选项只能是 0(未安装) 或 1(已安装)，退出中"
     fi
 
     # tomcat-new-port

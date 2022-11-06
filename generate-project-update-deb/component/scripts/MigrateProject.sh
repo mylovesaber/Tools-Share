@@ -12,7 +12,7 @@ defaultWebappsFolderNameLine="docs\|examples\|host-manager\|manager\|ROOT"
 withoutMigrateFolderName="WITHOUT_MIGRATE_FOLDER_NAME"
 packageSource="PACKAGE_SOURCE"
 
-cp -a /tmp/"$packageSource"/$tomcatNewName $packageDeployPath
+cp -a /tmp/$packageSource/$tomcatNewName $packageDeployPath
 mapfile -t needMigrateFolderNameList < <(find $packageDeployPath -maxdepth 1 -type d|grep -v "$defaultWebappsFolderNameLine\|$withoutMigrateFolderName")
 for i in "${needMigrateFolderNameList[@]}";do
     cp -a "$i" "$packageDeployPath/$tomcatNewName/webapps"
