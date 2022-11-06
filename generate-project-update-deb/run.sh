@@ -85,5 +85,6 @@ elif [ "$confirmYes" -eq 1 ]; then
             source function/execution/GenerateDeb.sh
         fi
     fi
+    cd ../../../ || exit 1
 fi
 

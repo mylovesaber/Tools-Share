@@ -178,7 +178,7 @@ case "$packageSkip" in
         packageDepends="\\\${shlibs:Depends}, \\\${misc:Depends}"
     else
         packageDepends=$(sed "s/^/\\\\\${shlibs:Depends}, \\\\\${misc:Depends}, /g" <<< "$packageDepends")
-        packageDepends="${packageDepends//^/\\\${shlibs:Depends}, \\\${misc:Depends}/}"
+#        packageDepends="${packageDepends//^/\\\${shlibs:Depends}, \\\${misc:Depends}/}"
     fi
 
     # package-architecture

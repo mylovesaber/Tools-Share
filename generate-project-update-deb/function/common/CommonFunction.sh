@@ -70,4 +70,30 @@ PrepareBuildEnv(){
     fi
 }
 
+
+SpendingTime(){
+    local time1
+    time1=$(date +%s)
+    $1
+    local time2
+    time2=$(date +%s)
+    local seconds=$(( time2 - time1 ))
+    if [ "$seconds" -ge 86400 ]; then
+        local dayCount=$((seconds/86400))
+        local hourCount=$((seconds%86400/3600))
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $dayCount 天 $hourCount 小时 $minuteCount 分钟 $secondCount 秒"
+    elif [ "$seconds" -ge 3600 ]; then
+        local hourCount=$((seconds%86400/3600))
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $hourCount 小时 $minuteCount 分钟 $secondCount 秒"
+    elif [ "$seconds" -ge 60 ]; then
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $minuteCount 分钟 $secondCount 秒"
+    fi
+}
+
 "$@"

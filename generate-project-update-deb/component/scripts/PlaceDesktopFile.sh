@@ -24,6 +24,7 @@ elif [ "$noBrowserFound" -eq 0 ]; then
         cp -af /usr/share/applications/$desktopFileName.desktop "$i"
         chmod 755 "$i"/$desktopFileName.desktop
         userName=$(awk -F '/' '{print $3}' <<< "$i")
-        chown "${userName}": "$i"/archivecollectjswx.desktop
+        chown "${userName}": "$i"/$desktopFileName.desktop
     done
 fi
+
