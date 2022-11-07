@@ -61,6 +61,7 @@ elif [ "$confirmYes" -eq 1 ]; then
         _error "清理构建目录时出现未知情况，请检查"
         exit 1
     esac
+    _info "开始创建必要文件夹结构"
     if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource" ]; then
         mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"
         mkdir -p build/"$packageSource"/combine
@@ -69,15 +70,21 @@ elif [ "$confirmYes" -eq 1 ]; then
             mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"/desktopfile
         fi
     fi
+    _success "必要文件夹结构创建完成"
     if [ "$tomcatSkip" -eq 0 ]; then
+        _info "开始配置 Tomcat"
         source function/execution/TomcatConfigure.sh
+        _success "Tomcat 配置完成"
     fi
 
     if [ "$mysqlSkip" -eq 0 ]; then
+        _info "开始配置 MySQL"
         source function/execution/MySQLConfigure.sh
+        _success "MySQL 配置完成"
     fi
 
     if [ "$packageSkip" -eq 0 ]; then
+        _info "开始执行打包流程"
         if [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
             _error "Tomcat 或 MySQL 的配置不能同时跳过，退出中"
             exit 1
@@ -85,6 +92,8 @@ elif [ "$confirmYes" -eq 1 ]; then
             source function/execution/GenerateDeb.sh
         fi
     fi
-    cd ../../../ || exit 1
+    if [ ! -d function/common ]; then
+        cd ../../../ || exit 1
+    fi
 fi
 
