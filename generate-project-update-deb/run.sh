@@ -91,6 +91,9 @@ elif [ "$confirmYes" -eq 1 ]; then
         else
             source function/execution/GenerateDeb.sh
         fi
+    elif [ "$packageSkip" -eq 1 ] && [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
+        _error "Tomcat/MySQL 和打包流程的配置不能同时跳过，退出中"
+        exit 1
     fi
     if [ ! -d function/common ]; then
         cd ../../../ || exit 1
