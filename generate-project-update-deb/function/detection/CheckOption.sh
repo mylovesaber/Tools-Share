@@ -175,7 +175,7 @@ case "$packageSkip" in
 
     # package-depends
     if [ -z "$packageDepends" ]; then
-        packageDepends="\\${shlibs:Depends}, \\${misc:Depends}"
+        packageDepends="\${shlibs:Depends}, \${misc:Depends}"
     else
         packageDepends=$(sed "s/^/\\\\\${shlibs:Depends}, \\\\\${misc:Depends}, /g" <<< "$packageDepends")
 #        packageDepends="${packageDepends//^/\\\${shlibs:Depends}, \\\${misc:Depends}/}"
