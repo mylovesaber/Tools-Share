@@ -7,23 +7,16 @@ GenerateOrigArchive(){
 
 ModifyDebianFolder(){
     _info "开始设置安装包必要参数"
-    cat > debian/control <<EOF
-Source: $packageSource
-Section: $packageSection
-Priority: $packagePriority
-Maintainer: $packageMaintainer
-Build-Depends: debhelper (>=9)
-Standards-Version: 3.9.6
-Homepage: $packageHomepage
-#Vcs-Git: git://anonscm.debian.org/collab-maint/$packageSource.git
-#Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/$packageSource.git
-
-Package: $packageName
-Architecture: $packageArchitecture
-Depends: $packageDepends
-Description: $packageDescription
-$packageMoreDescription
-EOF
+    sed -i "/^Source:/c\Source: $packageSource" debian/control
+    sed -i "/^Section:/c\Section: $packageSection" debian/control
+    sed -i "/^Priority:/c\Priority: $packagePriority" debian/control
+    sed -i "/^Maintainer:/c\Maintainer: $packageMaintainer" debian/control
+    sed -i "/^Homepage:/c\Homepage: $packageHomepage" debian/control
+    sed -i "/^Package:/c\Package: $packageName" debian/control
+    sed -i "/^Architecture:/c\Architecture: $packageArchitecture" debian/control
+    sed -i "/^Depends:/c\Depends: $packageDepends" debian/control
+    sed -i "/^Description:/c\Description: $packageDescription" debian/control
+    sed -i "/insert long description, indented with spaces/c\ $packageMoreDescription" debian/control
 
     cat << EOF >> debian/rules
 override_dh_auto_build:

@@ -16,6 +16,7 @@ Usage(){
 ArchitectureDetect(){
     case $(dpkg-architecture |awk -F '=' /DEB_HOST_ARCH=/'{print $2}') in
         "mips64el") CPUArchitecture="mips64el";;
+        "loongarch64") CPUArchitecture="loongarch64";;
         "amd64") CPUArchitecture="amd64";echo "暂未测试可用性，请自行测试";;
         *) _error "未知 CPU 架构或暂未适配此 CPU 架构，请检查"; exit 1
     esac
