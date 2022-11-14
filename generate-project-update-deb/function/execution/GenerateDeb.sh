@@ -104,7 +104,12 @@ GenerateFinalDeb(){
     _success "安装包生成完成"
     _info "正在将生成的安装包复制到 output 文件夹中"
     cp -af ../*.deb ../../../output
-    _success "打包流程结束，生成的安装包已放置到此路径下: $(pwd ../../../output)"
+    local outputPath
+    if cd ../../../output >/dev/null 2>&1; then
+        outputPath=$(pwd)
+        cd - || exit 1
+    fi
+    _success "打包流程结束，生成的安装包已放置到此路径下: $outputPath"
 }
 
 cd build/"$packageSource"/"$packageSource"-"$packageVersion" || exit 1
