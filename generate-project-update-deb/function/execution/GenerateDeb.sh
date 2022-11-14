@@ -28,7 +28,7 @@ override_dh_strip:
 EOF
 
     cat > debian/install <<EOF
-tmp/$packageSource /opt
+tmp/$packageSource /tmp
 usr/share/icons/hicolor/scalable/$projectIconName /usr/share/icons/hicolor/scalable
 EOF
     _success "安装包必要参数设置完成"
