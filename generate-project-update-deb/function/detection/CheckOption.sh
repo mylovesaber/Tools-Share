@@ -380,7 +380,7 @@ case "$tomcatSkip" in
             _info "已开启 Tomcat 资源包完整性检查"
             _info "开始检查与 Tomcat 官网的连接性"
             if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
-                _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
+                _error "无法连接 Tomcat 官网，请检查网络连接或重新运行检查流程(首次运行时，网站可能会抽风)，退出中"
                 exit 1
             fi
             _success "可连接 Tomcat 官网"
@@ -411,7 +411,7 @@ case "$tomcatSkip" in
         _warning "未下载此版本的 Tomcat 压缩包(仅限识别apache-tomcat-x.x.x.tar.gz)，将从网络中获取"
         _info "开始检查与 Tomcat 官网的连接性(官网可能抽风，如果失败可尝试反复运行)"
         if ! timeout 10s ping -c2 -W1 archive.apache.org > /dev/null 2>&1; then
-            _error "无法连接 Tomcat 官网，请检查网络连接，退出中"
+            _error "无法连接 Tomcat 官网，请检查网络连接或重新运行检查流程(首次运行时，网站可能会抽风)，退出中"
             exit 1
         else
             _success "可连接 Tomcat 官网"
