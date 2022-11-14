@@ -107,7 +107,7 @@ GenerateFinalDeb(){
     local outputPath
     if cd ../../../output >/dev/null 2>&1; then
         outputPath=$(pwd)
-        cd - || exit 1
+        cd - >/dev/null 2>&1 || exit 1
     fi
     _success "打包流程结束，生成的安装包已放置到此路径下: $outputPath"
 }
