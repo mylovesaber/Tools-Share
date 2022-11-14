@@ -15,8 +15,9 @@ done
 
 if [ "$noBrowserFound" -eq 1 ]; then
     echo "没有找到已适配的浏览器软件，暂时只支持以下浏览器："
-    echo "奇安信安全浏览器"
+    echo "龙芯浏览器"
     echo "360 安全浏览器"
+    echo "奇安信安全浏览器"
     echo "firefox(火狐)浏览器"
 elif [ "$noBrowserFound" -eq 0 ]; then
     mapfile -t desktopPath < <(find /home -type d -name "桌面")
