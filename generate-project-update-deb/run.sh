@@ -26,6 +26,10 @@ while true; do
 done
 
 # Main
+if [ "$(pwd|awk -F '/' '{print NF}')" != "generate-project-update-deb" ]; then
+    echo "必须在 generate-project-update-deb 文件夹路径下执行 run.sh，退出中"
+    exit 1
+fi
 source function/common/Color.sh
 source function/common/CommonFunction.sh
 [ "$printUsage" -eq 1 ] && Usage
@@ -61,6 +65,23 @@ elif [ "$confirmYes" -eq 1 ]; then
         _error "清理构建目录时出现未知情况，请检查"
         exit 1
     esac
+
+    if [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
+        case "$packageSkip" in
+        0)
+            _error "Tomcat 或 MySQL 的配置不能同时跳过，退出中"
+            exit 1
+        ;;
+        1)
+            _error "Tomcat/MySQL/打包 的配置不能同时跳过，退出中"
+            exit 1
+        ;;
+        *)
+            _error "package-skip 的值只能为 0 或 1，退出中"
+            exit 1
+        esac
+    fi
+
     _info "开始创建必要文件夹结构"
     if [ ! -d build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource" ]; then
         mkdir -p build/"$packageSource"/"$packageSource"-"$packageVersion"/tmp/"$packageSource"
@@ -85,15 +106,7 @@ elif [ "$confirmYes" -eq 1 ]; then
 
     if [ "$packageSkip" -eq 0 ]; then
         _info "开始执行打包流程"
-        if [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
-            _error "Tomcat 或 MySQL 的配置不能同时跳过，退出中"
-            exit 1
-        else
-            source function/execution/GenerateDeb.sh
-        fi
-    elif [ "$packageSkip" -eq 1 ] && [ "$tomcatSkip" -eq 1 ] && [ "$mysqlSkip" -eq 1 ]; then
-        _error "Tomcat/MySQL 和打包流程的配置不能同时跳过，退出中"
-        exit 1
+        source function/execution/GenerateDeb.sh
     fi
     if [ ! -d function/common ]; then
         cd ../../../ || exit 1
