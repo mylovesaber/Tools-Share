@@ -26,7 +26,7 @@ while true; do
 done
 
 # Main
-if [ "$(pwd|awk -F '/' '{print NF}')" != "generate-project-update-deb" ]; then
+if [ "$(pwd|awk -F '/' '{print $NF}')" != "generate-project-update-deb" ]; then
     echo "必须在 generate-project-update-deb 文件夹路径下执行 run.sh，退出中"
     exit 1
 fi
