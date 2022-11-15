@@ -39,10 +39,10 @@ WantedBy=default.target
 EOF
 systemctl daemon-reload
 systemctl start $tomcatNewName.service 1>& /dev/null
-echo "正在更新 Tomcat 配置"
+echo "正在停止 Tomcat 配置"
 tomcatIsActive=$(systemctl is-active $tomcatNewName.service)
 if [ "${tomcatIsActive}" = "active" ]; then
-	echo "服务正在运行，正在停止"
+	echo "检测到服务正在运行，正在停止"
 	systemctl stop $tomcatNewName.service 1>& /dev/null
 	sleep 2
 fi
@@ -57,9 +57,13 @@ if pgrep -f $tomcatNewName >/dev/null 2>&1; then
 	kill "$(pgrep -f $tomcatNewName)"
 	sleep 2
 fi
-if [ "$(ps aux|grep -c tomcat)" -gt 1 ]; then
-	echo "发现残留 Tomcat 进程"
+if [ "$(ps aux|grep -c $tomcatNewName)" -gt 2 ]; then
+	echo "发现残留 Tomcat 进程，请手动检查问题来源"
+else
+    echo "新版项目的 Tomcat 服务已停止"
 fi
+echo ""
+echo "开始更新 Tomcat 服务配置文件"
 cat > /etc/systemd/system/$tomcatNewName.service << EOF
 [Unit]
 Description=Tomcat
@@ -79,6 +83,9 @@ Restart=always
 WantedBy=default.target
 EOF
 systemctl daemon-reload
+echo "Tomcat 服务配置文件更新完成"
+echo ""
+echo "开始启动 Tomcat 新版本服务"
 systemctl enable $tomcatNewName.service --now 1>& /dev/null
 sleep 2
 tomcatIsActive=$(systemctl is-active $tomcatNewName.service)
@@ -120,8 +127,8 @@ for i in "${needRemoveTomcatList[@]}";do
     rm -rf "$i"
 done
 
-if [ "$(ps aux|grep -c tomcat)" -gt 2 ]; then
-    echo "发现残留 Tomcat 进程"
+if [ "$(ps aux|grep -c tomcat)" -gt 3 ]; then
+    echo "发现残留 Tomcat 进程，请手动检查问题来源"
 else
     echo "Tomcat 服务停止并清理完成"
 fi

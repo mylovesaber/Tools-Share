@@ -38,7 +38,7 @@ CheckProfile(){
 
 PrepareBuildEnv(){
     _info "开始检查系统依赖包安装情况"
-    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen" "curl")
+    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen" "curl" "nano")
     local needInstall=0
     for i in "${buildDeps[@]}"; do
         if ! dpkg -l|awk -F ' ' '{print $2}'|grep "^$i" >/dev/null 2>&1; then
@@ -51,7 +51,7 @@ PrepareBuildEnv(){
         local COUNT=0
         if ! while [ $COUNT -le 5 ]; do
             apt update
-            if ! apt install dh-make build-essential devscripts debhelper tree screen curl -yqq; then
+            if ! apt install dh-make build-essential devscripts debhelper tree screen curl nano -yqq; then
                 _warning "系统源抽风，即将重试"
                 COUNT=$((COUNT + 1))
                 continue
