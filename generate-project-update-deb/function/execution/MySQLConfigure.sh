@@ -9,6 +9,7 @@ ImportNewSQLFileToOldDB(){
     sed -i "s/MYSQL_PASSWORD/$mysqlPassword/g" "$SHPath"
     sed -i "s/DATABASE_OLD_NAME/$databaseOldName/g" "$SHPath"
     sed -i "s/SQL_FILE_NAME/$sqlFileName/g" "$SHPath"
+    sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
 }
 
 MigrateDatabase(){
@@ -23,6 +24,7 @@ MigrateDatabase(){
     sed -i "s/DATABASE_OLD_NAME/$databaseOldName/g" "$SHPath"
     sed -i "s/DATABASE_NEW_NAME/$databaseNewName/g" "$SHPath"
     sed -i "s/SQL_FILE_NAME/$sqlFileName/g" "$SHPath"
+    sed -i "s/PACKAGE_SOURCE/$packageSource/g" "$SHPath"
 }
 
 if [ "$tomcatSkip" -eq 1 ] || [ "$tomcatPlan" = "frontend" ]; then
