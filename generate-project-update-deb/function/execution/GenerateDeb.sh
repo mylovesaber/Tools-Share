@@ -29,8 +29,12 @@ EOF
 
     cat > debian/install <<EOF
 tmp/$packageSource /tmp
+EOF
+    if [ "$tomcatSkip" -eq 0 ]; then
+        cat > debian/install <<EOF
 usr/share/icons/hicolor/scalable/$projectIconName /usr/share/icons/hicolor/scalable
 EOF
+    fi
     _success "安装包必要参数设置完成"
 }
 
