@@ -9,22 +9,21 @@ sqlFileName="SQL_FILE_NAME"
 mysqldumpRealCommand="MYSQLDUMP_REAL_COMMAND"
 packageSource="PACKAGE_SOURCE"
 
-if $mysqlRealCommand -u"$mysqlUsername" -p"$mysqlPassword" <<< "CREATE DATABASE IF NOT EXISTS $databaseNewName;" >/dev/null 2>&1; then
+if MYSQL_PWD="$mysqlPassword" $mysqlRealCommand -u"$mysqlUsername" -e "CREATE DATABASE IF NOT EXISTS $databaseNewName;" 1>/dev/null; then
     echo "新数据库创建完成"
 else
     echo "新数据库创建失败，请手动检查环境"
 fi
 
-if $mysqldumpRealCommand -u"$mysqlUsername" -p"$mysqlPassword" $databaseOldName | $mysqlRealCommand -u"$mysqlUsername" -p"$mysqlPassword" $databaseNewName >/dev/null 2>&1; then
+if MYSQL_PWD="$mysqlPassword" $mysqldumpRealCommand -u"$mysqlUsername" $databaseOldName |MYSQL_PWD="$mysqlPassword" $mysqlRealCommand -u"$mysqlUsername" $databaseNewName 1>/dev/null; then
     echo "上一版本数据库迁移完成"
 else
     echo "上一版本数据库迁移失败，请手动检查环境"
 fi
-$mysqlRealCommand -u"$mysqlUsername" -p"$mysqlPassword" <<EOF
-USE $databaseNewName;
-source /tmp/$packageSource/$sqlFileName
-EOF
-if [ "$?" -eq 0 ]; then
+if MYSQL_PWD="$mysqlPassword" $mysqlRealCommand -u"$mysqlUsername" -e "\
+USE $databaseNewName; \
+source /tmp/$packageSource/$sqlFileName; \
+"; then
     echo "项目数据导入成功"
 else
 	echo "项目数据导入出现问题，请手动检查环境"

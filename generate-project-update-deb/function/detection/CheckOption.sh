@@ -492,13 +492,13 @@ case "$mysqlSkip" in
             mysqldumpRealCommand=$(which mysqldump)
             mysqlBinPath=$(sed 's/\/bin\/mysql//g' <<< "$mysqlRealCommand")
         fi
-        if ! "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "exit" >/dev/null 2>&1; then
+        if ! MYSQL_PWD="$mysqlPassword" "$mysqlRealCommand" -u"$mysqlUsername" -e "exit" >/dev/null 2>&1; then
             _error "无法连接已安装的 MySQL，提供的账号密码错误，请重新确认"
             exit 1
         fi
 
         # database-old-name
-        if ! "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseOldName;" >/dev/null 2>&1; then
+        if ! MYSQL_PWD="$mysqlPassword" "$mysqlRealCommand" -u"$mysqlUsername" -e "use $databaseOldName;" >/dev/null 2>&1; then
             _error "MySQL 不存在此名称的老版本数据库，请重新确认"
             exit 1
         fi
@@ -512,7 +512,7 @@ case "$mysqlSkip" in
             else
                 # database-base-name
                 databaseNewName="$databaseBaseName$commonDate"
-                if "$mysqlRealCommand" -u"$mysqlUsername" -p"$mysqlPassword" <<< "use $databaseNewName;" >/dev/null 2>&1; then
+                if MYSQL_PWD="$mysqlPassword" "$mysqlRealCommand" -u"$mysqlUsername" -e "use $databaseNewName;" >/dev/null 2>&1; then
                     _error "MySQL 存在同名新版本数据库，请指定不同名称的新数据库用于创建(名称格式: [新数据库基本名称][日期])"
                     exit 1
                 fi
