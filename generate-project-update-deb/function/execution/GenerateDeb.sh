@@ -31,7 +31,7 @@ EOF
 tmp/$packageSource /tmp
 EOF
     if [ "$tomcatSkip" -eq 0 ]; then
-        cat > debian/install <<EOF
+        cat >> debian/install <<EOF
 usr/share/icons/hicolor/scalable/$projectIconName /usr/share/icons/hicolor/scalable
 EOF
     fi
