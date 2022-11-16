@@ -12,11 +12,14 @@ defaultWebappsFolderNameLine="docs\|examples\|host-manager\|manager\|ROOT"
 withoutMigrateFolderName="WITHOUT_MIGRATE_FOLDER_NAME"
 packageSource="PACKAGE_SOURCE"
 
+echo ""
+echo "开始迁移项目中未更新的部分到新版本 Tomcat 中"
 cp -a /tmp/$packageSource/$tomcatNewName $packageDeployPath
-mapfile -t needMigrateFolderNameList < <(find $packageDeployPath/tomcat-$tomcatLatestRunningVersion-$tomcatPreviousPort -maxdepth 1 -type d|grep -v "$defaultWebappsFolderNameLine\|$withoutMigrateFolderName")
+mapfile -t needMigrateFolderNameList < <(find $packageDeployPath/tomcat-$tomcatLatestRunningVersion-$tomcatPreviousPort/webapps -maxdepth 1 -type d|grep -v "$defaultWebappsFolderNameLine\|$withoutMigrateFolderName")
 for i in "${needMigrateFolderNameList[@]}";do
     cp -a "$i" "$packageDeployPath/$tomcatNewName/webapps"
 done
+echo "迁移完成"
 
 echo ""
 echo "开始配置新版项目的 Tomcat 服务"
