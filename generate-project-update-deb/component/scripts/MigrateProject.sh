@@ -86,7 +86,8 @@ systemctl daemon-reload
 echo "Tomcat 服务配置文件更新完成"
 echo ""
 echo "开始启动 Tomcat 新版本服务"
-systemctl enable $tomcatNewName.service --now 1>& /dev/null
+systemctl start $tomcatNewName.service
+systemctl enable $tomcatNewName.service 1>& /dev/null
 sleep 2
 tomcatIsActive=$(systemctl is-active $tomcatNewName.service)
 if [ "${tomcatIsActive}" = "active" ]; then
