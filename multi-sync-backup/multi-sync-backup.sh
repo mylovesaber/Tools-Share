@@ -27,73 +27,73 @@ _info() {
 _success() {
 	printf "${_green}✓ %s${_norm}\n" "$@"
 }
-_successnoblank() {
+_successNoBlank() {
 	printf "${_green}%s${_norm}\n" "$@"
 }
 _warning() {
 	printf "${_tan}⚠ %s${_norm}\n" "$@"
 }
-_warningnoblank() {
+_warningNoBlank() {
 	printf "${_tan}%s${_norm}\n" "$@"
 }
 _error() {
 	printf "${_red}✗ %s${_norm}\n" "$@"
 }
-_errornoblank() {
+_errorNoBlank() {
 	printf "${_red}%s${_norm}\n" "$@"
 }
 
-_checkroot() {
+CheckRoot() {
 	if [ $EUID != 0 ] || [[ $(grep "^$(whoami)" /etc/passwd | cut -d':' -f3) != 0 ]]; then
         _error "没有 root 权限，请运行 \"sudo su -\" 命令并重新运行该脚本"
 		exit 1
 	fi
 }
-_checkroot
+CheckRoot
 
 # 变量名
-# SH_NAME 值必须和脚本名完全相同，脚本名修改的话必须改这里
-SH_NAME="multi-sync-backup"
-EXEC_COMMON_LOGFILE=/var/log/${SH_NAME}/log/exec-"$(date +"%Y-%m-%d")".log
-EXEC_ERROR_WARNING_SYNC_LOGFILE=/var/log/${SH_NAME}/log/exec-error-warning-sync-"$(date +"%Y-%m-%d")".log
-EXEC_ERROR_WARNING_BACKUP_LOGFILE=/var/log/${SH_NAME}/log/exec-error-warning-backup-"$(date +"%Y-%m-%d")".log
+# shName 值必须和脚本名完全相同，脚本名修改的话必须改这里
+shName="multi-sync-backup"
+execCommonLogFile=/var/log/${shName}/log/exec-"$(date +"%Y-%m-%d")".log
+execErrorWarningSyncLogFile=/var/log/${shName}/log/exec-error-warning-sync-"$(date +"%Y-%m-%d")".log
+execErrorWarningBackupLogFile=/var/log/${shName}/log/exec-error-warning-backup-"$(date +"%Y-%m-%d")".log
 
-SYNC_SOURCE_PATH=
-SYNC_DEST_PATH=
-BACKUP_SOURCE_PATH=
-BACKUP_DEST_PATH=
+syncSourcePath=
+syncDestPath=
+backupSourcePath=
+backupDestPath=
 
-SYNC_SOURCE_ALIAS=
-SYNC_DEST_ALIAS=
-BACKUP_SOURCE_ALIAS=
-BACKUP_DEST_ALIAS=
+syncSourceAlias=
+syncDestAlias=
+backupSourceAlias=
+backupDestAlias=
 
-SYNC_GROUP_INFO=
-BACKUP_GROUP_INFO=
-SYNC_TYPE=
-BACKUP_TYPE=
-SYNC_DATE_TYPE=
-BACKUP_DATE_TYPE=
-SYNC_OPERATION_NAME=
-BACKUP_OPERATION_NAME=
+syncGroupInfo=
+backupGroupInfo=
+syncType=
+backupType=
+syncDateType=
+backupDateType=
+syncOperationName=
+backupOperationName=
 
-OPERATION_CRON=
-OPERATION_CRON_NAME=
-LOG_CRON=
+operationCron=
+operationCronName=
+logCron=
 
-REMOVE_NODE_ALIAS=
-REMOVE_GROUP_INFO=
-REMOVE_OPERATION_FILE=
-DEPLOY_NODE_ALIAS=
-DEPLOY_GROUP_INFO=
+removeNodeAlias=
+removeGroupInfo=
+removeOperationFile=
+deployNodeAlias=
+deployGroupInfo=
 
-ALLOW_DAYS=
+allowDays=
 
-CHECK_DEP_SEP=0
-DELETE_EXPIRED_LOG=0
-NEED_CLEAN=0
-CONFIRM_CONTINUE=0
-HELP=0
+checkDepSep=0
+deleteExpiredLog=0
+needClean=0
+confirmContinue=0
+needHelp=0
 
 if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,r:,F:,s,E:,e,c,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_group_info:,remove_operation_file:,deploy:,deploy_group_info:,days:,check_dep_sep,deploy,delete_expired_log,clean,yes,help -- "$@")
 then
@@ -115,7 +115,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 1
         else
-            SYNC_SOURCE_PATH="$2"
+            syncSourcePath="$2"
         fi
         shift
         ;;
@@ -124,7 +124,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 2
         else
-            SYNC_DEST_PATH="$2"
+            syncDestPath="$2"
         fi
         shift
         ;;
@@ -133,7 +133,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 1
         else
-            BACKUP_SOURCE_PATH="$2"
+            backupSourcePath="$2"
         fi
         shift
         ;;
@@ -142,7 +142,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 2
         else
-            BACKUP_DEST_PATH="$2"
+            backupDestPath="$2"
         fi
         shift
         ;;
@@ -153,7 +153,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 4
         else
-            SYNC_SOURCE_ALIAS="$2"
+            syncSourceAlias="$2"
         fi
         shift
         ;;
@@ -162,7 +162,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 4
         else
-            SYNC_DEST_ALIAS="$2"
+            syncDestAlias="$2"
         fi
         shift
         ;;
@@ -171,7 +171,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 4
         else
-            BACKUP_SOURCE_ALIAS="$2"
+            backupSourceAlias="$2"
         fi
         shift
         ;;
@@ -180,7 +180,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 4
         else
-            BACKUP_DEST_ALIAS="$2"
+            backupDestAlias="$2"
         fi
         shift
         ;;
@@ -191,7 +191,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            SYNC_GROUP_INFO="$2"
+            syncGroupInfo="$2"
         fi
         shift
         ;;
@@ -200,7 +200,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            BACKUP_GROUP_INFO="$2"
+            backupGroupInfo="$2"
         fi
         shift
         ;;
@@ -211,7 +211,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            SYNC_TYPE="$2"
+            syncType="$2"
         fi
         shift
         ;;
@@ -220,7 +220,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            BACKUP_TYPE="$2"
+            backupType="$2"
         fi
         shift
         ;;
@@ -231,7 +231,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            SYNC_DATE_TYPE="$2"
+            syncDateType="$2"
         fi
         shift
         ;;
@@ -240,7 +240,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            BACKUP_DATE_TYPE="$2"
+            backupDateType="$2"
         fi
         shift
         ;;
@@ -251,7 +251,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            SYNC_OPERATION_NAME="$2"
+            syncOperationName="$2"
         fi
         shift
         ;;
@@ -260,7 +260,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            BACKUP_OPERATION_NAME="$2"
+            backupOperationName="$2"
         fi
         shift
         ;;
@@ -271,7 +271,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            OPERATION_CRON="$2"
+            operationCron="$2"
         fi
         shift
         ;;
@@ -280,7 +280,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            OPERATION_CRON_NAME="$2"
+            operationCronName="$2"
         fi
         shift
         ;;
@@ -289,7 +289,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            LOG_CRON="$2"
+            logCron="$2"
         fi
         shift
         ;;
@@ -300,7 +300,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            REMOVE_NODE_ALIAS="$2"
+            removeNodeAlias="$2"
         fi
         shift
         ;;
@@ -309,7 +309,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            REMOVE_GROUP_INFO="$2"
+            removeGroupInfo="$2"
         fi
         shift
         ;;
@@ -318,7 +318,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            REMOVE_OPERATION_FILE="$2"
+            removeOperationFile="$2"
         fi
         shift
         ;;
@@ -327,7 +327,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            DEPLOY_NODE_ALIAS="$2"
+            deployNodeAlias="$2"
         fi
         shift
         ;;
@@ -336,7 +336,7 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            DEPLOY_GROUP_INFO="$2"
+            deployGroupInfo="$2"
         fi
         shift
         ;;
@@ -347,26 +347,26 @@ while true; do
             _error "这是有参选项，必须指定对应参数，否则不能使用该选项！"
             exit 5
         else
-            ALLOW_DAYS="$2"
+            allowDays="$2"
         fi
         shift
         ;;
     
     # 其他选项
     -s | --check_dep_sep)
-        CHECK_DEP_SEP=1
+        checkDepSep=1
         ;;
     -e | --delete_expired_log)
-        DELETE_EXPIRED_LOG=1
+        deleteExpiredLog=1
         ;;
     -c | --clean)
-        NEED_CLEAN=1
+        needClean=1
         ;;
     -y | --yes)
-        CONFIRM_CONTINUE=1
+        confirmContinue=1
         ;;
     -h | --help)
-        HELP=1
+        needHelp=1
         ;;
     --)
         shift
@@ -379,14 +379,13 @@ done
 EnvCheck(){
     _info "环境自检中，请稍后"
     # 检查必要软件包安装情况(集成独立检测依赖功能)
-    #_info "检查脚本使用的有关软件安装情况"
     appList="tput scp pwd basename sort tail tee md5sum ip ifconfig shuf column sha256sum dirname stat"
     appNotInstalled=""
     for i in ${appList}; do
         if which "$i" >/dev/null 2>&1; then
-            [ "${CHECK_DEP_SEP}" == 1 ] && _success "$i 已安装"
+            [ "${checkDepSep}" == 1 ] && _success "$i 已安装"
         else
-            [ "${CHECK_DEP_SEP}" == 1 ] && _error "$i 未安装"
+            [ "${checkDepSep}" == 1 ] && _error "$i 未安装"
             appNotInstalled="${appNotInstalled} $i"
         fi
     done
@@ -395,7 +394,7 @@ EnvCheck(){
         _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
         exit 1
     elif [ -z "${appNotInstalled}" ]; then
-        [ "${CHECK_DEP_SEP}" == 1 ] && _success "脚本正常工作所需依赖全部满足要求" && exit 0
+        [ "${checkDepSep}" == 1 ] && _success "脚本正常工作所需依赖全部满足要求" && exit 0
     fi
     # 此环节用于检测是否有人为修改免密节点组信息的情况，并且在存在这种情况的前提下尝试自动修复，/root/.ssh/config 文件中应该包含各种免密组的文件夹名，所以默认脚本均检测此文件内容
     # 为防止此文件被误删，在每个创建的免密组文件夹中均有一个创建该组时对 config 硬链接的文件，名字是 .backup_config
@@ -404,21 +403,21 @@ EnvCheck(){
     # 1. 如果 /root/.ssh/config 不存在，则遍历 /root/.ssh 下的所有文件夹，查找里面的 .backup_config，如果都不存在则表示环境被毁或没有用专用脚本做免密部署，直接报错退出，如果存在，则取找到的列表中的第一个直接做个硬链接成 /root/.ssh/config
     if [ ! -f /root/.ssh/config ]; then
         _warning "自动部署的业务节点免密组配置文件被人为删除，正在尝试恢复"
-        mapfile -t BACKUP_CONFIG < <(find /root/.ssh -type f -name ".backup_config")
-        if [ "${#BACKUP_CONFIG[@]}" -eq 0 ]; then
+        mapfile -t backupConfig < <(find /root/.ssh -type f -name ".backup_config")
+        if [ "${#backupConfig[@]}" -eq 0 ]; then
             _error "所有 ssh 业务节点免密组的配置文件均未找到，如果此服务器未使用本脚本作者所写免密部署脚本部署，请先使用免密部署工具进行预部署后再执行此脚本"
             _error "如果曾经预部署过，请立即人工恢复，否则所有此脚本作者所写的自动化脚本将全体失效"
             exit 1
-        elif [ "${#BACKUP_CONFIG[@]}" -ne 0 ]; then
-            ln "${BACKUP_CONFIG[0]}" /root/.ssh/config
+        elif [ "${#backupConfig[@]}" -ne 0 ]; then
+            ln "${backupConfig[0]}" /root/.ssh/config
             _success "业务节点免密组默认配置文件恢复"
         fi
     fi
 
     # 2. 如果 /root/.ssh/config 存在，则遍历 /root/.ssh/config 中保存的节点组名的配置对比 /root/.ssh 下的所有文件夹名，查找里面的 .backup_config，在 /root/.ssh/config 中存在但对应文件夹中不存在 .backup_config 则做个硬链接到对应文件夹，
     # 如果文件夹被删，则删除 config 中的配置并报错退出
-    mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '/Include/{print $2}' /root/.ssh/config)
-    for i in "${GROUP_NAME_IN_FILE[@]}"; do
+    mapfile -t groupNameInFile < <(awk -F '[ /]' '/Include/{print $2}' /root/.ssh/config)
+    for i in "${groupNameInFile[@]}"; do
         if [ ! -f /root/.ssh/"${i}"/.backup_config ]; then
             if [ ! -d /root/.ssh/"${i}" ]; then
                 _error "业务节点免密组被人为删除，已从配置文件中删除此节点组引用，请重新运行免密部署脚本以添加需要的组"
@@ -432,13 +431,13 @@ EnvCheck(){
         fi
     done
 
-    # 3. 遍历 /root/.ssh 中的所有子文件夹中的 .backup_config 文件，然后对比查看对应文件夹名在 config 文件中是否有相关信息（上一步的 GROUP_NAME_IN_FILE 数组），没有的话添加上
+    # 3. 遍历 /root/.ssh 中的所有子文件夹中的 .backup_config 文件，然后对比查看对应文件夹名在 config 文件中是否有相关信息（上一步的 groupNameInFile 数组），没有的话添加上
     # 如果出现 config 文件与免密组文件夹名对不上的情况，可以清空 config 文件中的内容，通过文件夹的方式重新生成
-    mapfile -t DIR_GROUP_NAME < <(find /root/.ssh -type f -name ".backup_config"|awk -F '/' '{print $(NF-1)}')
-    mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
-    for i in "${DIR_GROUP_NAME[@]}"; do
+    mapfile -t dirGroupName < <(find /root/.ssh -type f -name ".backup_config"|awk -F '/' '{print $(NF-1)}')
+    mapfile -t groupNameInFile < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+    for i in "${dirGroupName[@]}"; do
         MARK=0
-        for j in "${GROUP_NAME_IN_FILE[@]}"; do
+        for j in "${groupNameInFile[@]}"; do
             if [ "$i" = "${j}" ]; then
                 MARK=1
                 break
@@ -466,25 +465,25 @@ EnvCheck(){
     done
     # 4. 将 .ssh 为开头的路径的数组对比 /etc/ssh/sshd_config，如果 ssh 配置文件不存在则添加上并重启 ssh
     [[ "$(grep "AuthorizedKeysFile" /etc/ssh/sshd_config)" =~ "#" ]] && sed -i 's/^#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
-    mapfile -t DIR_AUTHORIZED_KEYS_PATH < <(find /root/.ssh -type f -name "*-authorized_keys"|sed 's/\/root\///g')
-    IFS=" " read -r -a SSHD_CONFIG_PATH <<< "$(grep "AuthorizedKeysFile" /etc/ssh/sshd_config|awk '$1=""; {print $0}')"
-    IF_NEED_RESTART_SSHD=0
-    for i in "${DIR_AUTHORIZED_KEYS_PATH[@]}"; do
+    mapfile -t dirAuthorizedKeysPath < <(find /root/.ssh -type f -name "*-authorized_keys"|sed 's/\/root\///g')
+    IFS=" " read -r -a sshdConfigPath <<< "$(grep "AuthorizedKeysFile" /etc/ssh/sshd_config|awk '$1=""; {print $0}')"
+    ifNeedRestartSshd=0
+    for i in "${dirAuthorizedKeysPath[@]}"; do
         MARK=0
-        for j in "${SSHD_CONFIG_PATH[@]}"; do
+        for j in "${sshdConfigPath[@]}"; do
             if [ "${i}" = "${j}" ];then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            IF_NEED_RESTART_SSHD=1
+            ifNeedRestartSshd=1
             _warning "sshd 配置文件缺少有关免密参数，正在修改"
             i=$(echo "$i"|sed 's/\//\\\//g')
             sed -i "/AuthorizedKeysFile/s/$/\ ${i}/g" /etc/ssh/sshd_config
         fi
     done
-    [ "${IF_NEED_RESTART_SSHD}" -eq 1 ] && systemctl restart sshd
+    [ "${ifNeedRestartSshd}" -eq 1 ] && systemctl restart sshd
     _success "环境自检完成"
 }
 
@@ -492,34 +491,34 @@ CheckExecOption(){
     _info "开始检查传递的执行选项和参数"
     ################################################################
     # 仅运行同步备份或先同步再备份的所有选项
-    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -z "${BACKUP_SOURCE_PATH}" ] && [ -z "${BACKUP_DEST_PATH}" ] && [ -z "${BACKUP_SOURCE_ALIAS}" ] && [ -z "${BACKUP_DEST_ALIAS}" ] && [ -z "${BACKUP_GROUP_INFO}" ] && [ -z "${BACKUP_TYPE}" ] && [ -z "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ] && [ -n "${SYNC_OPERATION_NAME}" ] && [ -z "${BACKUP_OPERATION_NAME}" ]; then
+    if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -z "${backupSourcePath}" ] && [ -z "${backupDestPath}" ] && [ -z "${backupSourceAlias}" ] && [ -z "${backupDestAlias}" ] && [ -z "${backupGroupInfo}" ] && [ -z "${backupType}" ] && [ -z "${backupDateType}" ] && [ -n "${allowDays}" ] && [ -n "${syncOperationName}" ] && [ -z "${backupOperationName}" ]; then
         :
-    elif [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -z "${SYNC_SOURCE_PATH}" ] && [ -z "${SYNC_DEST_PATH}" ] && [ -z "${SYNC_SOURCE_ALIAS}" ] && [ -z "${SYNC_DEST_ALIAS}" ] && [ -z "${SYNC_GROUP_INFO}" ] && [ -z "${SYNC_TYPE}" ] && [ -z "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ] && [ -z "${SYNC_OPERATION_NAME}" ] && [ -n "${BACKUP_OPERATION_NAME}" ]; then
+    elif [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${allowDays}" ] && [ -z "${syncOperationName}" ] && [ -n "${backupOperationName}" ]; then
         :
-    elif [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -z "${BACKUP_SOURCE_PATH}" ] && [ -z "${BACKUP_DEST_PATH}" ] && [ -z "${BACKUP_SOURCE_ALIAS}" ] && [ -z "${BACKUP_DEST_ALIAS}" ] && [ -z "${BACKUP_GROUP_INFO}" ] && [ -z "${BACKUP_TYPE}" ] && [ -z "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
+    elif [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -z "${backupSourcePath}" ] && [ -z "${backupDestPath}" ] && [ -z "${backupSourceAlias}" ] && [ -z "${backupDestAlias}" ] && [ -z "${backupGroupInfo}" ] && [ -z "${backupType}" ] && [ -z "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         :
-    elif [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -z "${SYNC_SOURCE_PATH}" ] && [ -z "${SYNC_DEST_PATH}" ] && [ -z "${SYNC_SOURCE_ALIAS}" ] && [ -z "${SYNC_DEST_ALIAS}" ] && [ -z "${SYNC_GROUP_INFO}" ] && [ -z "${SYNC_TYPE}" ] && [ -z "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
+    elif [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         :
     else
         _error "用户层面只有两种输入选项参数的组合方式，同步或备份，先同步后备份则是执行两次，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
         _warning "运行同步功能所需的八个有参选项(两个通用选项见下):"
-        _errornoblank "
+        _errorNoBlank "
         --sync_source_path 设置源同步路径
         --sync_dest_path 设置目的同步路径
         --sync_source_alias 设置源同步节点别名
         --sync_dest_alias 设置目的同步节点别名"|column -t
-        _errornoblank "
+        _errorNoBlank "
         -G | --sync_group 同步需指定的免密节点组名
         -T | --sync_type 同步的内容类型(文件或文件夹:file或dir)
         -D | --sync_date_type 指定同步时包含的日期格式"|column -t
         echo ""
         _warning "运行备份功能所需的八个有参选项(两个通用选项见下):"
-        _errornoblank "
+        _errorNoBlank "
         --backup_source_path 设置源备份路径
         --backup_dest_path 设置目的备份路径
         --backup_source_alias 设置源备份节点别名
         --backup_dest_alias 设置目的备份节点别名"|column -t
-        _errornoblank "
+        _errorNoBlank "
         -g | --backup_group 备份需指定的免密节点组名
         -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
         -d | --backup_date_type 指定备份时包含的日期格式"|column -t
@@ -529,12 +528,12 @@ CheckExecOption(){
         exit 1
     fi
 
-    mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+    mapfile -t groupNameInFile < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
     # 同步节点组名非空时，检查其他所有同步选项
-    if [ -n "${SYNC_GROUP_INFO}" ]; then
-        for i in "${GROUP_NAME_IN_FILE[@]}"; do
+    if [ -n "${syncGroupInfo}" ]; then
+        for i in "${groupNameInFile[@]}"; do
             MARK=0
-            if [ "$i" = "${SYNC_GROUP_INFO}" ]; then
+            if [ "$i" = "${syncGroupInfo}" ]; then
                 MARK=1
                 break
             fi
@@ -542,61 +541,61 @@ CheckExecOption(){
         if [ "${MARK}" -eq 0 ]; then
             _error "请输入正确的同步免密节点组名称"
             _error "可用节点组如下:"
-            for i in "${GROUP_NAME_IN_FILE[@]}"; do
+            for i in "${groupNameInFile[@]}"; do
                 echo "${i}"
             done
             exit 1
         fi
-        [[ ! "${SYNC_SOURCE_PATH}" =~ ^/ ]] && _error "设置的源同步节点路径必须为绝对路径，请检查" && exit 112
-        [[ ! "${SYNC_DEST_PATH}" =~ ^/ ]] && _error "设置的目标同步节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${syncSourcePath}" =~ ^/ ]] && _error "设置的源同步节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${syncDestPath}" =~ ^/ ]] && _error "设置的目标同步节点路径必须为绝对路径，请检查" && exit 112
 
-        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${SYNC_GROUP_INFO}"/config-"${SYNC_GROUP_INFO}"-*|awk '/Host / {print $2}')
-        for i in "${HOST_ALIAS[@]}"; do
+        mapfile -t hostAlias < <(cat /root/.ssh/"${syncGroupInfo}"/config-"${syncGroupInfo}"-*|awk '/Host / {print $2}')
+        for i in "${hostAlias[@]}"; do
                 MARK=0
-            [ "${i}" = "${SYNC_SOURCE_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${syncSourceAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "源同步节点别名错误，请检查指定的免密节点组名中可用的源同步节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
 
-        for i in "${HOST_ALIAS[@]}"; do
+        for i in "${hostAlias[@]}"; do
             MARK=0
-            [ "${i}" = "${SYNC_DEST_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${syncDestAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "目标同步节点别名错误，请检查指定的免密节点组名中可用的目标同步节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
-        if [ ! "${SYNC_TYPE}" = "dir" ] && [ ! "${SYNC_TYPE}" = "file" ]; then
+        if [ ! "${syncType}" = "dir" ] && [ ! "${syncType}" = "file" ]; then
             _error "必须正确指定需要操作的内容类型参数: 按日期排序的文件或文件夹"
             _error "纯文件参数写法: dir"
             _error "纯文件夹参数写法: file"
             exit 1
         fi
 
-        if [[ "${SYNC_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
-            SYNC_DATE_TYPE_CONVERTED="YYYY-MMMM-DDDD"
-        elif [[ "${SYNC_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
-            SYNC_DATE_TYPE_CONVERTED="YYYY_MMMM_DDDD"
+        if [[ "${syncDateType}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
+            syncDateTypeConverted="YYYY-MMMM-DDDD"
+        elif [[ "${syncDateType}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
+            syncDateTypeConverted="YYYY_MMMM_DDDD"
         else
             _error "同步日期格式不存在，格式举例: abcd-Mm-12 或 2000_0a_3F，年份四位，月和日均为两位字符"
-            _error "格式支持大小写字母和数字随机组合，只检测连接符号特征，支持的格式暂时只有连字符和下划线两种"
+            _error "格式支持大小写字母和数字随机组合，只检测连接符号特征，支持的格式暂时只有连字符(-)和下划线(_)两种"
             exit 1
         fi
     fi
 
     # 备份节点组名非空时，检查其他所有备份选项
-    if [ -n "${BACKUP_GROUP_INFO}" ]; then
-        for i in "${GROUP_NAME_IN_FILE[@]}"; do
+    if [ -n "${backupGroupInfo}" ]; then
+        for i in "${groupNameInFile[@]}"; do
             MARK=0
-            if [ "$i" = "${BACKUP_GROUP_INFO}" ]; then
+            if [ "$i" = "${backupGroupInfo}" ]; then
                 MARK=1
                 break
             fi
@@ -604,50 +603,50 @@ CheckExecOption(){
         if [ "${MARK}" -eq 0 ]; then
             _error "请输入正确的免密节点组名称"
             _error "可用节点组如下:"
-            for i in "${GROUP_NAME_IN_FILE[@]}"; do
+            for i in "${groupNameInFile[@]}"; do
                 echo "${i}"
             done
             exit 1
         fi
-        [[ ! "${BACKUP_SOURCE_PATH}" =~ ^/ ]] && _error "设置的源备份节点路径必须为绝对路径，请检查" && exit 112
-        [[ ! "${BACKUP_DEST_PATH}" =~ ^/ ]] && _error "设置的目标备份节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${backupSourcePath}" =~ ^/ ]] && _error "设置的源备份节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${backupDestPath}" =~ ^/ ]] && _error "设置的目标备份节点路径必须为绝对路径，请检查" && exit 112
         
-        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${BACKUP_GROUP_INFO}"/config-"${BACKUP_GROUP_INFO}"-*|awk '/Host / {print $2}')
-        for i in "${HOST_ALIAS[@]}"; do
+        mapfile -t hostAlias < <(cat /root/.ssh/"${backupGroupInfo}"/config-"${backupGroupInfo}"-*|awk '/Host / {print $2}')
+        for i in "${hostAlias[@]}"; do
             MARK=0
-            [ "${i}" = "${BACKUP_SOURCE_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${backupSourceAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "源备份节点别名错误，请检查指定的免密节点组名中可用的源备份节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
 
-        for i in "${HOST_ALIAS[@]}"; do
+        for i in "${hostAlias[@]}"; do
             MARK=0
-            [ "${i}" = "${BACKUP_DEST_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${backupDestAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "目标备份节点别名错误，请检查指定的免密节点组名中可用的目标备份节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
 
-        if [ ! "${BACKUP_TYPE}" = "dir" ] && [ ! "${BACKUP_TYPE}" = "file" ]; then
+        if [ ! "${backupType}" = "dir" ] && [ ! "${backupType}" = "file" ]; then
             _error "必须正确指定需要操作的内容类型参数: 按日期排序的文件或文件夹"
             _error "纯文件参数写法: dir"
             _error "纯文件夹参数写法: file"
             exit 1
         fi
         
-        if [[ "${BACKUP_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
-            BACKUP_DATE_TYPE_CONVERTED="YYYY-MMMM-DDDD"
-        elif [[ "${BACKUP_DATE_TYPE}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
-            BACKUP_DATE_TYPE_CONVERTED="YYYY_MMMM_DDDD"
+        if [[ "${backupDateType}" =~ ^[0-9a-zA-Z]{4}-[0-9a-zA-Z]{2}-[0-9a-zA-Z]{2}+$ ]]; then
+            backupDateTypeConverted="YYYY-MMMM-DDDD"
+        elif [[ "${backupDateType}" =~ ^[0-9a-zA-Z]{4}_[0-9a-zA-Z]{2}_[0-9a-zA-Z]{2}+$ ]]; then
+            backupDateTypeConverted="YYYY_MMMM_DDDD"
         else
             _error "同步日期格式不存在，格式举例: abcd-Mm-12 或 2000_0a_3F，年份四位字符，月和日均为两位字符"
             _error "格式支持大小写字母和数字随意组合，只检测连接符号特征，支持的格式暂时只有连字符和下划线两种"
@@ -655,7 +654,7 @@ CheckExecOption(){
         fi
     fi
 
-    if [ -z "${ALLOW_DAYS}" ] || [[ ! "${ALLOW_DAYS}" =~ ^[0-9]+$ ]]; then
+    if [ -z "${allowDays}" ] || [[ ! "${allowDays}" =~ ^[0-9]+$ ]]; then
         _error "未设置允许搜索的最早日期距离今日的最大天数，请检查"
         _error "选项名为: --days  参数为非负整数"
         exit 116
@@ -665,26 +664,26 @@ CheckExecOption(){
 
 CheckDeployOption(){
     # 检查部署选项
-    if [ -n "${DEPLOY_NODE_ALIAS}" ]; then
+    if [ -n "${deployNodeAlias}" ]; then
         _info "开始检查传递的部署选项和参数"
-        if [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+        if [ -n "${syncOperationName}" ] && [ -n "${backupOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
             :
-        elif [ -n "${SYNC_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+        elif [ -n "${syncOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
             :
-        elif [ -n "${BACKUP_OPERATION_NAME}" ] && [ -n "${LOG_CRON}" ] && [ -n "${OPERATION_CRON}" ] && [ -n "${OPERATION_CRON_NAME}" ] && [ -n "${DEPLOY_GROUP_INFO}" ]; then
+        elif [ -n "${backupOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
             :
         else
             _error "部署时用户层面只有三种输入选项参数的组合方式，除了需要以上执行同步、备份、同步后备份的操作的所有选项外，还需指定部署节点、删除过期日志定时、操作别名和操作定时，请仔细对比帮助信息并检查缺失的选项和参数"
             _warning "部署同步功能所需的六个有参选项(五个通用选项见下):"
-            _errornoblank "
+            _errorNoBlank "
             -N | --sync_operation_name 设置同步操作的别名"|column -t
             echo ""
             _warning "部署备份功能所需的六个有参选项(五个通用选项见下):"
-            _errornoblank "
+            _errorNoBlank "
             -n | --backup_operation_name 设置备份操作的别名"|column -t
             echo ""
             _warning "运行任意一种功能均需设置的五种通用有参选项: "
-            _errornoblank "
+            _errorNoBlank "
             -L | --deploy 设置部署节点别名
             -O | --operation_cron 设置方案组启动定时规则
             -o | --operation_cron_name 设置方案组名
@@ -694,10 +693,10 @@ CheckDeployOption(){
             exit 1
         fi
 
-        mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
-        for i in "${GROUP_NAME_IN_FILE[@]}"; do
+        mapfile -t groupNameInFile < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+        for i in "${groupNameInFile[@]}"; do
             MARK=0
-            if [ "$i" = "${DEPLOY_GROUP_INFO}" ]; then
+            if [ "$i" = "${deployGroupInfo}" ]; then
                 MARK=1
                 break
             fi
@@ -705,122 +704,121 @@ CheckDeployOption(){
         if [ "${MARK}" -eq 0 ]; then
             _error "请输入正确的同步免密节点组名称"
             _error "可用节点组如下:"
-            for i in "${GROUP_NAME_IN_FILE[@]}"; do
+            for i in "${groupNameInFile[@]}"; do
                 echo "${i}"
             done
             exit 1
         fi
-        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${DEPLOY_GROUP_INFO}"/config-"${DEPLOY_GROUP_INFO}"-*|awk '/Host / {print $2}')
-        for i in "${HOST_ALIAS[@]}"; do
+        mapfile -t hostAlias < <(cat /root/.ssh/"${deployGroupInfo}"/config-"${deployGroupInfo}"-*|awk '/Host / {print $2}')
+        for i in "${hostAlias[@]}"; do
             MARK=0
-            [ "${i}" = "${DEPLOY_NODE_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${deployNodeAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "部署节点别名错误，请检查指定的免密节点组名中可用的部署节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
-        if ssh -o BatchMode=yes "${DEPLOY_NODE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "部署节点 ${DEPLOY_NODE_ALIAS} 连接正常"
+        if ssh -o BatchMode=yes "${deployNodeAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "部署节点 ${deployNodeAlias} 连接正常"
         else
-            _error "部署节点 ${DEPLOY_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
+            _error "部署节点 ${deployNodeAlias} 无法连接，请检查源部署节点硬件是否损坏"
             MARK=1
         fi
 
         # 参数传入规范检查
-        if [[ ! "${LOG_CRON}" =~ ^[0-9\*,/[:blank:]-]*$ ]]; then
+        if [[ ! "${logCron}" =~ ^[0-9\*,/[:blank:]-]*$ ]]; then
             _error "清理过期日志定时写法有错，请检查"
             exit 1
         fi
-        if [[ ! "${OPERATION_CRON}" =~ ^[0-9\*,/[:blank:]-]*$ ]]; then
+        if [[ ! "${operationCron}" =~ ^[0-9\*,/[:blank:]-]*$ ]]; then
             _error "集合操作定时写法有错，请检查"
             exit 1
         fi
-        if [[ ! "${OPERATION_CRON_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+        if [[ ! "${operationCronName}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
             _error "集合操作别名写法有错，只支持大小写字母、数字、下划线和连字符，请检查"
             exit 1
         fi
-        if [ -n "${SYNC_OPERATION_NAME}" ]; then
-            if [[ ! "${SYNC_OPERATION_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+        if [ -n "${syncOperationName}" ]; then
+            if [[ ! "${syncOperationName}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
                 _error "同步操作别名写法有错，只支持大小写字母、数字、下划线和连字符，请检查"
                 exit 1
             fi
         fi
-        if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-            if [[ ! "${BACKUP_OPERATION_NAME}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+        if [ -n "${backupOperationName}" ]; then
+            if [[ ! "${backupOperationName}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
                 _error "备份操作别名写法有错，只支持大小写字母、数字、下划线和连字符，请检查"
                 exit 1
             fi
         fi
-
-        mapfile -t OPERATION_CRON_NAME_FILE < <(ssh "${DEPLOY_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "*run-*"|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
+        mapfile -t operationCronNameFile < <(ssh "${deployNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "*run-*"|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
         MARK=0
-        for i in "${OPERATION_CRON_NAME_FILE[@]}"; do
-            [ "$i" = "${OPERATION_CRON_NAME}" ] && MARK=1
+        for i in "${operationCronNameFile[@]}"; do
+            [ "$i" = "${operationCronName}" ] && MARK=1
         done
 
-        MARK_SYNC_OPERATION_NAME=0
-        MARK_BACKUP_OPERATION_NAME=0
+        markSyncOperationName=0
+        markBackupOperationName=0
         if [ "${MARK}" -eq 1 ]; then
-            mapfile -t SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -o \"\-\-sync_operation_name .* \" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}|awk '{print \$2}'")
-            mapfile -t BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep -o \"\-\-backup_operation_name .* \" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}|awk '{print \$2}'")
-            SAME_SYNC_OPERATION_NAME_LIST=()
-            SAME_BACKUP_OPERATION_NAME_LIST=()
-            for i in "${SYNC_OPERATION_NAME_LIST[@]}"; do
-                [ "$i" = "${SYNC_OPERATION_NAME}" ] && MARK_SYNC_OPERATION_NAME=1 && break
+            mapfile -t syncOperationNameList < <(ssh "${deployNodeAlias}" "grep -o \"\-\-sync_operation_name .* \" /var/log/${shName}/exec/run-${operationCronName}|awk '{print \$2}'")
+            mapfile -t backupOperationNameList < <(ssh "${deployNodeAlias}" "grep -o \"\-\-backup_operation_name .* \" /var/log/${shName}/exec/run-${operationCronName}|awk '{print \$2}'")
+            sameSyncOperationNameList=()
+            sameBackupOperationNameList=()
+            for i in "${syncOperationNameList[@]}"; do
+                [ "$i" = "${syncOperationName}" ] && markSyncOperationName=1 && break
             done
 
-            for i in "${BACKUP_OPERATION_NAME_LIST[@]}"; do
-                [ "$i" = "${BACKUP_OPERATION_NAME}" ] && MARK_BACKUP_OPERATION_NAME=1 && break
+            for i in "${backupOperationNameList[@]}"; do
+                [ "$i" = "${backupOperationName}" ] && markBackupOperationName=1 && break
             done
             
-            mapfile -t -O "${#SAME_SYNC_OPERATION_NAME_LIST[@]}" SAME_SYNC_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"\-\-sync_operation_name ${SYNC_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}")
-            mapfile -t -O "${#SAME_BACKUP_OPERATION_NAME_LIST[@]}" SAME_BACKUP_OPERATION_NAME_LIST < <(ssh "${DEPLOY_NODE_ALIAS}" "grep \"\-\-backup_operation_name ${BACKUP_OPERATION_NAME}\" /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}")
+            mapfile -t -O "${#sameSyncOperationNameList[@]}" sameSyncOperationNameList < <(ssh "${deployNodeAlias}" "grep \"\-\-sync_operation_name ${syncOperationName}\" /var/log/${shName}/exec/run-${operationCronName}")
+            mapfile -t -O "${#sameBackupOperationNameList[@]}" sameBackupOperationNameList < <(ssh "${deployNodeAlias}" "grep \"\-\-backup_operation_name ${backupOperationName}\" /var/log/${shName}/exec/run-${operationCronName}")
             # 信息汇总
             _success "已收集所需信息，请检查以下汇总信息:"
-            _success "部署节点 ${DEPLOY_NODE_ALIAS} 中存在方案组文件 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}"
-            if [ "${MARK_SYNC_OPERATION_NAME}" -eq 1 ]; then
+            _success "部署节点 ${deployNodeAlias} 中存在方案组文件 /var/log/${shName}/exec/run-${operationCronName}"
+            if [ "${markSyncOperationName}" -eq 1 ]; then
                 _warning "在以上方案组文件中发现同名同步执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
                 _warning "如果确认部署的话将追加而非替换，以下是全部同名同步执行功能:"
-                for i in "${SAME_SYNC_OPERATION_NAME_LIST[@]}"; do
+                for i in "${sameSyncOperationNameList[@]}"; do
                     echo "$i"
                 done
                 echo ""
             fi
-            if [ "${MARK_BACKUP_OPERATION_NAME}" -eq 1 ]; then
+            if [ "${markBackupOperationName}" -eq 1 ]; then
                 _warning "在以上方案组文件中发现同名备份执行功能，请自行辨认，如果功能重复或只是希望更新信息，则请手动删除无用的执行功能"
                 _warning "如果确认部署的话将追加而非替换，以下是全部同名备份执行功能:"
-                for i in "${SAME_BACKUP_OPERATION_NAME_LIST[@]}"; do
+                for i in "${sameBackupOperationNameList[@]}"; do
                     echo "$i"
                 done
                 echo ""
             fi
-            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 方案组加入以下执行功能:"
-            if [ -n "${SYNC_OPERATION_NAME}" ]; then
-                echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y"
+            _warning "将向部署节点 ${deployNodeAlias} 中创建的 ${operationCronName} 方案组加入以下执行功能:"
+            if [ -n "${syncOperationName}" ]; then
+                echo "bash <(cat /var/log/${shName}/exec/${shName}) --days \"${allowDays}\" --sync_source_path \"${syncSourcePath}\" --sync_dest_path \"${syncDestPath}\" --sync_source_alias \"${syncSourceAlias}\" --sync_dest_alias \"${syncDestAlias}\" --sync_group \"${syncGroupInfo}\" --sync_type \"${syncType}\" --sync_date_type \"${syncDateType}\" --sync_operation_name \"${syncOperationName}\" -y"
                 echo ""
             fi
-            if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-                echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" --backup_operation_name \"${BACKUP_OPERATION_NAME}\" -y"
+            if [ -n "${backupOperationName}" ]; then
+                echo "bash <(cat /var/log/${shName}/exec/${shName}) --days \"${allowDays}\" --backup_source_path \"${backupSourcePath}\" --backup_dest_path \"${backupDestPath}\" --backup_source_alias \"${backupSourceAlias}\" --backup_dest_alias \"${backupDestAlias}\" --backup_group \"${backupGroupInfo}\" --backup_type \"${backupType}\" --backup_date_type \"${backupDateType}\" --backup_operation_name \"${backupOperationName}\" -y"
                 echo ""
             fi
         else
             # 信息汇总
             _success "已收集所需信息，请检查以下汇总信息:"
-            _warning "部署节点 ${DEPLOY_NODE_ALIAS} 中未找到方案组 /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME}，即将创建该文件"
-            _warning "将向部署节点 ${DEPLOY_NODE_ALIAS} 中创建的 ${OPERATION_CRON_NAME} 方案组加入以下执行功能:"
-            if [ -n "${SYNC_OPERATION_NAME}" ]; then
-                echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --sync_source_path \"${SYNC_SOURCE_PATH}\" --sync_dest_path \"${SYNC_DEST_PATH}\" --sync_source_alias \"${SYNC_SOURCE_ALIAS}\" --sync_dest_alias \"${SYNC_DEST_ALIAS}\" --sync_group \"${SYNC_GROUP_INFO}\" --sync_type \"${SYNC_TYPE}\" --sync_date_type \"${SYNC_DATE_TYPE}\" --sync_operation_name \"${SYNC_OPERATION_NAME}\" -y"
+            _warning "部署节点 ${deployNodeAlias} 中未找到方案组 /var/log/${shName}/exec/run-${operationCronName}，即将创建该文件"
+            _warning "将向部署节点 ${deployNodeAlias} 中创建的 ${operationCronName} 方案组加入以下执行功能:"
+            if [ -n "${syncOperationName}" ]; then
+                echo "bash <(cat /var/log/${shName}/exec/${shName}) --days \"${allowDays}\" --sync_source_path \"${syncSourcePath}\" --sync_dest_path \"${syncDestPath}\" --sync_source_alias \"${syncSourceAlias}\" --sync_dest_alias \"${syncDestAlias}\" --sync_group \"${syncGroupInfo}\" --sync_type \"${syncType}\" --sync_date_type \"${syncDateType}\" --sync_operation_name \"${syncOperationName}\" -y"
             fi
-            if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-                echo "bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"${ALLOW_DAYS}\" --backup_source_path \"${BACKUP_SOURCE_PATH}\" --backup_dest_path \"${BACKUP_DEST_PATH}\" --backup_source_alias \"${BACKUP_SOURCE_ALIAS}\" --backup_dest_alias \"${BACKUP_DEST_ALIAS}\" --backup_group \"${BACKUP_GROUP_INFO}\" --backup_type \"${BACKUP_TYPE}\" --backup_date_type \"${BACKUP_DATE_TYPE}\" --backup_operation_name \"${BACKUP_OPERATION_NAME}\" -y"
+            if [ -n "${backupOperationName}" ]; then
+                echo "bash <(cat /var/log/${shName}/exec/${shName}) --days \"${allowDays}\" --backup_source_path \"${backupSourcePath}\" --backup_dest_path \"${backupDestPath}\" --backup_source_alias \"${backupSourceAlias}\" --backup_dest_alias \"${backupDestAlias}\" --backup_group \"${backupGroupInfo}\" --backup_type \"${backupType}\" --backup_date_type \"${backupDateType}\" --backup_operation_name \"${backupOperationName}\" -y"
             fi
         fi
 
         # 部署流程末尾，无论是否确认，各自功能都会运行完成后退出
-        if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
+        if [ "${confirmContinue}" -eq 1 ]; then
             Deploy
             exit 0
         else
@@ -828,23 +826,23 @@ CheckDeployOption(){
             exit 0
         fi
     else
-        if [ -n "${OPERATION_CRON}" ] || [ -n "${OPERATION_CRON_NAME}" ] || [ -n "${LOG_CRON}" ] || [ -n "${DEPLOY_GROUP_INFO}" ]; then
+        if [ -n "${operationCron}" ] || [ -n "${operationCronName}" ] || [ -n "${logCron}" ] || [ -n "${deployGroupInfo}" ]; then
             _warning "以下四个选项均为部署时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
-            _errornoblank "
+            _errorNoBlank "
             -O | --operation_cron 设置方案组启动定时规则
             -o | --operation_cron_name 设置方案组名
             -l | --deploy_group_info 指定部署节点所在的免密节点组名
             -E | --log_cron 设置删除过期日志定时规则"|column -t
-            _errornoblank "以上选项必须和指定部署脚本的节点别名选项同时被指定: -L | --deploy"
+            _errorNoBlank "以上选项必须和指定部署脚本的节点别名选项同时被指定: -L | --deploy"
             exit 1
         fi
     fi
 }
 
 CheckRemoveOption(){
-    if [ -n "${REMOVE_NODE_ALIAS}" ]; then
+    if [ -n "${removeNodeAlias}" ]; then
         _info "开始检查传递的卸载选项和参数"
-        if [ -n "${REMOVE_GROUP_INFO}" ] && [ -n "${REMOVE_OPERATION_FILE}" ]; then
+        if [ -n "${removeGroupInfo}" ] && [ -n "${removeOperationFile}" ]; then
             :
         else
             _error "卸载时用户层面只有一种输入选项参数的组合方式，需同时指定:"
@@ -853,7 +851,7 @@ CheckRemoveOption(){
             _error "3. 卸载的具体的方案"
             _error "请仔细对比帮助信息并检查缺失的选项和参数"
             _warning "需设置的三种通用有参选项: "
-            _errornoblank "
+            _errorNoBlank "
             -R | --remove 指定卸载脚本的节点别名
             -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
             -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
@@ -861,10 +859,10 @@ CheckRemoveOption(){
             exit 1
         fi
 
-        mapfile -t GROUP_NAME_IN_FILE < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
-        for i in "${GROUP_NAME_IN_FILE[@]}"; do
+        mapfile -t groupNameInFile < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
+        for i in "${groupNameInFile[@]}"; do
             MARK=0
-            if [ "$i" = "${REMOVE_GROUP_INFO}" ]; then
+            if [ "$i" = "${removeGroupInfo}" ]; then
                 MARK=1
                 break
             fi
@@ -872,51 +870,50 @@ CheckRemoveOption(){
         if [ "${MARK}" -eq 0 ]; then
             _error "请输入正确的同步免密节点组名称"
             _error "可用节点组如下:"
-            for i in "${GROUP_NAME_IN_FILE[@]}"; do
+            for i in "${groupNameInFile[@]}"; do
                 echo "${i}"
             done
             exit 1
         fi
-        mapfile -t HOST_ALIAS < <(cat /root/.ssh/"${REMOVE_GROUP_INFO}"/config-"${REMOVE_GROUP_INFO}"-*|awk '/Host / {print $2}')
-        for i in "${HOST_ALIAS[@]}"; do
+        mapfile -t hostAlias < <(cat /root/.ssh/"${removeGroupInfo}"/config-"${removeGroupInfo}"-*|awk '/Host / {print $2}')
+        for i in "${hostAlias[@]}"; do
             MARK=0
-            [ "${i}" = "${REMOVE_NODE_ALIAS}" ] && MARK=1 && break
+            [ "${i}" = "${removeNodeAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
             _error "部署节点别名错误，请检查指定的免密节点组名中可用的部署节点别名:"
-            for i in "${HOST_ALIAS[@]}"; do
+            for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
             exit 114
         fi
-        if ssh -o BatchMode=yes "${REMOVE_NODE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "卸载节点 ${REMOVE_NODE_ALIAS} 连接正常"
+        if ssh -o BatchMode=yes "${removeNodeAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "卸载节点 ${removeNodeAlias} 连接正常"
         else
-            _error "卸载节点 ${REMOVE_NODE_ALIAS} 无法连接，请检查源部署节点硬件是否损坏"
+            _error "卸载节点 ${removeNodeAlias} 无法连接，请检查源部署节点硬件是否损坏"
             MARK=1
         fi
 
-        if [ -n "${REMOVE_OPERATION_FILE}" ]; then
-            if [[ ! "${REMOVE_OPERATION_FILE}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
+        if [ -n "${removeOperationFile}" ]; then
+            if [[ ! "${removeOperationFile}" =~ ^[0-9a-zA-Z_-]*$ ]]; then
                 _error "需移除的方案组别名写法有错，只支持大小写字母、数字、下划线和连字符，请检查"
                 exit 1
             fi
         fi
-        
-        IS_REMOVE_ALL=0
-        mapfile -t OPERATION_NAME_FILE < <(ssh "${REMOVE_NODE_ALIAS}" "find /var/log/${SH_NAME}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
-        if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
-            IS_REMOVE_ALL=1
+        isRemoveAll=0
+        mapfile -t operationNameFile < <(ssh "${removeNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
+        if [ "${removeOperationFile}" = "all" ]; then
+            isRemoveAll=1
         else
             MARK=0
-            for i in "${OPERATION_NAME_FILE[@]}"; do
-                [ "$i" = "${REMOVE_OPERATION_FILE}" ] && MARK=1 && break
+            for i in "${operationNameFile[@]}"; do
+                [ "$i" = "${removeOperationFile}" ] && MARK=1 && break
             done
-            if [ "${#OPERATION_NAME_FILE[@]}" -gt 0 ]; then
+            if [ "${#operationNameFile[@]}" -gt 0 ]; then
                 if [ "${MARK}" -eq 0 ]; then
                     _error "请输入正确的方案组名称"
                     _error "可选的方案组名称如下:"
-                    for i in "${OPERATION_NAME_FILE[@]}"; do
+                    for i in "${operationNameFile[@]}"; do
                         echo "${i}"
                     done
                     exit 1
@@ -925,24 +922,24 @@ CheckRemoveOption(){
         fi
 
         # 信息汇总
-        if [ "${IS_REMOVE_ALL}" -eq 1 ]; then
-            if [ "${#OPERATION_NAME_FILE[@]}" -eq 0 ]; then
+        if [ "${isRemoveAll}" -eq 1 ]; then
+            if [ "${#operationNameFile[@]}" -eq 0 ]; then
                 _warning "指定节点中不存在任何同步或备份方案组，继续执行将检查并清理系统中其余残留信息"
             else
                 _warning "即将卸载指定节点中所有的同步或备份方案组，以下为需卸载节点中保存的所有方案细节:"
-                ssh "${REMOVE_NODE_ALIAS}" "sed '/\/bin\/bash/d' /var/log/${SH_NAME}/exec/run-*"
+                ssh "${removeNodeAlias}" "sed '/\/bin\/bash/d' /var/log/${shName}/exec/run-*"
             fi
         else
-            if [ "${#OPERATION_NAME_FILE[@]}" -eq 0 ]; then
+            if [ "${#operationNameFile[@]}" -eq 0 ]; then
                 _error "指定节点中不存在任何同步或备份方案组，如果不是人为因素导致此问题，请在卸载时直接将选项 --remove_operation_file 或 -F 的参数设置成 all 以完成全部卸载，再重新部署"
                 exit 1
             else
-                _warning "即将卸载指定节点中名为 ${REMOVE_OPERATION_FILE} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
-                ssh "${REMOVE_NODE_ALIAS}" "sed '/\/bin\/bash/d' /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
+                _warning "即将卸载指定节点中名为 ${removeOperationFile} 的同步或备份方案组，以下为需卸载节点中该方案细节:"
+                ssh "${removeNodeAlias}" "sed '/\/bin\/bash/d' /var/log/${shName}/exec/run-${removeOperationFile}"
             fi
         fi
 
-        if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
+        if [ "${confirmContinue}" -eq 1 ]; then
             Remove
             exit 0
         else
@@ -950,9 +947,9 @@ CheckRemoveOption(){
             exit 0
         fi
     else
-        if [ -n "${REMOVE_GROUP_INFO}" ] || [ -n "${REMOVE_OPERATION_FILE}" ]; then
+        if [ -n "${removeGroupInfo}" ] || [ -n "${removeOperationFile}" ]; then
             _warning "以下两个选项均为卸载时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
-            _errornoblank "
+            _errorNoBlank "
             -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
             -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
             exit 1
@@ -963,38 +960,38 @@ CheckRemoveOption(){
 CheckTransmissionStatus(){
     _info "测试节点连通性"
     MARK=0
-    if [ -n "${SYNC_SOURCE_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${SYNC_SOURCE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "源同步节点 ${SYNC_SOURCE_ALIAS} 连接正常"
+    if [ -n "${syncSourceAlias}" ]; then
+        if ssh -o BatchMode=yes "${syncSourceAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "源同步节点 ${syncSourceAlias} 连接正常"
         else
-            _error "源同步节点 ${SYNC_SOURCE_ALIAS} 无法连接，请检查源同步节点硬件是否损坏"
+            _error "源同步节点 ${syncSourceAlias} 无法连接，请检查源同步节点硬件是否损坏"
             MARK=1
         fi
     fi
 
-    if [ -n "${SYNC_DEST_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${SYNC_DEST_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "目标同步节点 ${SYNC_DEST_ALIAS} 连接正常"
+    if [ -n "${syncDestAlias}" ]; then
+        if ssh -o BatchMode=yes "${syncDestAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "目标同步节点 ${syncDestAlias} 连接正常"
         else
-            _error "目标同步节点 ${SYNC_DEST_ALIAS} 无法连接，请检查目标同步节点硬件是否损坏"
+            _error "目标同步节点 ${syncDestAlias} 无法连接，请检查目标同步节点硬件是否损坏"
             MARK=1
         fi
     fi
 
-    if [ -n "${BACKUP_SOURCE_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${BACKUP_SOURCE_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "源备份节点 ${BACKUP_SOURCE_ALIAS} 连接正常"
+    if [ -n "${backupSourceAlias}" ]; then
+        if ssh -o BatchMode=yes "${backupSourceAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "源备份节点 ${backupSourceAlias} 连接正常"
         else
-            _error "源备份节点 ${BACKUP_SOURCE_ALIAS} 无法连接，请检查源备份节点硬件是否损坏"
+            _error "源备份节点 ${backupSourceAlias} 无法连接，请检查源备份节点硬件是否损坏"
             MARK=1
         fi
     fi
 
-    if [ -n "${BACKUP_DEST_ALIAS}" ]; then
-        if ssh -o BatchMode=yes "${BACKUP_DEST_ALIAS}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "目标备份节点 ${BACKUP_DEST_ALIAS} 连接正常"
+    if [ -n "${backupDestAlias}" ]; then
+        if ssh -o BatchMode=yes "${backupDestAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
+            _success "目标备份节点 ${backupDestAlias} 连接正常"
         else
-            _error "目标备份节点 ${BACKUP_DEST_ALIAS} 无法连接，请检查目标备份节点硬件是否损坏"
+            _error "目标备份节点 ${backupDestAlias} 无法连接，请检查目标备份节点硬件是否损坏"
             MARK=1
         fi
     fi
@@ -1004,52 +1001,52 @@ CheckTransmissionStatus(){
 
     _info "开始同步/备份节点路径检查和处理"
     # 备份一下，忘了为什么之前会用这个写法，当时应该是能正常工作的，但现在无法工作： sed -e "s/'/'\\\\''/g"
-    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ]; then
-        SYNC_SOURCE_PATH=$(echo "${SYNC_SOURCE_PATH}" | sed -e "s/\/$//g")
-        if ssh "${SYNC_SOURCE_ALIAS}" "[ -d \"${SYNC_SOURCE_PATH}\" ]"; then
-            _info "修正后的源同步节点路径: ${SYNC_SOURCE_PATH}"
+    if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ]; then
+        syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
+        if ssh "${syncSourceAlias}" "[ -d \"${syncSourcePath}\" ]"; then
+            _info "修正后的源同步节点路径: ${syncSourcePath}"
         else
-            _error "源同步节点路径不存在，请检查: ${SYNC_SOURCE_ALIAS}"
+            _error "源同步节点路径不存在，请检查: ${syncSourceAlias}"
             exit 1
         fi
-        SYNC_DEST_PATH=$(echo "${SYNC_DEST_PATH}" | sed -e "s/\/$//g")
-        ssh "${SYNC_DEST_ALIAS}" "[ ! -d \"${SYNC_DEST_PATH}\" ] && echo \"目标同步节点路径不存在，将创建路径: ${SYNC_DEST_PATH}\" && mkdir -p \"${SYNC_DEST_PATH}\""
-        _info "修正后的目标同步节点路径: ${SYNC_DEST_PATH}"
+        syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
+        ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目标同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\""
+        _info "修正后的目标同步节点路径: ${syncDestPath}"
     fi
-    if [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ]; then
-        BACKUP_SOURCE_PATH=$(echo "${BACKUP_SOURCE_PATH}" | sed -e "s/\/$//g")
-        if ssh "${BACKUP_SOURCE_ALIAS}" "[ -d \"${BACKUP_SOURCE_PATH}\" ]"; then
-            _info "修正后的源备份节点路径: ${BACKUP_SOURCE_PATH}"
+    if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ]; then
+        backupSourcePath=$(echo "${backupSourcePath}" | sed -e "s/\/$//g")
+        if ssh "${backupSourceAlias}" "[ -d \"${backupSourcePath}\" ]"; then
+            _info "修正后的源备份节点路径: ${backupSourcePath}"
         else
             _error "源备份节点路径不存在，请检查，退出中"
             exit 1
         fi
-        BACKUP_DEST_PATH=$(echo "${BACKUP_DEST_PATH}" | sed -e "s/\/$//g")
-        ssh "${BACKUP_DEST_ALIAS}" "[ ! -d \"${BACKUP_DEST_PATH}\" ] && echo \"目标备份节点路径不存在，将创建路径: ${BACKUP_DEST_PATH}\" && mkdir -p \"${BACKUP_DEST_PATH}\""
-        _info "修正后的目标备份节点路径: ${BACKUP_DEST_PATH}"
+        backupDestPath=$(echo "${backupDestPath}" | sed -e "s/\/$//g")
+        ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目标备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\""
+        _info "修正后的目标备份节点路径: ${backupDestPath}"
     fi
     _success "节点路径检查和处理完毕"
 }
 
 SearchCondition(){
     export LANG=en_US.UTF-8
-    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
-        if [ "${SYNC_TYPE}" = "dir" ]; then
+    if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
+        if [ "${syncType}" = "dir" ]; then
             SyncLocateFolders
-        elif [ "${SYNC_TYPE}" = "file" ]; then
+        elif [ "${syncType}" = "file" ]; then
             SyncLocateFiles
         fi
     fi
     
-    if [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
-        if [ "${BACKUP_TYPE}" = "dir" ]; then
+    if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
+        if [ "${backupType}" = "dir" ]; then
             BackupLocateFolders
-        elif [ "${BACKUP_TYPE}" = "file" ]; then
+        elif [ "${backupType}" = "file" ]; then
             BackupLocateFiles
         fi
     fi
 
-    if [ "${CONFIRM_CONTINUE}" -eq 1 ]; then
+    if [ "${confirmContinue}" -eq 1 ]; then
         OperationCondition
     else
         _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
@@ -1058,443 +1055,443 @@ SearchCondition(){
 }
 
 OperationCondition(){
-    if [ -n "${SYNC_SOURCE_PATH}" ] && [ -n "${SYNC_DEST_PATH}" ] && [ -n "${SYNC_SOURCE_ALIAS}" ] && [ -n "${SYNC_DEST_ALIAS}" ] && [ -n "${SYNC_GROUP_INFO}" ] && [ -n "${SYNC_TYPE}" ] && [ -n "${SYNC_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
+    if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         SyncOperation
     fi
     
-    if [ -n "${BACKUP_SOURCE_PATH}" ] && [ -n "${BACKUP_DEST_PATH}" ] && [ -n "${BACKUP_SOURCE_ALIAS}" ] && [ -n "${BACKUP_DEST_ALIAS}" ] && [ -n "${BACKUP_GROUP_INFO}" ] && [ -n "${BACKUP_TYPE}" ] && [ -n "${BACKUP_DATE_TYPE}" ] && [ -n "${ALLOW_DAYS}" ]; then
+    if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         BackupOperation
     fi
 }
 
 SyncLocateFolders(){
-    MARK_SYNC_SOURCE_FIND_PATH=0
-    MARK_SYNC_DEST_FIND_PATH=0
+    markSyncSourceFindPath=0
+    markSyncDestFindPath=0
     JUMP=0
     days=0
-    for((LOOP=0;LOOP<"${ALLOW_DAYS}";LOOP++));do
+    for((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        YEAR_VALUE=$(date -d ${days}days +%Y)
-        MONTH_VALUE=$(date -d ${days}days +%m)
-        DAY_VALUE=$(date -d ${days}days +%d)
-        SYNC_DATE=$(echo "${SYNC_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
-        mapfile -t SYNC_SOURCE_FIND_FOLDER_NAME_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type d -name \"*${SYNC_DATE}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
-        mapfile -t SYNC_DEST_FIND_FOLDER_NAME_1 < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -maxdepth 1 -type d -name \"*${SYNC_DATE}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
+        yearValue=$(date -d ${days}days +%Y)
+        monthValue=$(date -d ${days}days +%m)
+        dayValue=$(date -d ${days}days +%d)
+        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        mapfile -t syncSourceFindFolderName1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type d -name \"*${syncDate}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
+        mapfile -t syncDestFindFolderName1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type d -name \"*${syncDate}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
 
-        SYNC_SOURCE_FIND_PATH=()
-        for i in "${SYNC_SOURCE_FIND_FOLDER_NAME_1[@]}"; do
-            mapfile -t -O "${#SYNC_SOURCE_FIND_PATH[@]}" SYNC_SOURCE_FIND_PATH < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
+        syncSourceFindPath=()
+        for i in "${syncSourceFindFolderName1[@]}"; do
+            mapfile -t -O "${#syncSourceFindPath[@]}" syncSourceFindPath < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
+        done
+
+        syncDestFindPath=()
+        for i in "${syncDestFindFolderName1[@]}"; do
+            mapfile -t -O "${#syncDestFindPath[@]}" syncDestFindPath < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
+        done
+
+        syncSourceFindFile=()
+        for i in "${syncSourceFindFolderName1[@]}"; do
+            mapfile -t -O "${#syncSourceFindFile[@]}" syncSourceFindFile < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
+        done
+
+        syncDestFindFile=()
+        for i in "${syncDestFindFolderName1[@]}"; do
+            mapfile -t -O "${#syncDestFindFile[@]}" syncDestFindFile < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
         done
         
-        SYNC_DEST_FIND_PATH=()
-        for i in "${SYNC_DEST_FIND_FOLDER_NAME_1[@]}"; do
-            mapfile -t -O "${#SYNC_DEST_FIND_PATH[@]}" SYNC_DEST_FIND_PATH < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
-        done
-        
-        SYNC_SOURCE_FIND_FILE=()
-        for i in "${SYNC_SOURCE_FIND_FOLDER_NAME_1[@]}"; do
-            mapfile -t -O "${#SYNC_SOURCE_FIND_FILE[@]}" SYNC_SOURCE_FIND_FILE < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
-        done
-        
-        SYNC_DEST_FIND_FILE=()
-        for i in "${SYNC_DEST_FIND_FOLDER_NAME_1[@]}"; do
-            mapfile -t -O "${#SYNC_DEST_FIND_FILE[@]}" SYNC_DEST_FIND_FILE < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
-        done
-        
-        [ "${#SYNC_SOURCE_FIND_PATH[@]}" -gt 0 ] && MARK_SYNC_SOURCE_FIND_PATH=1 && JUMP=1
-        [ "${#SYNC_DEST_FIND_PATH[@]}" -gt 0 ] && MARK_SYNC_DEST_FIND_PATH=1 && JUMP=1
+        [ "${#syncSourceFindPath[@]}" -gt 0 ] && markSyncSourceFindPath=1 && JUMP=1
+        [ "${#syncDestFindPath[@]}" -gt 0 ] && markSyncDestFindPath=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
         days=$(( days - 1 ))
     done
         
-    if [ "${MARK_SYNC_SOURCE_FIND_PATH}" -eq 1 ] && [ "${MARK_SYNC_DEST_FIND_PATH}" -eq 0 ]; then
-        _warning "目标同步节点${SYNC_DEST_ALIAS}不存在指定日期格式${SYNC_DATE}的文件夹"
+    if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
+        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件夹"
         ErrorWarningSyncLog
-        echo "目标同步节点${SYNC_DEST_ALIAS}不存在指定日期格式${SYNC_DATE}的文件夹" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    elif [ "${MARK_SYNC_SOURCE_FIND_PATH}" -eq 0 ] && [ "${MARK_SYNC_DEST_FIND_PATH}" -eq 1 ]; then
-        _warning "源同步节点${SYNC_SOURCE_ALIAS}不存在指定日期格式${SYNC_DATE}的文件夹"
+        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件夹" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
+        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件夹"
         ErrorWarningSyncLog
-        echo "源同步节点${SYNC_SOURCE_ALIAS}不存在指定日期格式${SYNC_DATE}的文件夹" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    elif [ "${MARK_SYNC_SOURCE_FIND_PATH}" -eq 1 ] && [ "${MARK_SYNC_DEST_FIND_PATH}" -eq 1 ]; then
-        _success "源与目标同步节点均找到指定日期格式${SYNC_DATE}的文件夹"
-    elif [ "${MARK_SYNC_SOURCE_FIND_PATH}" -eq 0 ] && [ "${MARK_SYNC_DEST_FIND_PATH}" -eq 0 ]; then
-        _error "源与目标同步节点均不存在指定日期格式${SYNC_DATE}的文件夹，退出中"
+        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件夹" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
+        _success "源与目标同步节点均找到指定日期格式${syncDate}的文件夹"
+    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
+        _error "源与目标同步节点均不存在指定日期格式${syncDate}的文件夹，退出中"
         ErrorWarningSyncLog
-        echo "源与目标同步节点均不存在指定日期格式${SYNC_DATE}的文件夹，退出中" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+        echo "源与目标同步节点均不存在指定日期格式${syncDate}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
 
     # 锁定目的节点需创建的文件夹的相对路径并转换成绝对路径存进数组
-    LOCATE_DEST_NEED_FOLDER=()
-    for i in "${SYNC_SOURCE_FIND_PATH[@]}"; do
+    locateDestNeedFolder=()
+    for i in "${syncSourceFindPath[@]}"; do
         MARK=0
-        for j in "${SYNC_DEST_FIND_PATH[@]}"; do
+        for j in "${syncDestFindPath[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#LOCATE_DEST_NEED_FOLDER[@]}" LOCATE_DEST_NEED_FOLDER < <(echo "\"${SYNC_DEST_PATH}/$i\"")
+            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"${syncDestPath}/$i\"")
         fi
     done
     
     # 锁定源节点需创建的文件夹的相对路径并转换成绝对路径存进数组
-    LOCATE_SOURCE_NEED_FOLDER=()
-    for i in "${SYNC_DEST_FIND_PATH[@]}"; do
+    locateSourceNeedFolder=()
+    for i in "${syncDestFindPath[@]}"; do
         MARK=0
-        for j in "${SYNC_SOURCE_FIND_PATH[@]}"; do
+        for j in "${syncSourceFindPath[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#LOCATE_SOURCE_NEED_FOLDER[@]}" LOCATE_SOURCE_NEED_FOLDER < <(echo "\"${SYNC_SOURCE_PATH}/$i\"")
+            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"${syncSourcePath}/$i\"")
         fi
     done
     
     # 锁定始到末需传送的文件的绝对路径
-    CONFILICT_FILE=()
-    for i in "${SYNC_SOURCE_FIND_FILE[@]}"; do
+    conflictFile=()
+    for i in "${syncSourceFindFile[@]}"; do
         MARK=0
-        for j in "${SYNC_DEST_FIND_FILE[@]}"; do
+        for j in "${syncDestFindFile[@]}"; do
             if [ "$i" = "$j" ]; then
-                if [[ ! $(ssh "${SYNC_SOURCE_ALIAS}" "sha256sum \"${SYNC_SOURCE_PATH}/$i\"|awk '{print \$1}'") = $(ssh "${SYNC_DEST_ALIAS}" "sha256sum \"${SYNC_DEST_PATH}/$j\"|awk '{print \$1}'") ]]; then
-                    _warning "源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点:\"${SYNC_DEST_PATH}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    CONFILICT_FILE+=("源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点: \"${SYNC_DEST_PATH}/$j\"")
+                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
+                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
                 else
-                    _success "源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点: \"${SYNC_DEST_PATH}/$j\" 文件校验值一致"
+                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
                 fi
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            LOCATE_SOURCE_OUTGOING_FILE+=("\"${SYNC_SOURCE_PATH}/$i\"")
-            LOCATE_DEST_INCOMING_FILE+=("\"${SYNC_DEST_PATH}/$i\"")
+            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
+            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
         fi
     done
     
     # 将同名不同内容的冲突文件列表写入日志
     ErrorWarningSyncLog
-    echo "始末节点中的同名文件存在冲突，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    for i in "${CONFILICT_FILE[@]}"; do
-        echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+    echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
+    for i in "${conflictFile[@]}"; do
+        echo "$i" >> "${execErrorWarningSyncLogFile}"
     done
 
     # 锁定末到始需传送的文件的绝对路径
-    for i in "${SYNC_DEST_FIND_FILE[@]}"; do
+    for i in "${syncDestFindFile[@]}"; do
         MARK=0
-        for j in "${SYNC_SOURCE_FIND_FILE[@]}"; do
+        for j in "${syncSourceFindFile[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            LOCATE_DEST_OUTGOING_FILE+=("\"${SYNC_DEST_PATH}/$i\"")
-            LOCATE_SOURCE_INCOMING_FILE+=("\"${SYNC_SOURCE_PATH}/$i\"")
+            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
+            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
         fi
     done
     
     # 信息汇总
     _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
     _warning "源节点 —— 待创建文件夹绝对路径列表:"
-    for i in "${LOCATE_SOURCE_NEED_FOLDER[@]}"; do
+    for i in "${locateSourceNeedFolder[@]}"; do
         echo "$i"
     done
     echo ""
     _warning "目的节点 —— 待创建文件夹绝对路径列表:"
-    for i in "${LOCATE_DEST_NEED_FOLDER[@]}"; do
+    for i in "${locateDestNeedFolder[@]}"; do
         echo "$i"
     done
     echo ""
     _warning "传输方向: 源节点 -> 目的节点 —— 源节点待传出-目的节点待传入文件绝对路径列表:"
-    for i in "${!LOCATE_SOURCE_OUTGOING_FILE[@]}"; do
-        echo "${LOCATE_SOURCE_OUTGOING_FILE[$i]} -> ${LOCATE_DEST_INCOMING_FILE[$i]}"
+    for i in "${!locateSourceOutgoingFile[@]}"; do
+        echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}"
     done
     echo ""
     _warning "传输方向: 目的节点 -> 源节点 —— 目的节点待传出-源节点待传入文件绝对路径列表:"
-    for i in "${!LOCATE_DEST_OUTGOING_FILE[@]}"; do
-        echo "${LOCATE_DEST_OUTGOING_FILE[$i]} -> ${LOCATE_SOURCE_INCOMING_FILE[$i]}"
+    for i in "${!locateDestOutgoingFile[@]}"; do
+        echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}"
     done
     echo ""
     _warning "基于指定路径的始末节点存在冲突的文件绝对路径列表:"
-    for i in "${CONFILICT_FILE[@]}"; do
+    for i in "${conflictFile[@]}"; do
         echo "$i"
     done
     echo ""
 }
 
 SyncLocateFiles(){
-    MARK_SYNC_SOURCE_FIND_FILE_1=0
-    MARK_SYNC_DEST_FIND_FILE_1=0
+    markSyncSourceFindFile1=0
+    markSyncDestFindFile1=0
     JUMP=0
     days=0
-    for ((LOOP=0;LOOP<"${ALLOW_DAYS}";LOOP++));do
+    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        YEAR_VALUE=$(date -d ${days}days +%Y)
-        MONTH_VALUE=$(date -d ${days}days +%m)
-        DAY_VALUE=$(date -d ${days}days +%d)
-        SYNC_DATE=$(echo "${SYNC_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
-        mapfile -t SYNC_SOURCE_FIND_FILE_1 < <(ssh "${SYNC_SOURCE_ALIAS}" "cd \"${SYNC_SOURCE_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-        mapfile -t SYNC_DEST_FIND_FILE_1 < <(ssh "${SYNC_DEST_ALIAS}" "cd \"${SYNC_DEST_PATH}\";find . -maxdepth 1 -type f -name \"*${SYNC_DATE}*\"|sed 's/^\.\///g'")
+        yearValue=$(date -d ${days}days +%Y)
+        monthValue=$(date -d ${days}days +%m)
+        dayValue=$(date -d ${days}days +%d)
+        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
+        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
 
         
-        [ "${#SYNC_SOURCE_FIND_FILE_1[@]}" -gt 0 ] && MARK_SYNC_SOURCE_FIND_FILE_1=1 && JUMP=1
-        [ "${#SYNC_DEST_FIND_FILE_1[@]}" -gt 0 ] && MARK_SYNC_DEST_FIND_FILE_1=1 && JUMP=1
+        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
+        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
         days=$(( days - 1 ))
     done
         
-    if [ "${MARK_SYNC_SOURCE_FIND_FILE_1}" -eq 1 ] && [ "${MARK_SYNC_DEST_FIND_FILE_1}" -eq 0 ]; then
-        _warning "目标同步节点${SYNC_DEST_ALIAS}不存在指定日期格式${SYNC_DATE}的文件"
+    if [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
+        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件"
         ErrorWarningSyncLog
-        echo "目标同步节点${SYNC_DEST_ALIAS}不存在指定日期格式${SYNC_DATE}的文件" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    elif [ "${MARK_SYNC_SOURCE_FIND_FILE_1}" -eq 0 ] && [ "${MARK_SYNC_DEST_FIND_FILE_1}" -eq 1 ]; then
-        _warning "源同步节点${SYNC_SOURCE_ALIAS}不存在指定日期格式${SYNC_DATE}的文件"
+        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindFile1}" -eq 0 ] && [ "${markSyncDestFindFile1}" -eq 1 ]; then
+        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件"
         ErrorWarningSyncLog
-        echo "源同步节点${SYNC_SOURCE_ALIAS}不存在指定日期格式${SYNC_DATE}的文件" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    elif [ "${MARK_SYNC_SOURCE_FIND_FILE_1}" -eq 1 ] && [ "${MARK_SYNC_DEST_FIND_FILE_1}" -eq 1 ]; then
-        _success "源与目标同步节点均找到指定日期格式${SYNC_DATE}的文件"
-    elif [ "${MARK_SYNC_SOURCE_FIND_FILE_1}" -eq 0 ] && [ "${MARK_SYNC_DEST_FIND_FILE_1}" -eq 0 ]; then
-        _error "源与目标同步节点均不存在指定日期格式${SYNC_DATE}的文件，退出中"
+        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 1 ]; then
+        _success "源与目标同步节点均找到指定日期格式${syncDate}的文件"
+    elif [ "${markSyncSourceFindFile1}" -eq 0 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
+        _error "源与目标同步节点均不存在指定日期格式${syncDate}的文件，退出中"
         ErrorWarningSyncLog
-        echo "源与目标同步节点均不存在指定日期格式${SYNC_DATE}的文件，退出中" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+        echo "源与目标同步节点均不存在指定日期格式${syncDate}的文件，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
 
     # 锁定始到末需传送的文件的绝对路径
-    CONFILICT_FILE=()
-    for i in "${SYNC_SOURCE_FIND_FILE_1[@]}"; do
+    conflictFile=()
+    for i in "${syncSourceFindFile1[@]}"; do
         MARK=0
-        for j in "${SYNC_DEST_FIND_FILE_1[@]}"; do
+        for j in "${syncDestFindFile1[@]}"; do
             if [ "$i" = "$j" ]; then
-                if [[ ! $(ssh "${SYNC_SOURCE_ALIAS}" "sha256sum \"${SYNC_SOURCE_PATH}/$i\"|awk '{print \$1}'") = $(ssh "${SYNC_DEST_ALIAS}" "sha256sum \"${SYNC_DEST_PATH}/$j\"|awk '{print \$1}'") ]]; then
-                    _warning "源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点:\"${SYNC_DEST_PATH}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    CONFILICT_FILE+=("源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点: \"${SYNC_DEST_PATH}/$j\"")
+                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
+                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
                 else
-                    _success "源节点: \"${SYNC_SOURCE_PATH}/$i\"，目的节点: \"${SYNC_DEST_PATH}/$j\" 文件校验值一致"
+                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
                 fi
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            LOCATE_SOURCE_OUTGOING_FILE+=("\"${SYNC_SOURCE_PATH}/$i\"")
-            LOCATE_DEST_INCOMING_FILE+=("\"${SYNC_DEST_PATH}/$i\"")
+            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
+            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
         fi
     done
     
     # 将同名不同内容的冲突文件列表写入日志
     ErrorWarningSyncLog
-    echo "始末节点中的同名文件存在冲突，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-    for i in "${CONFILICT_FILE[@]}"; do
-        echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+    echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
+    for i in "${conflictFile[@]}"; do
+        echo "$i" >> "${execErrorWarningSyncLogFile}"
     done
 
     # 锁定末到始需传送的文件的绝对路径
-    for i in "${SYNC_DEST_FIND_FILE_1[@]}"; do
+    for i in "${syncDestFindFile1[@]}"; do
         MARK=0
-        for j in "${SYNC_SOURCE_FIND_FILE_1[@]}"; do
+        for j in "${syncSourceFindFile1[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            LOCATE_DEST_OUTGOING_FILE+=("\"${SYNC_DEST_PATH}/$i\"")
-            LOCATE_SOURCE_INCOMING_FILE+=("\"${SYNC_SOURCE_PATH}/$i\"")
+            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
+            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
         fi
     done
     
     # 信息汇总
     _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
     _warning "传输方向: 源节点 -> 目的节点 —— 源节点待传出-目的节点待传入文件绝对路径列表:"
-    for i in "${!LOCATE_SOURCE_OUTGOING_FILE[@]}"; do
-        echo "${LOCATE_SOURCE_OUTGOING_FILE[$i]} -> ${LOCATE_DEST_INCOMING_FILE[$i]}"
+    for i in "${!locateSourceOutgoingFile[@]}"; do
+        echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}"
     done
     echo ""
     _warning "传输方向: 目的节点 -> 源节点 —— 目的节点待传出-源节点待传入文件绝对路径列表:"
-    for i in "${!LOCATE_DEST_OUTGOING_FILE[@]}"; do
-        echo "${LOCATE_DEST_OUTGOING_FILE[$i]} -> ${LOCATE_SOURCE_INCOMING_FILE[$i]}"
+    for i in "${!locateDestOutgoingFile[@]}"; do
+        echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}"
     done
     echo ""
     _warning "基于指定路径的始末节点存在冲突的文件绝对路径列表:"
-    for i in "${CONFILICT_FILE[@]}"; do
+    for i in "${conflictFile[@]}"; do
         echo "$i"
     done
     echo ""
 }
 
 BackupLocateFolders(){
-    MARK_BACKUP_SOURCE_FIND_FOLDER_FULL_PATH=0
+    markBackupSourceFindFolderFullPath=0
     JUMP=0
     days=0
-    for((LOOP=0;LOOP<"${ALLOW_DAYS}";LOOP++));do
+    for((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        YEAR_VALUE=$(date -d ${days}days +%Y)
-        MONTH_VALUE=$(date -d ${days}days +%m)
-        DAY_VALUE=$(date -d ${days}days +%d)
-        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
-        mapfile -t BACKUP_SOURCE_FIND_FOLDER_FULL_PATH < <(ssh "${BACKUP_SOURCE_ALIAS}" "find \"${BACKUP_SOURCE_PATH}\" -maxdepth 1 -type d -name \"*${BACKUP_DATE}*\"|grep -v \"\.$\"")
+        yearValue=$(date -d ${days}days +%Y)
+        monthValue=$(date -d ${days}days +%m)
+        dayValue=$(date -d ${days}days +%d)
+        backupDate=$(echo "${backupDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        mapfile -t backupSourceFindFolderFullPath < <(ssh "${backupSourceAlias}" "find \"${backupSourcePath}\" -maxdepth 1 -type d -name \"*${backupDate}*\"|grep -v \"\.$\"")
         
-        [ "${#BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[@]}" -gt 0 ] && MARK_BACKUP_SOURCE_FIND_FOLDER_FULL_PATH=1 && JUMP=1
+        [ "${#backupSourceFindFolderFullPath[@]}" -gt 0 ] && markBackupSourceFindFolderFullPath=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
         days=$(( days - 1 ))
     done
 
-    if [ "${MARK_BACKUP_SOURCE_FIND_FOLDER_FULL_PATH}" -eq 1 ]; then
-        _success "源备份节点存在指定日期格式${BACKUP_DATE}的文件夹"
-    elif [ "${MARK_BACKUP_SOURCE_FIND_FOLDER_FULL_PATH}" -eq 0 ]; then
-        _error "源备份节点不存在指定日期格式${BACKUP_DATE}的文件夹，退出中"
+    if [ "${markBackupSourceFindFolderFullPath}" -eq 1 ]; then
+        _success "源备份节点存在指定日期格式${backupDate}的文件夹"
+    elif [ "${markBackupSourceFindFolderFullPath}" -eq 0 ]; then
+        _error "源备份节点不存在指定日期格式${backupDate}的文件夹，退出中"
         ErrorWarningBackupLog
-        echo "源备份节点不存在指定日期格式${BACKUP_DATE}的文件夹，退出中" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
+        echo "源备份节点不存在指定日期格式${backupDate}的文件夹，退出中" >> "${execErrorWarningBackupLogFile}"
         exit 1
     fi
     
     # 信息汇总
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
     _warning "源节点待备份文件夹绝对路径列表:"
-    for i in "${!BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[@]}"; do
-        echo "${BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[$i]}"
+    for i in "${!backupSourceFindFolderFullPath[@]}"; do
+        echo "${backupSourceFindFolderFullPath[$i]}"
     done
     echo ""
 }
 
 BackupLocateFiles(){
-    MARK_BACKUP_SOURCE_FIND_FILE_1=0
+    markBackupSourceFindFile1=0
     JUMP=0
     days=0
-    for ((LOOP=0;LOOP<"${ALLOW_DAYS}";LOOP++));do
+    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        YEAR_VALUE=$(date -d ${days}days +%Y)
-        MONTH_VALUE=$(date -d ${days}days +%m)
-        DAY_VALUE=$(date -d ${days}days +%d)
-        BACKUP_DATE=$(echo "${BACKUP_DATE_TYPE_CONVERTED}"|sed -e "s/YYYY/${YEAR_VALUE}/g; s/MMMM/${MONTH_VALUE}/g; s/DDDD/${DAY_VALUE}/g")
-        mapfile -t BACKUP_SOURCE_FIND_FILE_1 < <(ssh "${BACKUP_SOURCE_ALIAS}" "find \"${BACKUP_SOURCE_PATH}\" -maxdepth 1 -type f -name \"*${BACKUP_DATE}*\"")
+        yearValue=$(date -d ${days}days +%Y)
+        monthValue=$(date -d ${days}days +%m)
+        dayValue=$(date -d ${days}days +%d)
+        backupDate=$(echo "${backupDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        mapfile -t backupSourceFindFile1 < <(ssh "${backupSourceAlias}" "find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*${backupDate}*\"")
 
-        [ "${#BACKUP_SOURCE_FIND_FILE_1[@]}" -gt 0 ] && MARK_BACKUP_SOURCE_FIND_FILE_1=1 && JUMP=1
+        [ "${#backupSourceFindFile1[@]}" -gt 0 ] && markBackupSourceFindFile1=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
         days=$(( days - 1 ))
     done
         
-    if [ "${MARK_BACKUP_SOURCE_FIND_FILE_1}" -eq 1 ]; then
-        _success "源备份节点已找到指定日期格式${BACKUP_DATE}的文件"
-    elif [ "${MARK_BACKUP_SOURCE_FIND_FILE_1}" -eq 0 ]; then
-        _error "源节点不存在指定日期格式${BACKUP_DATE}的文件，退出中"
+    if [ "${markBackupSourceFindFile1}" -eq 1 ]; then
+        _success "源备份节点已找到指定日期格式${backupDate}的文件"
+    elif [ "${markBackupSourceFindFile1}" -eq 0 ]; then
+        _error "源节点不存在指定日期格式${backupDate}的文件，退出中"
         ErrorWarningBackupLog
-        echo "源与目标同步节点均不存在指定日期格式${BACKUP_DATE}的文件，退出中" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
+        echo "源与目标同步节点均不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
         exit 1
     fi
 
     # 信息汇总
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
     _warning "源节点待备份文件绝对路径列表:"
-    for i in "${!BACKUP_SOURCE_FIND_FILE_1[@]}"; do
-        echo "${BACKUP_SOURCE_FIND_FILE_1[$i]}"
+    for i in "${!backupSourceFindFile1[@]}"; do
+        echo "${backupSourceFindFile1[$i]}"
     done
     echo ""
 }
 
 SyncOperation(){
-    if [ "${SYNC_TYPE}" = "dir" ]; then
+    if [ "${syncType}" = "dir" ]; then
         # 源节点需创建的文件夹
-        if [ "${#LOCATE_SOURCE_NEED_FOLDER[@]}" -gt 0 ]; then
+        if [ "${#locateSourceNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建源同步节点所需文件夹"
-            # ssh "${SYNC_SOURCE_ALIAS}" "for i in \"${LOCATE_SOURCE_NEED_FOLDER[@]}\";do echo \"$i\";mkdir -p \"$i\";done"  # 这行可能会调用 CONFILICT_FILE 数组导致出错
-            for i in "${LOCATE_SOURCE_NEED_FOLDER[@]}";do
+            # ssh "${syncSourceAlias}" "for i in \"${locateSourceNeedFolder[@]}\";do echo \"$i\";mkdir -p \"$i\";done"  # 这行可能会调用 conflictFile 数组导致出错
+            for i in "${locateSourceNeedFolder[@]}";do
                 echo "正在创建文件夹: $i"
-                ssh "${SYNC_SOURCE_ALIAS}" "mkdir -p \"$i\""
+                ssh "${syncSourceAlias}" "mkdir -p \"$i\""
             done
             _info "源同步节点所需文件夹已创建成功"
         fi
         
         # 目的节点需创建的文件夹
-        if [ "${#LOCATE_DEST_NEED_FOLDER[@]}" -gt 0 ]; then
+        if [ "${#locateDestNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建目的同步节点所需文件夹"
-            # ssh "${SYNC_DEST_ALIAS}" "for i in \"${LOCATE_DEST_NEED_FOLDER[@]}\";do echo \"$i\";mkdir -p \"$i\";done"
-            for i in "${LOCATE_DEST_NEED_FOLDER[@]}";do
+            # ssh "${syncDestAlias}" "for i in \"${locateDestNeedFolder[@]}\";do echo \"$i\";mkdir -p \"$i\";done"
+            for i in "${locateDestNeedFolder[@]}";do
                 echo "正在创建文件夹: $i"
-                ssh "${SYNC_DEST_ALIAS}" "mkdir -p \"$i\""
+                ssh "${syncDestAlias}" "mkdir -p \"$i\""
             done
             _info "目的同步节点所需文件夹已创建成功"
         fi
         
         # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
-        if [ "${#LOCATE_SOURCE_OUTGOING_FILE[@]}" -gt 0 ]; then
+        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
             _info "源节点 -> 目的节点 开始传输"
-            SOURCE_TO_DEST_FAILED=()
-            for i in "${!LOCATE_SOURCE_OUTGOING_FILE[@]}"; do
-                if ! scp -r "${SYNC_SOURCE_ALIAS}":"${LOCATE_SOURCE_OUTGOING_FILE[$i]}" "${SYNC_DEST_ALIAS}":"${LOCATE_DEST_INCOMING_FILE[$i]}"; then
-                    SOURCE_TO_DEST_FAILED+=("${LOCATE_SOURCE_OUTGOING_FILE[$i]} -> ${LOCATE_DEST_INCOMING_FILE[$i]}")
+            sourceToDestFailed=()
+            for i in "${!locateSourceOutgoingFile[@]}"; do
+                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
+                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
                 fi
             done
-            if [ "${#SOURCE_TO_DEST_FAILED[@]}" -gt 0 ]; then
+            if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
                 _warning "部分文件传输失败，请查看报错日志"
                 ErrorWarningSyncLog
-                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-                for i in "${SOURCE_TO_DEST_FAILED[@]}"; do
-                    echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${sourceToDestFailed[@]}"; do
+                    echo "$i" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
         fi
         
         # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
-        if [ "${#LOCATE_DEST_OUTGOING_FILE[@]}" -gt 0 ]; then
+        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
             _info "目的节点 -> 源节点 开始传输"
-            DEST_TO_SOURCE_FAILED=()
-            for i in "${!LOCATE_DEST_OUTGOING_FILE[@]}"; do
-                if ! scp -r "${SYNC_DEST_ALIAS}":"${LOCATE_DEST_OUTGOING_FILE[$i]}" "${SYNC_SOURCE_ALIAS}":"${LOCATE_SOURCE_INCOMING_FILE[$i]}"; then
-                    DEST_TO_SOURCE_FAILED+=("${LOCATE_DEST_OUTGOING_FILE[$i]} -> ${LOCATE_SOURCE_INCOMING_FILE[$i]}")
+            destToSourceFailed=()
+            for i in "${!locateDestOutgoingFile[@]}"; do
+                if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
+                    destToSourceFailed+=("${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}")
                 fi
             done
-            if [ "${#DEST_TO_SOURCE_FAILED[@]}" -gt 0 ]; then
+            if [ "${#destToSourceFailed[@]}" -gt 0 ]; then
                 _warning "部分文件传输失败，请查看报错日志"
                 ErrorWarningSyncLog
-                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-                for i in "${DEST_TO_SOURCE_FAILED[@]}"; do
-                    echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${destToSourceFailed[@]}"; do
+                    echo "$i" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
         fi
         
-    elif [ "${SYNC_TYPE}" = "file" ]; then
+    elif [ "${syncType}" = "file" ]; then
         # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
-        if [ "${#LOCATE_SOURCE_OUTGOING_FILE[@]}" -gt 0 ]; then
+        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
             _info "源节点 -> 目的节点 开始传输"
-            SOURCE_TO_DEST_FAILED=()
-            for i in "${!LOCATE_SOURCE_OUTGOING_FILE[@]}"; do
-                if ! scp -r "${SYNC_SOURCE_ALIAS}":"${LOCATE_SOURCE_OUTGOING_FILE[$i]}" "${SYNC_DEST_ALIAS}":"${LOCATE_DEST_INCOMING_FILE[$i]}"; then
-                    SOURCE_TO_DEST_FAILED+=("${LOCATE_SOURCE_OUTGOING_FILE[$i]} -> ${LOCATE_DEST_INCOMING_FILE[$i]}")
+            sourceToDestFailed=()
+            for i in "${!locateSourceOutgoingFile[@]}"; do
+                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
+                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
                 fi
             done
-            if [ "${#SOURCE_TO_DEST_FAILED[@]}" -gt 0 ]; then
+            if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
                 _warning "部分文件传输失败，请查看报错日志"
                 ErrorWarningSyncLog
-                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-                for i in "${SOURCE_TO_DEST_FAILED[@]}"; do
-                    echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${sourceToDestFailed[@]}"; do
+                    echo "$i" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
         fi
         
         # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
-        if [ "${#LOCATE_DEST_OUTGOING_FILE[@]}" -gt 0 ]; then
+        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
             _info "目的节点 -> 源节点 开始传输"
-            DEST_TO_SOURCE_FAILED=()
-            for i in "${!LOCATE_DEST_OUTGOING_FILE[@]}"; do
-                if ! scp -r "${SYNC_DEST_ALIAS}":"${LOCATE_DEST_OUTGOING_FILE[$i]}" "${SYNC_SOURCE_ALIAS}":"${LOCATE_SOURCE_INCOMING_FILE[$i]}"; then
-                    DEST_TO_SOURCE_FAILED+=("${LOCATE_DEST_OUTGOING_FILE[$i]} -> ${LOCATE_SOURCE_INCOMING_FILE[$i]}")
+            destToSourceFailed=()
+            for i in "${!locateDestOutgoingFile[@]}"; do
+                if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
+                    destToSourceFailed+=("${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}")
                 fi
             done
-            if [ "${#DEST_TO_SOURCE_FAILED[@]}" -gt 0 ]; then
+            if [ "${#destToSourceFailed[@]}" -gt 0 ]; then
                 _warning "部分文件传输失败，请查看报错日志"
                 ErrorWarningSyncLog
-                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
-                for i in "${DEST_TO_SOURCE_FAILED[@]}"; do
-                    echo "$i" >> "${EXEC_ERROR_WARNING_SYNC_LOGFILE}"
+                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${destToSourceFailed[@]}"; do
+                    echo "$i" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
         fi
@@ -1502,44 +1499,44 @@ SyncOperation(){
 }
 
 BackupOperation(){
-    if [ "${BACKUP_TYPE}" = "dir" ]; then
+    if [ "${backupType}" = "dir" ]; then
         _info "源节点文件夹备份开始"
-        SOURCE_TO_DEST_FAILED=()
-        for i in "${!BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[@]}"; do
-            if ! scp -r "${BACKUP_SOURCE_ALIAS}":"${BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[$i]}" "${BACKUP_DEST_ALIAS}":"${BACKUP_DEST_PATH}"; then
-                SOURCE_TO_DEST_FAILED+=("${BACKUP_SOURCE_FIND_FOLDER_FULL_PATH[$i]} -> ${BACKUP_DEST_PATH}")
+        sourceToDestFailed=()
+        for i in "${!backupSourceFindFolderFullPath[@]}"; do
+            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFolderFullPath[$i]}" "${backupDestAlias}":"${backupDestPath}"; then
+                sourceToDestFailed+=("${backupSourceFindFolderFullPath[$i]} -> ${backupDestPath}")
             fi
         done
-        if [ "${#SOURCE_TO_DEST_FAILED[@]}" -gt 0 ]; then
+        if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
             _warning "部分文件夹传输失败，请查看报错日志"
             ErrorWarningBackupLog
-            echo "源节点部分文件夹备份失败，请检查" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
-            for i in "${SOURCE_TO_DEST_FAILED[@]}"; do
-                echo "$i" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
+            echo "源节点部分文件夹备份失败，请检查" >> "${execErrorWarningBackupLogFile}"
+            for i in "${sourceToDestFailed[@]}"; do
+                echo "$i" >> "${execErrorWarningBackupLogFile}"
             done
         fi
-    elif [ "${BACKUP_TYPE}" = "file" ]; then
+    elif [ "${backupType}" = "file" ]; then
         _info "源节点文件备份开始"
-        SOURCE_TO_DEST_FAILED=()
-        for i in "${!BACKUP_SOURCE_FIND_FILE_1[@]}"; do
-            if ! scp -r "${BACKUP_SOURCE_ALIAS}":"${BACKUP_SOURCE_FIND_FILE_1[$i]}" "${BACKUP_DEST_ALIAS}":"${BACKUP_DEST_PATH}"; then
-                SOURCE_TO_DEST_FAILED+=("${BACKUP_SOURCE_FIND_FILE_1[$i]} -> ${BACKUP_DEST_PATH}")
+        sourceToDestFailed=()
+        for i in "${!backupSourceFindFile1[@]}"; do
+            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFile1[$i]}" "${backupDestAlias}":"${backupDestPath}"; then
+                sourceToDestFailed+=("${backupSourceFindFile1[$i]} -> ${backupDestPath}")
             fi
         done
-        if [ "${#SOURCE_TO_DEST_FAILED[@]}" -gt 0 ]; then
+        if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
             _warning "部分文件传输失败，请查看报错日志"
             ErrorWarningBackupLog
-            echo "源节点部分文件备份失败，请检查" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
-            for i in "${SOURCE_TO_DEST_FAILED[@]}"; do
-                echo "$i" >> "${EXEC_ERROR_WARNING_BACKUP_LOGFILE}"
+            echo "源节点部分文件备份失败，请检查" >> "${execErrorWarningBackupLogFile}"
+            for i in "${sourceToDestFailed[@]}"; do
+                echo "$i" >> "${execErrorWarningBackupLogFile}"
             done
         fi
     fi
 }
 
 ErrorWarningSyncLog(){
-    [ ! -d /var/log/${SH_NAME}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${SH_NAME}/{exec,log}
-    cat >> /var/log/${SH_NAME}/log/exec-error-warning-sync-"$(date +"%Y-%m-%d")".log <<EOF
+    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+    cat >> /var/log/${shName}/log/exec-error-warning-sync-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
 时间：$(date +"%H:%M:%S")
@@ -1548,8 +1545,8 @@ EOF
 }
 
 ErrorWarningBackupLog(){
-    [ ! -d /var/log/${SH_NAME}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${SH_NAME}/{exec,log}
-    cat >> /var/log/${SH_NAME}/log/exec-error-warning-backup-"$(date +"%Y-%m-%d")".log <<EOF
+    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+    cat >> /var/log/${shName}/log/exec-error-warning-backup-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
 时间：$(date +"%H:%M:%S")
@@ -1558,8 +1555,8 @@ EOF
 }
 
 CommonLog(){
-    [ ! -d /var/log/${SH_NAME}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${SH_NAME}/{exec,log}
-    cat >> /var/log/${SH_NAME}/log/exec-"$(date +"%Y-%m-%d")".log <<EOF
+    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+    cat >> /var/log/${shName}/log/exec-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
 时间：$(date +"%H:%M:%S")
@@ -1569,8 +1566,8 @@ EOF
 
 DeleteExpiredLog(){
     _info "开始清理陈旧日志文件"
-    logfile=$(find /var/log/${SH_NAME}/log -name "exec*.log" -mtime +10)
-    for a in $logfile
+    logFile=$(find /var/log/${shName}/log -name "exec*.log" -mtime +10)
+    for a in $logFile
     do
         rm -f "${a}"
     done
@@ -1579,47 +1576,47 @@ DeleteExpiredLog(){
 
 Deploy(){
     _info "开始部署..."
-    ssh "${DEPLOY_NODE_ALIAS}" "mkdir -p /var/log/${SH_NAME}/{exec,log}"
-    scp "$(pwd)"/"${SH_NAME}".sh "${DEPLOY_NODE_ALIAS}":/var/log/${SH_NAME}/exec/${SH_NAME}
-    ssh "${DEPLOY_NODE_ALIAS}" "chmod +x /var/log/${SH_NAME}/exec/${SH_NAME}"
-    ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/bashrc"
-    ssh "${DEPLOY_NODE_ALIAS}" "echo \"alias msb='/usr/bin/bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME})'\" >> /etc/bashrc"
-    ssh "${DEPLOY_NODE_ALIAS}" "sed -i \"/${SH_NAME})\ -e/d\" /etc/crontab"
-    ssh "${DEPLOY_NODE_ALIAS}" "echo \"${LOG_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) -e'\" >> /etc/crontab"
+    ssh "${deployNodeAlias}" "mkdir -p /var/log/${shName}/{exec,log}"
+    scp "$(pwd)"/"${shName}".sh "${deployNodeAlias}":/var/log/${shName}/exec/${shName}
+    ssh "${deployNodeAlias}" "chmod +x /var/log/${shName}/exec/${shName}"
+    ssh "${deployNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
+    ssh "${deployNodeAlias}" "echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc"
+    ssh "${deployNodeAlias}" "sed -i \"/${shName})\ -e/d\" /etc/crontab"
+    ssh "${deployNodeAlias}" "echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab"
 
     # 集合定时任务，里面将存放各种同步或备份的执行功能(if判断如果写在ssh命令会出现判断功能失效的毛病)
-    ssh "${DEPLOY_NODE_ALIAS}" "[ ! -f /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" ] && echo \"#!/bin/bash\" >/var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\" && chmod +x /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
-    if [ "$(ssh "${DEPLOY_NODE_ALIAS}" "grep -c \"${OPERATION_CRON_NAME}\" /etc/crontab")" -eq 0 ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"${OPERATION_CRON} root /usr/bin/bash -c 'bash <(cat /var/log/${SH_NAME}/exec/run-${OPERATION_CRON_NAME})'\" >> /etc/crontab"
+    ssh "${deployNodeAlias}" "[ ! -f /var/log/${shName}/exec/run-\"${operationCronName}\" ] && echo \"#!/bin/bash\" >/var/log/${shName}/exec/run-\"${operationCronName}\" && chmod +x /var/log/${shName}/exec/run-\"${operationCronName}\""
+    if [ "$(ssh "${deployNodeAlias}" "grep -c \"${operationCronName}\" /etc/crontab")" -eq 0 ]; then
+        ssh "${deployNodeAlias}" "echo \"${operationCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/run-${operationCronName})'\" >> /etc/crontab"
     fi
     # 向集合定时任务添加具体执行功能
-    if [ -n "${SYNC_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --sync_source_path \"\"${SYNC_SOURCE_PATH}\"\" --sync_dest_path \"\"${SYNC_DEST_PATH}\"\" --sync_source_alias \"\"${SYNC_SOURCE_ALIAS}\"\" --sync_dest_alias \"\"${SYNC_DEST_ALIAS}\"\" --sync_group \"\"${SYNC_GROUP_INFO}\"\" --sync_type \"\"${SYNC_TYPE}\"\" --sync_date_type \"\"${SYNC_DATE_TYPE}\"\" --sync_operation_name \"\"${SYNC_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+    if [ -n "${syncOperationName}" ]; then
+        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --sync_source_path \"\"${syncSourcePath}\"\" --sync_dest_path \"\"${syncDestPath}\"\" --sync_source_alias \"\"${syncSourceAlias}\"\" --sync_dest_alias \"\"${syncDestAlias}\"\" --sync_group \"\"${syncGroupInfo}\"\" --sync_type \"\"${syncType}\"\" --sync_date_type \"\"${syncDateType}\"\" --sync_operation_name \"\"${syncOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
     fi
-    if [ -n "${BACKUP_OPERATION_NAME}" ]; then
-        ssh "${DEPLOY_NODE_ALIAS}" "echo \"bash <(cat /var/log/${SH_NAME}/exec/${SH_NAME}) --days \"\"${ALLOW_DAYS}\"\" --backup_source_path \"\"${BACKUP_SOURCE_PATH}\"\" --backup_dest_path \"\"${BACKUP_DEST_PATH}\"\" --backup_source_alias \"\"${BACKUP_SOURCE_ALIAS}\"\" --backup_dest_alias \"\"${BACKUP_DEST_ALIAS}\"\" --backup_group \"\"${BACKUP_GROUP_INFO}\"\" --backup_type \"\"${BACKUP_TYPE}\"\" --backup_date_type \"\"${BACKUP_DATE_TYPE}\"\" --backup_operation_name \"\"${BACKUP_OPERATION_NAME}\"\" -y\" >> /var/log/${SH_NAME}/exec/run-\"${OPERATION_CRON_NAME}\""
+    if [ -n "${backupOperationName}" ]; then
+        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --backup_source_path \"\"${backupSourcePath}\"\" --backup_dest_path \"\"${backupDestPath}\"\" --backup_source_alias \"\"${backupSourceAlias}\"\" --backup_dest_alias \"\"${backupDestAlias}\"\" --backup_group \"\"${backupGroupInfo}\"\" --backup_type \"\"${backupType}\"\" --backup_date_type \"\"${backupDateType}\"\" --backup_operation_name \"\"${backupOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
     fi
     _success "部署成功"
 }
 
 Remove(){
-    if [ "${REMOVE_OPERATION_FILE}" = "all" ]; then
+    if [ "${removeOperationFile}" = "all" ]; then
         _info "开始卸载工具本身和生成的日志，不会对同步或备份文件产生任何影响"
-        ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}"
-        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/bashrc"
-        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${SH_NAME}/d\" /etc/crontab"
+        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}"
+        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
+        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/crontab"
     else
         _info "开始卸载指定的方案组，不会对其他方案组、同步或备份文件产生任何影响"
-        ssh "${REMOVE_NODE_ALIAS}" "rm -rf /var/log/${SH_NAME}/exec/run-${REMOVE_OPERATION_FILE}"
-        ssh "${REMOVE_NODE_ALIAS}" "sed -i \"/${REMOVE_OPERATION_FILE}/d\" /etc/crontab"
+        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}/exec/run-${removeOperationFile}"
+        ssh "${removeNodeAlias}" "sed -i \"/${removeOperationFile}/d\" /etc/crontab"
     fi
     _success "卸载成功"
 }
 
 Clean(){
-    if [ -d "/var/log/${SH_NAME}" ]; then
+    if [ -d "/var/log/${shName}" ]; then
         _warning "发现脚本运行残留，正在清理"
-        rm -rf /var/log/${SH_NAME}
+        rm -rf /var/log/${shName}
         _success "清理完成"
     else
         _success "未发现脚本运行残留"
@@ -1627,11 +1624,11 @@ Clean(){
 }
 
 Help(){
-    _successnoblank "
+    _successNoBlank "
     本脚本依赖SCP传输
     所有内置选项及传参格式如下，有参选项必须加具体参数，否则脚本会自动检测并阻断运行:"| column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     --sync_source_path 同步源路径
@@ -1668,7 +1665,7 @@ Help(){
     -L | --deploy 指定部署脚本的节点别名
     -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
     
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -s | --check_dep_sep 只检测并打印脚本运行必备依赖情况的详细信息并退出
@@ -1678,12 +1675,12 @@ Help(){
     -h | --help 打印此帮助信息并退出" | column -t
     echo ""
     echo "----------------------------------------------------------------"
-    _warningnoblank "以下为根据脚本内置5种可重复功能归类各自选项(存在选项复用情况)"
+    _warningNoBlank "以下为根据脚本内置5种可重复功能归类各自选项(存在选项复用情况)"
     echo ""
-    _successnoblank "|------------|"
-    _successnoblank "|部署同步功能|"
-    _successnoblank "|------------|"
-    _warningnoblank "
+    _successNoBlank "|------------|"
+    _successNoBlank "|部署同步功能|"
+    _successNoBlank "|------------|"
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     --sync_source_path 同步源路径
@@ -1707,17 +1704,17 @@ Help(){
     -L | --deploy 指定部署脚本的节点别名
     -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
     echo ""
 
 
-    _successnoblank "|------------|"
-    _successnoblank "|部署备份功能|"
-    _successnoblank "|------------|"
-    _warningnoblank "
+    _successNoBlank "|------------|"
+    _successNoBlank "|部署备份功能|"
+    _successNoBlank "|------------|"
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     --backup_source_path 备份源路径
@@ -1741,16 +1738,16 @@ Help(){
     -L | --deploy 指定部署脚本的节点别名
     -l | --deploy_group_info 指定部署脚本的节点所属免密节点组名" | column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
     echo ""
 
-    _successnoblank "|------------|"
-    _successnoblank "|执行同步功能|"
-    _successnoblank "|------------|"
-    _warningnoblank "
+    _successNoBlank "|------------|"
+    _successNoBlank "|执行同步功能|"
+    _successNoBlank "|------------|"
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     --sync_source_path 同步源路径
@@ -1766,16 +1763,16 @@ Help(){
     -D | --sync_date_type 指定同步时包含的日期格式
     -N | --sync_operation_name 指定部署的同步操作名称(仅部署时用于识别，执行时可不写)" | column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
     echo ""
 
-    _successnoblank "|------------|"
-    _successnoblank "|执行备份功能|"
-    _successnoblank "|------------|"
-    _warningnoblank "
+    _successNoBlank "|------------|"
+    _successNoBlank "|执行备份功能|"
+    _successNoBlank "|------------|"
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     --backup_source_path 备份源路径
@@ -1791,23 +1788,23 @@ Help(){
     -d | --backup_date_type 指定备份时包含的日期格式
     -n | --backup_operation_name 指定部署的备份操作名称(仅部署时用于识别，执行时可不写)" | column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
     echo ""
 
-    _successnoblank "|--------------------|"
-    _successnoblank "|卸载方案组或全部功能|"
-    _successnoblank "|--------------------|"
-    _warningnoblank "
+    _successNoBlank "|--------------------|"
+    _successNoBlank "|卸载方案组或全部功能|"
+    _successNoBlank "|--------------------|"
+    _warningNoBlank "
     以下为有参选项，必须带上相应参数"| column -t
     echo "
     -R | --remove 指定卸载脚本的节点别名
     -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
     -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
 
-    _warningnoblank "
+    _warningNoBlank "
     以下为无参选项:"| column -t
     echo "
     -y | --yes 确认执行所有检测结果后的实际操作" | column -t
@@ -1825,9 +1822,9 @@ Main(){
 }
 
 # 只执行完就直接退出
-[ "${HELP}" -eq 1 ] && Help && exit 0
-[ "${DELETE_EXPIRED_LOG}" -eq 1 ] && DeleteExpiredLog && exit 0
-[ "${NEED_CLEAN}" -eq 1 ] && Clean && exit 0
+[ "${needHelp}" -eq 1 ] && Help && exit 0
+[ "${deleteExpiredLog}" -eq 1 ] && DeleteExpiredLog && exit 0
+[ "${needClean}" -eq 1 ] && Clean && exit 0
 
-[ ! -d /var/log/${SH_NAME} ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${SH_NAME}/{exec,log}
-Main | tee -a "${EXEC_COMMON_LOGFILE}"
+[ ! -d /var/log/${shName} ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+Main | tee -a "${execCommonLogFile}"
