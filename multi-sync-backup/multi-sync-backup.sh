@@ -379,7 +379,9 @@ done
 EnvCheck(){
     _info "环境自检中，请稍后"
     # 检查必要软件包安装情况(集成独立检测依赖功能)
+    local appList
     appList="tput scp pwd basename sort tail tee md5sum ip ifconfig shuf column sha256sum dirname stat"
+    local appNotInstalled
     appNotInstalled=""
     for i in ${appList}; do
         if which "$i" >/dev/null 2>&1; then
@@ -403,6 +405,7 @@ EnvCheck(){
     # 1. 如果 /root/.ssh/config 不存在，则遍历 /root/.ssh 下的所有文件夹，查找里面的 .backup_config，如果都不存在则表示环境被毁或没有用专用脚本做免密部署，直接报错退出，如果存在，则取找到的列表中的第一个直接做个硬链接成 /root/.ssh/config
     if [ ! -f /root/.ssh/config ]; then
         _warning "自动部署的业务节点免密组配置文件被人为删除，正在尝试恢复"
+        local backupConfig
         mapfile -t backupConfig < <(find /root/.ssh -type f -name ".backup_config")
         if [ "${#backupConfig[@]}" -eq 0 ]; then
             _error "所有 ssh 业务节点免密组的配置文件均未找到，如果此服务器未使用本脚本作者所写免密部署脚本部署，请先使用免密部署工具进行预部署后再执行此脚本"
@@ -433,6 +436,7 @@ EnvCheck(){
 
     # 3. 遍历 /root/.ssh 中的所有子文件夹中的 .backup_config 文件，然后对比查看对应文件夹名在 config 文件中是否有相关信息（上一步的 groupNameInFile 数组），没有的话添加上
     # 如果出现 config 文件与免密组文件夹名对不上的情况，可以清空 config 文件中的内容，通过文件夹的方式重新生成
+    local dirGroupName
     mapfile -t dirGroupName < <(find /root/.ssh -type f -name ".backup_config"|awk -F '/' '{print $(NF-1)}')
     mapfile -t groupNameInFile < <(awk -F '[ /]' '{print $2}' /root/.ssh/config)
     for i in "${dirGroupName[@]}"; do
@@ -465,9 +469,12 @@ EnvCheck(){
     done
     # 4. 将 .ssh 为开头的路径的数组对比 /etc/ssh/sshd_config，如果 ssh 配置文件不存在则添加上并重启 ssh
     [[ "$(grep "AuthorizedKeysFile" /etc/ssh/sshd_config)" =~ "#" ]] && sed -i 's/^#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
+    local dirAuthorizedKeysPath
     mapfile -t dirAuthorizedKeysPath < <(find /root/.ssh -type f -name "*-authorized_keys"|sed 's/\/root\///g')
+    local sshdConfigPath
     IFS=" " read -r -a sshdConfigPath <<< "$(grep "AuthorizedKeysFile" /etc/ssh/sshd_config|awk '$1=""; {print $0}')"
-    ifNeedRestartSshd=0
+    local needRestartSshd
+    needRestartSshd=0
     for i in "${dirAuthorizedKeysPath[@]}"; do
         MARK=0
         for j in "${sshdConfigPath[@]}"; do
@@ -477,13 +484,13 @@ EnvCheck(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            ifNeedRestartSshd=1
+            needRestartSshd=1
             _warning "sshd 配置文件缺少有关免密参数，正在修改"
             i=$(echo "$i"|sed 's/\//\\\//g')
             sed -i "/AuthorizedKeysFile/s/$/\ ${i}/g" /etc/ssh/sshd_config
         fi
     done
-    [ "${ifNeedRestartSshd}" -eq 1 ] && systemctl restart sshd
+    [ "${needRestartSshd}" -eq 1 ] && systemctl restart sshd
     _success "环境自检完成"
 }
 
@@ -753,17 +760,24 @@ CheckDeployOption(){
                 exit 1
             fi
         fi
+        local operationCronNameFile
         mapfile -t operationCronNameFile < <(ssh "${deployNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "*run-*"|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
         MARK=0
         for i in "${operationCronNameFile[@]}"; do
             [ "$i" = "${operationCronName}" ] && MARK=1
         done
 
+        local markSyncOperationName
+        local markBackupOperationName
         markSyncOperationName=0
         markBackupOperationName=0
         if [ "${MARK}" -eq 1 ]; then
+            local syncOperationNameList
+            local backupOperationNameList
             mapfile -t syncOperationNameList < <(ssh "${deployNodeAlias}" "grep -o \"\-\-sync_operation_name .* \" /var/log/${shName}/exec/run-${operationCronName}|awk '{print \$2}'")
             mapfile -t backupOperationNameList < <(ssh "${deployNodeAlias}" "grep -o \"\-\-backup_operation_name .* \" /var/log/${shName}/exec/run-${operationCronName}|awk '{print \$2}'")
+            local sameSyncOperationNameList
+            local sameBackupOperationNameList
             sameSyncOperationNameList=()
             sameBackupOperationNameList=()
             for i in "${syncOperationNameList[@]}"; do
@@ -900,7 +914,9 @@ CheckRemoveOption(){
                 exit 1
             fi
         fi
+        local isRemoveAll
         isRemoveAll=0
+        local operationNameFile
         mapfile -t operationNameFile < <(ssh "${removeNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "run-*"|awk -F '/' '{print \$NF}'"|sed 's/run-//g')
         if [ "${removeOperationFile}" = "all" ]; then
             isRemoveAll=1
@@ -1065,6 +1081,8 @@ OperationCondition(){
 }
 
 SyncLocateFolders(){
+    local markSyncSourceFindPath
+    local markSyncDestFindPath
     markSyncSourceFindPath=0
     markSyncDestFindPath=0
     JUMP=0
@@ -1075,24 +1093,30 @@ SyncLocateFolders(){
         monthValue=$(date -d ${days}days +%m)
         dayValue=$(date -d ${days}days +%d)
         syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        local syncSourceFindFolderName1
+        local syncDestFindFolderName1
         mapfile -t syncSourceFindFolderName1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type d -name \"*${syncDate}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
         mapfile -t syncDestFindFolderName1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type d -name \"*${syncDate}*\"|grep -v \"\.$\"|sed 's/^\.\///g'")
 
+        local syncSourceFindPath
         syncSourceFindPath=()
         for i in "${syncSourceFindFolderName1[@]}"; do
             mapfile -t -O "${#syncSourceFindPath[@]}" syncSourceFindPath < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
         done
 
+        local syncDestFindPath
         syncDestFindPath=()
         for i in "${syncDestFindFolderName1[@]}"; do
             mapfile -t -O "${#syncDestFindPath[@]}" syncDestFindPath < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -type d|grep \"\./$i\"|sed 's/^\.\///g'")
         done
 
+        local syncSourceFindFile
         syncSourceFindFile=()
         for i in "${syncSourceFindFolderName1[@]}"; do
             mapfile -t -O "${#syncSourceFindFile[@]}" syncSourceFindFile < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
         done
 
+        local syncDestFindFile
         syncDestFindFile=()
         for i in "${syncDestFindFolderName1[@]}"; do
             mapfile -t -O "${#syncDestFindFile[@]}" syncDestFindFile < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -type f|grep \"\./$i\"|sed 's/^\.\///g'")
@@ -1225,6 +1249,8 @@ SyncLocateFolders(){
 }
 
 SyncLocateFiles(){
+    local markSyncSourceFindFile1
+    local markSyncDestFindFile1
     markSyncSourceFindFile1=0
     markSyncDestFindFile1=0
     JUMP=0
@@ -1235,6 +1261,8 @@ SyncLocateFiles(){
         monthValue=$(date -d ${days}days +%m)
         dayValue=$(date -d ${days}days +%d)
         syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+        local syncSourceFindFile1
+        local syncDestFindFile1
         mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
         mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
 
@@ -1326,6 +1354,7 @@ SyncLocateFiles(){
 }
 
 BackupLocateFolders(){
+    local markBackupSourceFindFolderFullPath
     markBackupSourceFindFolderFullPath=0
     JUMP=0
     days=0
@@ -1361,6 +1390,7 @@ BackupLocateFolders(){
 }
 
 BackupLocateFiles(){
+    local markBackupSourceFindFile1
     markBackupSourceFindFile1=0
     JUMP=0
     days=0
@@ -1441,6 +1471,7 @@ SyncOperation(){
         # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
             _info "目的节点 -> 源节点 开始传输"
+            local destToSourceFailed
             destToSourceFailed=()
             for i in "${!locateDestOutgoingFile[@]}"; do
                 if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
@@ -1566,6 +1597,7 @@ EOF
 
 DeleteExpiredLog(){
     _info "开始清理陈旧日志文件"
+    local logFile
     logFile=$(find /var/log/${shName}/log -name "exec*.log" -mtime +10)
     for a in $logFile
     do
