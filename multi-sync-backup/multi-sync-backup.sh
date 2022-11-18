@@ -493,7 +493,7 @@ EnvCheck(){
         fi
     done
     [ "${needRestartSshd}" -eq 1 ] && systemctl restart sshd
-    [ "${checkDepSep}" == 1 ] && _success "系统免密环境完整性检测完成，已自动修复脚本正常工作所依赖的系统完整性(如果存在被破坏情况)" && exit 0
+    [ "${checkDepSep}" == 1 ] && _success "系统免密环境完整性检测完成，已自动修复脚本正常工作所依赖的系统完整性(如果存在被破坏情况)" && _success "环境自检完成" && exit 0
     _success "环境自检完成"
 }
 
