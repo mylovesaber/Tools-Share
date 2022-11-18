@@ -100,7 +100,7 @@ then
     _error "脚本中没有此无参选项或此选项为有参选项"
     exit 1
 elif [ -z "$1" ]; then
-    _error "没有设置选项"
+    _error "没有设置选项，请查看以下帮助菜单"
     needHelp=1
 elif [ "$1" == "-" ]; then
     _error "选项写法出现错误"
