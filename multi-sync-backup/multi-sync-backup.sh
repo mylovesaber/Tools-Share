@@ -379,6 +379,7 @@ done
 EnvCheck(){
     _info "环境自检中，请稍后"
     # 检查必要软件包安装情况(集成独立检测依赖功能)
+    [ "${checkDepSep}" == 1 ] && _info "开始检查脚本正常工作所需依赖的安装情况"
     local appList
     appList="tput scp pwd basename sort tail tee md5sum ip ifconfig shuf column sha256sum dirname stat"
     local appNotInstalled
@@ -396,12 +397,13 @@ EnvCheck(){
         _error "当前运行环境不支持部分脚本功能，为安全起见，此脚本在重新适配前运行都将自动终止进程"
         exit 1
     elif [ -z "${appNotInstalled}" ]; then
-        [ "${checkDepSep}" == 1 ] && _success "脚本正常工作所需依赖全部满足要求" && exit 0
+        [ "${checkDepSep}" == 1 ] && _success "脚本正常工作所需依赖已全部安装"
     fi
-    # 此环节用于检测是否有人为修改免密节点组信息的情况，并且在存在这种情况的前提下尝试自动修复，/root/.ssh/config 文件中应该包含各种免密组的文件夹名，所以默认脚本均检测此文件内容
+
+    # 以下环节用于检测是否有人为修改免密节点组信息的情况，并且在存在这种情况的前提下尝试自动修复，/root/.ssh/config 文件中应该包含各种免密组的文件夹名，所以默认脚本均检测此文件内容
     # 为防止此文件被误删，在每个创建的免密组文件夹中均有一个创建该组时对 config 硬链接的文件，名字是 .backup_config
-    
     # 自检流程：
+    [ "${checkDepSep}" == 1 ] && _info "开始检查系统免密环境完整性，如存在破坏情况则尝试自动修复，实在无法修复将停止运行，不会影响到系统本身"
     # 1. 如果 /root/.ssh/config 不存在，则遍历 /root/.ssh 下的所有文件夹，查找里面的 .backup_config，如果都不存在则表示环境被毁或没有用专用脚本做免密部署，直接报错退出，如果存在，则取找到的列表中的第一个直接做个硬链接成 /root/.ssh/config
     if [ ! -f /root/.ssh/config ]; then
         _warning "自动部署的业务节点免密组配置文件被人为删除，正在尝试恢复"
@@ -491,6 +493,7 @@ EnvCheck(){
         fi
     done
     [ "${needRestartSshd}" -eq 1 ] && systemctl restart sshd
+    [ "${checkDepSep}" == 1 ] && _success "系统免密环境完整性检测完成，已自动修复脚本正常工作所依赖的系统完整性(如果存在被破坏情况)" && exit 0
     _success "环境自检完成"
 }
 
@@ -498,13 +501,13 @@ CheckExecOption(){
     _info "开始检查传递的执行选项和参数"
     ################################################################
     # 仅运行同步备份或先同步再备份的所有选项
-    if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -z "${backupSourcePath}" ] && [ -z "${backupDestPath}" ] && [ -z "${backupSourceAlias}" ] && [ -z "${backupDestAlias}" ] && [ -z "${backupGroupInfo}" ] && [ -z "${backupType}" ] && [ -z "${backupDateType}" ] && [ -n "${allowDays}" ] && [ -n "${syncOperationName}" ] && [ -z "${backupOperationName}" ]; then
-        :
-    elif [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${allowDays}" ] && [ -z "${syncOperationName}" ] && [ -n "${backupOperationName}" ]; then
+      if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -z "${backupSourcePath}" ] && [ -z "${backupDestPath}" ] && [ -z "${backupSourceAlias}" ] && [ -z "${backupDestAlias}" ] && [ -z "${backupGroupInfo}" ] && [ -z "${backupType}" ] && [ -z "${backupDateType}" ] && [ -n "${allowDays}" ] && [ -n "${syncOperationName}" ] && [ -z "${backupOperationName}" ]; then
         :
     elif [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -z "${backupSourcePath}" ] && [ -z "${backupDestPath}" ] && [ -z "${backupSourceAlias}" ] && [ -z "${backupDestAlias}" ] && [ -z "${backupGroupInfo}" ] && [ -z "${backupType}" ] && [ -z "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         :
-    elif [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${allowDays}" ]; then
+    elif [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ] && [ -z "${syncOperationName}" ] && [ -n "${backupOperationName}" ]; then
+        :
+    elif [ -z "${syncSourcePath}" ] && [ -z "${syncDestPath}" ] && [ -z "${syncSourceAlias}" ] && [ -z "${syncDestAlias}" ] && [ -z "${syncGroupInfo}" ] && [ -z "${syncType}" ] && [ -z "${syncDateType}" ] && [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         :
     else
         _error "用户层面只有两种输入选项参数的组合方式，同步或备份，先同步后备份则是执行两次，请仔细对比帮助信息并检查缺失或多输入的选项和参数"
@@ -530,8 +533,8 @@ CheckExecOption(){
         -t | --backup_type 备份的内容类型(文件或文件夹:file或dir)
         -d | --backup_date_type 指定备份时包含的日期格式"|column -t
         echo ""
-        _error "运行任意一种功能均需设置最长查找历史天数的有参选项: --days"
         _warning "两种组合方式中，任何选项均没有次序要求"
+        _errorNoBlank "运行任意一种功能均需设置最长查找历史天数的有参选项: --days"
         exit 1
     fi
 
