@@ -101,7 +101,7 @@ then
     exit 1
 elif [ -z "$1" ]; then
     _error "没有设置选项"
-    exit 1
+    needHelp=1
 elif [ "$1" == "-" ]; then
     _error "选项写法出现错误"
     exit 1
