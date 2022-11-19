@@ -1306,9 +1306,6 @@ SyncLocateFiles(){
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
         mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
-#        for i in \"\${syncSourceFindFile1[@]}\";do
-#            echo \"\$i\";
-#        done;
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
@@ -1331,17 +1328,18 @@ SyncLocateFiles(){
             done;
         fi;
     done")
-    echo "================================="
-    echo "源路径文件"
-    for i in "${syncSourceFindFile1[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
-    echo "目的路径文件"
-    for i in "${syncDestFindFile1[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源路径文件"
+#    for i in "${syncSourceFindFile1[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+#    echo "目的路径文件"
+#    for i in "${syncDestFindFile1[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+
 #    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
 #        # 将文件夹允许的格式字符串替换成真实日期
 #        yearValue=$(date -d -"${LOOP}"days +%Y)
@@ -1394,10 +1392,10 @@ SyncLocateFiles(){
             shaValueJ=$(awk -F '_-_' '{print $2}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
-                    _warning "源节点${syncSourceAlias}: \"${syncSourcePath}/$i\"，目的节点${syncDestAlias}:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
+                    _warning "源节点${syncSourceAlias}: \"${syncSourcePath}/${fileNameI}\"，目的节点${syncDestAlias}:\"${syncDestPath}/${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源节点: \"${syncSourcePath}/${fileNameI}\"，目的节点: \"${syncDestPath}/${fileNameJ}\"")
                 else
-                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
+                    _success "源节点: \"${syncSourcePath}/${fileNameI}\"，目的节点: \"${syncDestPath}/${fileNameJ}\" 文件校验值一致"
                 fi
                 MARK=1
                 break
