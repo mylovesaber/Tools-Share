@@ -1406,6 +1406,18 @@ SyncLocateFiles(){
             mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameJ}\"")
         fi
     done
+    echo "================================="
+    echo "源路径发出文件"
+    for i in "${locateSourceOutgoingFile[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "================================="
+    echo "目的路径传入文件"
+    for i in "${locateDestIncomingFile[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 #    for i in "${syncSourceFindFile1[@]}"; do
 #        MARK=0
 #        for j in "${syncDestFindFile1[@]}"; do
