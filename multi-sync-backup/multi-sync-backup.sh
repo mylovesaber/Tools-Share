@@ -1262,30 +1262,93 @@ SyncLocateFolders(){
 }
 
 SyncLocateFiles(){
-    local markSyncSourceFindFile1
-    local markSyncDestFindFile1
-    markSyncSourceFindFile1=0
-    markSyncDestFindFile1=0
-    JUMP=0
-    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
-        # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d -"${LOOP}"days +%Y)
-        monthValue=$(date -d -"${LOOP}"days +%m)
-        dayValue=$(date -d -"${LOOP}"days +%d)
-        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-        local syncSourceFindFile1
-        local syncDestFindFile1
-        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
+#    local markSyncSourceFindFile1
+#    local markSyncDestFindFile1
+#    markSyncSourceFindFile1=0
+#    markSyncDestFindFile1=0
+#    JUMP=0
+#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
+#        # 将文件夹允许的格式字符串替换成真实日期
+#        yearValue=$(date -d -"${LOOP}"days +%Y)
+#        monthValue=$(date -d -"${LOOP}"days +%m)
+#        dayValue=$(date -d -"${LOOP}"days +%d)
+#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+#        local syncSourceFindFile1
+#        local syncDestFindFile1
+#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+##        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
+##        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
+#
+#
+#        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
+#        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
+#        [ "${JUMP}" -eq 1 ] && break
+#    done
 
-        
-        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
-        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
-        [ "${JUMP}" -eq 1 ] && break
-    done
-        
+#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
+#        yearValue=$(date -d -"${LOOP}"days +%Y)
+#        monthValue=$(date -d -"${LOOP}"days +%m)
+#        dayValue=$(date -d -"${LOOP}"days +%d)
+#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+#        mapfile -t syncDestFindFile1 < <(find "${syncSourcePath}" -maxdepth 1 -type f -name "*${syncDate}*")
+#        if [ "${#syncSourceFindFile1[@]}" -gt 0 ]; then
+#            for i in "${syncSourceFindFile1[@]}";do
+#                echo "$i"
+#            done
+#            break
+#        fi
+#    done
+    local syncSourceFindFile1
+    mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t syncDestFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\");
+        if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
+            for i in \"\${syncSourceFindFile1[@]}\";do
+                echo \"\$i\";
+            done;
+            break;
+        fi;
+    done")
+
+    local syncDestFindFile1
+    mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t syncDestFindFile1 < <(find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\");
+        if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
+            for i in \"\${syncDestFindFile1[@]}\";do
+                echo \"\$i\";
+            done;
+            break;
+        fi;
+    done")
+
+#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
+#        # 将文件夹允许的格式字符串替换成真实日期
+#        yearValue=$(date -d -"${LOOP}"days +%Y)
+#        monthValue=$(date -d -"${LOOP}"days +%m)
+#        dayValue=$(date -d -"${LOOP}"days +%d)
+#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
+#        local syncSourceFindFile1
+#        local syncDestFindFile1
+#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+##        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
+##        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
+#
+#
+#        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
+#        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
+#        [ "${JUMP}" -eq 1 ] && break
+#    done
+    [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1
+    [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1
     if [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
         _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件"
         ErrorWarningSyncLog
