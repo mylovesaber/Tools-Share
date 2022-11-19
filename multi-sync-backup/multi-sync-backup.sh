@@ -967,8 +967,10 @@ CheckRemoveOption(){
         fi
     else
         if [ -n "${removeGroupInfo}" ] || [ -n "${removeOperationFile}" ]; then
-            _warning "以下两个选项均为卸载时的独占功能，如果只是运行备份或同步功能的话不要加上这些选项中的任意一个或多个"
+            _warning "以下三个选项均为卸载时的专用功能，必须同时指定或同时不指定"
+            _warning "如果只是运行或部署备份/同步功能的话不要加上这些选项中的任意一个或多个"
             _errorNoBlank "
+            -R | --remove 指定卸载脚本的节点别名
             -r | --remove_group_info 指定卸载脚本的节点所属免密节点组名
             -F | --remove_operation_file 指定卸载脚本的节点中的方案组名(all代表全部卸载)" | column -t
             exit 1
