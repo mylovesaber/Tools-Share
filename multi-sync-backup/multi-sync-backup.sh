@@ -676,11 +676,11 @@ CheckDeployOption(){
     # 检查部署选项
     if [ -n "${deployNodeAlias}" ]; then
         _info "开始检查传递的部署选项和参数"
-        if [ -n "${syncOperationName}" ] && [ -n "${backupOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
+          if [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ] && [ -n "${logCron}" ] && [ -n "${syncOperationName}" ] && [ -n "${backupOperationName}" ]; then
             :
-        elif [ -n "${syncOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
+        elif [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ] && [ -n "${logCron}" ] && [ -n "${syncOperationName}" ]; then
             :
-        elif [ -n "${backupOperationName}" ] && [ -n "${logCron}" ] && [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ]; then
+        elif [ -n "${operationCron}" ] && [ -n "${operationCronName}" ] && [ -n "${deployGroupInfo}" ] && [ -n "${logCron}" ] && [ -n "${backupOperationName}" ]; then
             :
         else
             _error "部署时用户层面只有三种输入选项参数的组合方式，除了需要以上执行同步、备份、同步后备份的操作的所有选项外，还需指定部署节点、删除过期日志定时、操作别名和操作定时，请仔细对比帮助信息并检查缺失的选项和参数"
