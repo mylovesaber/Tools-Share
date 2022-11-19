@@ -1276,7 +1276,7 @@ SyncLocateFiles(){
         local syncSourceFindFile1
         local syncDestFindFile1
         mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "export LANG=en_US.UTF-8;find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "export LANG=en_US.UTF-8;find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "export LANG=en_US.UTF-8;find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
 #        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
 #        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
 
