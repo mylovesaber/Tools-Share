@@ -1312,7 +1312,7 @@ SyncLocateFiles(){
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
-                echo \"\$i_-_\$shaValue\";
+                echo \"\${i}_-_\${shaValue}\";
             done;
         fi;
     done")
@@ -1327,7 +1327,7 @@ SyncLocateFiles(){
         if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncDestFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
-                echo \"\$i_-_\$shaValue\";
+                echo \"\${i}_-_\${shaValue}\";
             done;
         fi;
     done")
