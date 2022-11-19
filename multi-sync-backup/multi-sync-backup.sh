@@ -1053,16 +1053,20 @@ SearchCondition(){
     export LANG=en_US.UTF-8
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         if [ "${syncType}" = "dir" ]; then
+            _info "已指定同步文件夹，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件夹"
             SyncLocateFolders
         elif [ "${syncType}" = "file" ]; then
+            _info "已指定同步文件，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件"
             SyncLocateFiles
         fi
     fi
     
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         if [ "${backupType}" = "dir" ]; then
+            _info "已指定备份文件夹，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件夹"
             BackupLocateFolders
         elif [ "${backupType}" = "file" ]; then
+            _info "已指定备份文件，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件"
             BackupLocateFiles
         fi
     fi
@@ -1077,10 +1081,12 @@ SearchCondition(){
 
 OperationCondition(){
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
+        _info "开始执行同步操作"
         SyncOperation
     fi
     
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
+        _info "开始执行备份操作"
         BackupOperation
     fi
 }
