@@ -1051,22 +1051,26 @@ CheckTransmissionStatus(){
 
 SearchCondition(){
     export LANG=en_US.UTF-8
+    local oldestDate
+    local todayDate
+    oldestDate=$(date -d "${allowDays}"days +%Y年%m月%d日)
+    todayDate=$(date +%Y年%m月%d日)
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         if [ "${syncType}" = "dir" ]; then
-            _info "已指定同步文件夹，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件夹"
+            _info "已指定同步文件夹，开始在[${oldestDate} - ${todayDate}]的时间段内检索包含最新指定格式日期的文件夹"
             SyncLocateFolders
         elif [ "${syncType}" = "file" ]; then
-            _info "已指定同步文件，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件"
+            _info "已指定同步文件，开始在[${oldestDate} - ${todayDate}]的时间段内检索包含最新指定格式日期的文件"
             SyncLocateFiles
         fi
     fi
     
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         if [ "${backupType}" = "dir" ]; then
-            _info "已指定备份文件夹，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件夹"
+            _info "已指定备份文件夹，开始在[${oldestDate} - ${todayDate}]的时间段内检索包含最新指定格式日期的文件夹"
             BackupLocateFolders
         elif [ "${backupType}" = "file" ]; then
-            _info "已指定备份文件，开始在从今日到向前不超过${allowDays}天的范围内检索包含最新指定格式日期的文件"
+            _info "已指定备份文件，开始在[${oldestDate} - ${todayDate}]的时间段内检索包含最新指定格式日期的文件"
             BackupLocateFiles
         fi
     fi
@@ -1138,21 +1142,21 @@ SyncLocateFolders(){
         [ "${JUMP}" -eq 1 ] && break
         days=$(( days - 1 ))
     done
-        
+
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件夹"
+        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹"
         ErrorWarningSyncLog
-        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件夹" >> "${execErrorWarningSyncLogFile}"
+        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
-        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件夹"
+        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹"
         ErrorWarningSyncLog
-        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件夹" >> "${execErrorWarningSyncLogFile}"
+        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
-        _success "源与目标同步节点均找到指定日期格式${syncDate}的文件夹"
+        _success "源与目标同步节点均找到指定日期格式${syncDateType}的文件夹"
     elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-        _error "源与目标同步节点均不存在指定日期格式${syncDate}的文件夹，退出中"
+        _error "源与目标同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中"
         ErrorWarningSyncLog
-        echo "源与目标同步节点均不存在指定日期格式${syncDate}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
+        echo "源与目标同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
 
