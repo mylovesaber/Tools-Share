@@ -1321,7 +1321,7 @@ SyncLocateFiles(){
         done
         if [ "${MARK}" -eq 0 ]; then
             locateSourceOutgoingFile+=("\"$i\"")
-            locateDestIncomingFile+=("\"$i\"")
+            locateDestIncomingFile+=("\"$j\"")
 #            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
 #            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
         fi
@@ -1364,7 +1364,7 @@ SyncLocateFiles(){
         done
         if [ "${MARK}" -eq 0 ]; then
             locateDestOutgoingFile+=("\"$i\"")
-            locateSourceIncomingFile+=("\"$i\"")
+            locateSourceIncomingFile+=("\"$j\"")
 #            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
 #            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
         fi
