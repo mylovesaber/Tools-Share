@@ -1101,12 +1101,11 @@ SyncLocateFolders(){
     markSyncSourceFindPath=0
     markSyncDestFindPath=0
     JUMP=0
-    days=0
     for((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d ${days}days +%Y)
-        monthValue=$(date -d ${days}days +%m)
-        dayValue=$(date -d ${days}days +%d)
+        yearValue=$(date -d -"${LOOP}"days +%Y)
+        monthValue=$(date -d -"${LOOP}"days +%m)
+        dayValue=$(date -d -"${LOOP}"days +%d)
         syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
         local syncSourceFindFolderName1
         local syncDestFindFolderName1
@@ -1140,7 +1139,6 @@ SyncLocateFolders(){
         [ "${#syncSourceFindPath[@]}" -gt 0 ] && markSyncSourceFindPath=1 && JUMP=1
         [ "${#syncDestFindPath[@]}" -gt 0 ] && markSyncDestFindPath=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
-        days=$(( days - 1 ))
     done
 
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
@@ -1269,12 +1267,11 @@ SyncLocateFiles(){
     markSyncSourceFindFile1=0
     markSyncDestFindFile1=0
     JUMP=0
-    days=0
     for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d ${days}days +%Y)
-        monthValue=$(date -d ${days}days +%m)
-        dayValue=$(date -d ${days}days +%d)
+        yearValue=$(date -d -"${LOOP}"days +%Y)
+        monthValue=$(date -d -"${LOOP}"days +%m)
+        dayValue=$(date -d -"${LOOP}"days +%d)
         syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
         local syncSourceFindFile1
         local syncDestFindFile1
@@ -1285,7 +1282,6 @@ SyncLocateFiles(){
         [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
         [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
-        days=$(( days - 1 ))
     done
         
     if [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
@@ -1372,18 +1368,16 @@ BackupLocateFolders(){
     local markBackupSourceFindFolderFullPath
     markBackupSourceFindFolderFullPath=0
     JUMP=0
-    days=0
     for((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d ${days}days +%Y)
-        monthValue=$(date -d ${days}days +%m)
-        dayValue=$(date -d ${days}days +%d)
+        yearValue=$(date -d -"${LOOP}"days +%Y)
+        monthValue=$(date -d -"${LOOP}"days +%m)
+        dayValue=$(date -d -"${LOOP}"days +%d)
         backupDate=$(echo "${backupDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
         mapfile -t backupSourceFindFolderFullPath < <(ssh "${backupSourceAlias}" "find \"${backupSourcePath}\" -maxdepth 1 -type d -name \"*${backupDate}*\"|grep -v \"\.$\"")
         
         [ "${#backupSourceFindFolderFullPath[@]}" -gt 0 ] && markBackupSourceFindFolderFullPath=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
-        days=$(( days - 1 ))
     done
 
     if [ "${markBackupSourceFindFolderFullPath}" -eq 1 ]; then
@@ -1408,18 +1402,16 @@ BackupLocateFiles(){
     local markBackupSourceFindFile1
     markBackupSourceFindFile1=0
     JUMP=0
-    days=0
     for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
         # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d ${days}days +%Y)
-        monthValue=$(date -d ${days}days +%m)
-        dayValue=$(date -d ${days}days +%d)
+        yearValue=$(date -d -"${LOOP}"days +%Y)
+        monthValue=$(date -d -"${LOOP}"days +%m)
+        dayValue=$(date -d -"${LOOP}"days +%d)
         backupDate=$(echo "${backupDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
         mapfile -t backupSourceFindFile1 < <(ssh "${backupSourceAlias}" "find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*${backupDate}*\"")
 
         [ "${#backupSourceFindFile1[@]}" -gt 0 ] && markBackupSourceFindFile1=1 && JUMP=1
         [ "${JUMP}" -eq 1 ] && break
-        days=$(( days - 1 ))
     done
         
     if [ "${markBackupSourceFindFile1}" -eq 1 ]; then
