@@ -1291,7 +1291,7 @@ SyncLocateFiles(){
 #        monthValue=$(date -d -"${LOOP}"days +%m)
 #        dayValue=$(date -d -"${LOOP}"days +%d)
 #        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-#        mapfile -t syncDestFindFile1 < <(find "${syncSourcePath}" -maxdepth 1 -type f -name "*${syncDate}*")
+#        mapfile -t syncSourceFindFile1 < <(find "${syncSourcePath}" -maxdepth 1 -type f -name "*${syncDate}*")
 #        if [ "${#syncSourceFindFile1[@]}" -gt 0 ]; then
 #            for i in "${syncSourceFindFile1[@]}";do
 #                echo "$i"
@@ -1305,10 +1305,11 @@ SyncLocateFiles(){
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\");
+        mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
-                echo \"\$i\";
+                shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
+                echo \"\$i_-_\$shaValue\";
             done;
             break;
         fi;
@@ -1320,10 +1321,11 @@ SyncLocateFiles(){
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t syncDestFindFile1 < <(find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\");
+        mapfile -t syncDestFindFile1 < <(find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncDestFindFile1[@]}\";do
-                echo \"\$i\";
+                shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
+                echo \"\$i_-_\$shaValue\";
             done;
             break;
         fi;
@@ -1368,27 +1370,54 @@ SyncLocateFiles(){
 
     # 锁定始到末需传送的文件的绝对路径
     conflictFile=()
+    local fileNameI
+    local shaValueI
+    local fileNameJ
+    local shaValueJ
     for i in "${syncSourceFindFile1[@]}"; do
         MARK=0
+        fileNameI=$(awk -F '_-_' '{print $1}' <<< "$i")
+        shaValueI=$(awk -F '_-_' '{print $2}' <<< "$i")
         for j in "${syncDestFindFile1[@]}"; do
-            if [ "$i" = "$j" ]; then
-                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"$j\"|awk '{print \$1}'") ]]; then
-                    _warning "源节点: \"$i\"，目的节点:\"$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    conflictFile+=("源节点: \"$i\"，目的节点: \"$j\"")
+            fileNameJ=$(awk -F '_-_' '{print $1}' <<< "$j")
+            shaValueJ=$(awk -F '_-_' '{print $2}' <<< "$j")
+            if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
+                if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
+                    _warning "源节点${syncSourceAlias}: \"${syncSourcePath}/$i\"，目的节点${syncDestAlias}:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
                 else
-                    _success "源节点: \"$i\"，目的节点: \"$j\" 文件校验值一致"
+                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
                 fi
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            locateSourceOutgoingFile+=("\"$i\"")
-            locateDestIncomingFile+=("\"$j\"")
-#            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
-#            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
+            locateSourceOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
+            locateDestIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
         fi
     done
+#    for i in "${syncSourceFindFile1[@]}"; do
+#        MARK=0
+#        for j in "${syncDestFindFile1[@]}"; do
+#            if [ "$i" = "$j" ]; then
+#                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"$j\"|awk '{print \$1}'") ]]; then
+#                    _warning "源节点: \"$i\"，目的节点:\"$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+#                    conflictFile+=("源节点: \"$i\"，目的节点: \"$j\"")
+#                else
+#                    _success "源节点: \"$i\"，目的节点: \"$j\" 文件校验值一致"
+#                fi
+#                MARK=1
+#                break
+#            fi
+#        done
+#        if [ "${MARK}" -eq 0 ]; then
+#            locateSourceOutgoingFile+=("\"$i\"")
+#            locateDestIncomingFile+=("\"$j\"")
+##            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
+##            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
+#        fi
+#    done
 #    for i in "${syncSourceFindFile1[@]}"; do
 #        MARK=0
 #        for j in "${syncDestFindFile1[@]}"; do
@@ -1410,29 +1439,47 @@ SyncLocateFiles(){
 #    done
     
     # 将同名不同内容的冲突文件列表写入日志
-    ErrorWarningSyncLog
-    echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
-    for i in "${conflictFile[@]}"; do
-        echo "$i" >> "${execErrorWarningSyncLogFile}"
-    done
+    if [[ "${#conflictFile[@]}" -gt 0 ]]; then
+        ErrorWarningSyncLog
+        echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
+        for i in "${conflictFile[@]}"; do
+            echo "$i" >> "${execErrorWarningSyncLogFile}"
+        done
+    fi
+
 
     # 锁定末到始需传送的文件的绝对路径
+#    for i in "${syncDestFindFile1[@]}"; do
+#        MARK=0
+#        for j in "${syncSourceFindFile1[@]}"; do
+#            if [ "$i" = "$j" ]; then
+#                MARK=1
+#                break
+#            fi
+#        done
+#        if [ "${MARK}" -eq 0 ]; then
+#            locateDestOutgoingFile+=("\"$i\"")
+#            locateSourceIncomingFile+=("\"$j\"")
+##            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
+##            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
+#        fi
+#    done
+
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
+        fileNameI=$(awk -F '_-_' '{print $1}' <<< "$i")
         for j in "${syncSourceFindFile1[@]}"; do
-            if [ "$i" = "$j" ]; then
+            fileNameJ=$(awk -F '_-_' '{print $1}' <<< "$j")
+            if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            locateDestOutgoingFile+=("\"$i\"")
-            locateSourceIncomingFile+=("\"$j\"")
-#            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
-#            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
+            locateDestOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
+            locateSourceIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
         fi
     done
-    
     # 信息汇总
     _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
     _warning "传输方向: 源节点 -> 目的节点 —— 源节点待传出-目的节点待传入文件绝对路径列表:"
