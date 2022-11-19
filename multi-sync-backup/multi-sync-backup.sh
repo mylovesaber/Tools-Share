@@ -1262,10 +1262,10 @@ SyncLocateFolders(){
 }
 
 SyncLocateFiles(){
-#    local markSyncSourceFindFile1
-#    local markSyncDestFindFile1
-#    markSyncSourceFindFile1=0
-#    markSyncDestFindFile1=0
+    local markSyncSourceFindFile1
+    local markSyncDestFindFile1
+    markSyncSourceFindFile1=0
+    markSyncDestFindFile1=0
 #    JUMP=0
 #    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
 #        # 将文件夹允许的格式字符串替换成真实日期
