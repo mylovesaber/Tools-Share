@@ -1306,16 +1306,15 @@ SyncLocateFiles(){
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
         mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
-        for i in \"\${syncSourceFindFile1[@]}\";do
-            echo \"\$i\";
-        done;
-#        if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
-#            for i in \"\${syncSourceFindFile1[@]}\";do
-#                shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
-#                echo \"\$i_-_\$shaValue\";
-#            done;
-#            break;
-#        fi;
+#        for i in \"\${syncSourceFindFile1[@]}\";do
+#            echo \"\$i\";
+#        done;
+        if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
+            for i in \"\${syncSourceFindFile1[@]}\";do
+                shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
+                echo \"\$i_-_\$shaValue\";
+            done;
+        fi;
     done")
 
     local syncDestFindFile1
@@ -1330,7 +1329,6 @@ SyncLocateFiles(){
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
                 echo \"\$i_-_\$shaValue\";
             done;
-            break;
         fi;
     done")
     echo "================================="
