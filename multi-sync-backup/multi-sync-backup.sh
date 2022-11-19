@@ -1275,8 +1275,10 @@ SyncLocateFiles(){
         syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
         local syncSourceFindFile1
         local syncDestFindFile1
-        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
+        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "export LANG=en_US.UTF-8;find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
+        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "export LANG=en_US.UTF-8;find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
+#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
+#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
 
         
         [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
@@ -1307,21 +1309,42 @@ SyncLocateFiles(){
         MARK=0
         for j in "${syncDestFindFile1[@]}"; do
             if [ "$i" = "$j" ]; then
-                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
-                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
+                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"$j\"|awk '{print \$1}'") ]]; then
+                    _warning "源节点: \"$i\"，目的节点:\"$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源节点: \"$i\"，目的节点: \"$j\"")
                 else
-                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
+                    _success "源节点: \"$i\"，目的节点: \"$j\" 文件校验值一致"
                 fi
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
-            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
+            locateSourceOutgoingFile+=("\"$i\"")
+            locateDestIncomingFile+=("\"$i\"")
+#            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
+#            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
         fi
     done
+#    for i in "${syncSourceFindFile1[@]}"; do
+#        MARK=0
+#        for j in "${syncDestFindFile1[@]}"; do
+#            if [ "$i" = "$j" ]; then
+#                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
+#                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+#                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
+#                else
+#                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
+#                fi
+#                MARK=1
+#                break
+#            fi
+#        done
+#        if [ "${MARK}" -eq 0 ]; then
+#            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
+#            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
+#        fi
+#    done
     
     # 将同名不同内容的冲突文件列表写入日志
     ErrorWarningSyncLog
