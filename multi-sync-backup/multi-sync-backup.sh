@@ -1053,7 +1053,7 @@ SearchCondition(){
     export LANG=en_US.UTF-8
     local oldestDate
     local todayDate
-    oldestDate=$(date -d "${allowDays}"days +%Y年%m月%d日)
+    oldestDate=$(date -d -"${allowDays}"days +%Y年%m月%d日)
     todayDate=$(date +%Y年%m月%d日)
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         if [ "${syncType}" = "dir" ]; then
