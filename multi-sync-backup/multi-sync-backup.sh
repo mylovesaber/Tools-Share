@@ -1402,8 +1402,8 @@ SyncLocateFiles(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            locateSourceOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
-            locateDestIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
+            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
+            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameJ}\"")
         fi
     done
 #    for i in "${syncSourceFindFile1[@]}"; do
@@ -1485,8 +1485,10 @@ SyncLocateFiles(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            locateDestOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
-            locateSourceIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
+#            locateDestOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
+#            locateSourceIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
+            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
+            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameJ}\"")
         fi
     done
     # 信息汇总
