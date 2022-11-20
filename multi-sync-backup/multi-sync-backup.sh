@@ -1061,7 +1061,7 @@ CheckTransmissionStatus(){
 #                if [ ! -d \"\$i\" ]; then
 #                    echo \"\$i\";
 #                    break;
-                fi;
+#                fi;
             done;
         fi"
         local fatherPathNotExist
