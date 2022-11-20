@@ -1043,6 +1043,23 @@ CheckTransmissionStatus(){
 #            echo "$i"
 #        done
 #        echo "=========================="
+        ssh "${syncSourceAlias}" "
+        if [ ! -d \"${syncSourcePath}\" ]; then
+            folderCount=\$(awk -F '/' '{print NF}' <<< \"${syncSourcePath}\");
+            needDetectPath=\"\";
+            needDetectPathList=();
+            for ((i=2;i<=folderCount;i++)); do
+                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"\${syncSourcePath}\");
+                needDetectPath=\"\${needDetectPath}/\${pathElement}\";
+                mapfile -t -O \"\${#needDetectPathList[@]}\" needDetectPathList < <(echo \"\${needDetectPath}\");
+            done;
+            for i in \"\${needDetectPathList[@]}\";do
+                if [ ! -d \"\$i\" ]; then
+                    echo \"\$i\";
+                    break;
+                fi;
+            done;
+        fi"
         local fatherPathNotExist
         fatherPathNotExist=$(ssh "${syncSourceAlias}" "
         if [ ! -d \"${syncSourcePath}\" ]; then
