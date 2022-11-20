@@ -557,7 +557,7 @@ CheckExecOption(){
             exit 1
         fi
         [[ ! "${syncSourcePath}" =~ ^/ ]] && _error "设置的源同步节点路径必须为绝对路径，请检查" && exit 112
-        [[ ! "${syncDestPath}" =~ ^/ ]] && _error "设置的目标同步节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${syncDestPath}" =~ ^/ ]] && _error "设置的目的同步节点路径必须为绝对路径，请检查" && exit 112
 
         mapfile -t hostAlias < <(cat /root/.ssh/"${syncGroupInfo}"/config-"${syncGroupInfo}"-*|awk '/Host / {print $2}')
         for i in "${hostAlias[@]}"; do
@@ -577,7 +577,7 @@ CheckExecOption(){
             [ "${i}" = "${syncDestAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
-            _error "目标同步节点别名错误，请检查指定的免密节点组名中可用的目标同步节点别名:"
+            _error "目的同步节点别名错误，请检查指定的免密节点组名中可用的目的同步节点别名:"
             for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
@@ -619,7 +619,7 @@ CheckExecOption(){
             exit 1
         fi
         [[ ! "${backupSourcePath}" =~ ^/ ]] && _error "设置的源备份节点路径必须为绝对路径，请检查" && exit 112
-        [[ ! "${backupDestPath}" =~ ^/ ]] && _error "设置的目标备份节点路径必须为绝对路径，请检查" && exit 112
+        [[ ! "${backupDestPath}" =~ ^/ ]] && _error "设置的目的备份节点路径必须为绝对路径，请检查" && exit 112
         
         mapfile -t hostAlias < <(cat /root/.ssh/"${backupGroupInfo}"/config-"${backupGroupInfo}"-*|awk '/Host / {print $2}')
         for i in "${hostAlias[@]}"; do
@@ -639,7 +639,7 @@ CheckExecOption(){
             [ "${i}" = "${backupDestAlias}" ] && MARK=1 && break
         done
         if [ "${MARK}" -eq 0 ]; then
-            _error "目标备份节点别名错误，请检查指定的免密节点组名中可用的目标备份节点别名:"
+            _error "目的备份节点别名错误，请检查指定的免密节点组名中可用的目的备份节点别名:"
             for i in "${hostAlias[@]}"; do
                 echo "${i}"
             done
@@ -992,9 +992,9 @@ CheckTransmissionStatus(){
 
     if [ -n "${syncDestAlias}" ]; then
         if ssh -o BatchMode=yes "${syncDestAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "目标同步节点 ${syncDestAlias} 连接正常"
+            _success "目的同步节点 ${syncDestAlias} 连接正常"
         else
-            _error "目标同步节点 ${syncDestAlias} 无法连接，请检查目标同步节点硬件是否损坏"
+            _error "目的同步节点 ${syncDestAlias} 无法连接，请检查目的同步节点硬件是否损坏"
             MARK=1
         fi
     fi
@@ -1010,9 +1010,9 @@ CheckTransmissionStatus(){
 
     if [ -n "${backupDestAlias}" ]; then
         if ssh -o BatchMode=yes "${backupDestAlias}" "echo \"\">/dev/null 2>&1" >/dev/null 2>&1; then
-            _success "目标备份节点 ${backupDestAlias} 连接正常"
+            _success "目的备份节点 ${backupDestAlias} 连接正常"
         else
-            _error "目标备份节点 ${backupDestAlias} 无法连接，请检查目标备份节点硬件是否损坏"
+            _error "目的备份节点 ${backupDestAlias} 无法连接，请检查目的备份节点硬件是否损坏"
             MARK=1
         fi
     fi
@@ -1031,8 +1031,8 @@ CheckTransmissionStatus(){
             exit 1
         fi
         syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
-        ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目标同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\""
-        _info "修正后的目标同步节点路径: ${syncDestPath}"
+        ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\""
+        _info "修正后的目的同步节点路径: ${syncDestPath}"
     fi
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ]; then
         backupSourcePath=$(echo "${backupSourcePath}" | sed -e "s/\/$//g")
@@ -1043,8 +1043,8 @@ CheckTransmissionStatus(){
             exit 1
         fi
         backupDestPath=$(echo "${backupDestPath}" | sed -e "s/\/$//g")
-        ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目标备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\""
-        _info "修正后的目标备份节点路径: ${backupDestPath}"
+        ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\""
+        _info "修正后的目的备份节点路径: ${backupDestPath}"
     fi
     _success "节点路径检查和处理完毕"
 }
@@ -1142,19 +1142,19 @@ SyncLocateFolders(){
     done
 
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹"
+        _warning "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹"
         ErrorWarningSyncLog
-        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
+        echo "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
         _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹"
         ErrorWarningSyncLog
         echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
-        _success "源与目标同步节点均找到指定日期格式${syncDateType}的文件夹"
+        _success "源与目的同步节点均找到指定日期格式${syncDateType}的文件夹"
     elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-        _error "源与目标同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中"
+        _error "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中"
         ErrorWarningSyncLog
-        echo "源与目标同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
+        echo "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
 
@@ -1302,46 +1302,56 @@ SyncLocateFiles(){
 
     # 以下用printf会比find更快，但一万个文件只有 7ms 差距暂时不改了
     # time echo x|printf '%s\n' /root/108/ttt/*20221120*
+    _info "开始检索源节点并计算每个文件的校验值"
     local syncSourceFindFile1
     mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        echo \"正在检索\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)生成的待备份文件\";
         mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_\${shaValue}\";
             done;
+        else
+            echo \"\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)未生成待备份文件\";
         fi;
     done")
+    _success "源节点检索并计算完成"
 
+    _info "开始检索目的节点并计算每个文件的校验值"
     local syncDestFindFile1
     mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        echo \"正在检索\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)的文件\";
         mapfile -t syncDestFindFile1 < <(find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncDestFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_\${shaValue}\";
             done;
+        else
+            echo \"\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)未生成待备份文件\";
         fi;
     done")
-    echo "================================="
-    echo "源路径文件"
-    for i in "${syncSourceFindFile1[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
-    echo "目的路径文件"
-    for i in "${syncDestFindFile1[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+    _success "目的节点检索并计算完成"
+#    echo "================================="
+#    echo "源路径文件"
+#    for i in "${syncSourceFindFile1[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+#    echo "目的路径文件"
+#    for i in "${syncDestFindFile1[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
 #    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
 #        # 将文件夹允许的格式字符串替换成真实日期
@@ -1364,23 +1374,24 @@ SyncLocateFiles(){
     [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1
     [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1
     if [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
-        _warning "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件"
+        _warning "目的同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件"
         ErrorWarningSyncLog
-        echo "目标同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件" >> "${execErrorWarningSyncLogFile}"
+        echo "目的同步节点${syncDestAlias}不存在指定日期格式${syncDate}的文件" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindFile1}" -eq 0 ] && [ "${markSyncDestFindFile1}" -eq 1 ]; then
         _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件"
         ErrorWarningSyncLog
         echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDate}的文件" >> "${execErrorWarningSyncLogFile}"
     elif [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 1 ]; then
-        _success "源与目标同步节点均找到指定日期格式${syncDate}的文件"
+        _success "源与目的同步节点均找到指定日期格式${syncDate}的文件"
     elif [ "${markSyncSourceFindFile1}" -eq 0 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
-        _error "源与目标同步节点均不存在指定日期格式${syncDate}的文件，退出中"
+        _error "源与目的同步节点均不存在指定日期格式${syncDate}的文件，退出中"
         ErrorWarningSyncLog
-        echo "源与目标同步节点均不存在指定日期格式${syncDate}的文件，退出中" >> "${execErrorWarningSyncLogFile}"
+        echo "源与目的同步节点均不存在指定日期格式${syncDate}的文件，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
 
     # 锁定始到末需传送的文件的绝对路径
+    _info "开始比对索引中源与目的节点每个文件的校验值"
     conflictFile=()
     local fileNameI
     local shaValueI
@@ -1409,18 +1420,19 @@ SyncLocateFiles(){
             mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
         fi
     done
-    echo "================================="
-    echo "源路径发出文件"
-    for i in "${locateSourceOutgoingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
-    echo "================================="
-    echo "目的路径传入文件"
-    for i in "${locateDestIncomingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源路径发出文件"
+#    for i in "${locateSourceOutgoingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+#    echo "================================="
+#    echo "目的路径传入文件"
+#    for i in "${locateDestIncomingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+
 #    for i in "${syncSourceFindFile1[@]}"; do
 #        MARK=0
 #        for j in "${syncDestFindFile1[@]}"; do
@@ -1464,13 +1476,15 @@ SyncLocateFiles(){
     
     # 将同名不同内容的冲突文件列表写入日志
     if [[ "${#conflictFile[@]}" -gt 0 ]]; then
+        _warning "检测到存在冲突文件，开始写入日志"
         ErrorWarningSyncLog
         echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
         for i in "${conflictFile[@]}"; do
             echo "$i" >> "${execErrorWarningSyncLogFile}"
         done
+        _success "冲突文件记录完成"
     fi
-
+    _success "冲突文件检索完成，已定位从源节点到目的节点待同步的文件"
 
     # 锁定末到始需传送的文件的绝对路径
 #    for i in "${syncDestFindFile1[@]}"; do
@@ -1488,7 +1502,7 @@ SyncLocateFiles(){
 ##            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
 #        fi
 #    done
-
+    _info "开始比对索引中目的与源节点每个文件的校验值"
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
         fileNameI=$(awk -F '_-_' '{print $1}' <<< "$i")
@@ -1506,6 +1520,9 @@ SyncLocateFiles(){
             mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
         fi
     done
+    _success "文件检索完成，已定位从目的节点到源节点待同步的文件"
+    echo ""
+
     # 信息汇总
     _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
     _warning "传输方向: 源节点 -> 目的节点 —— 源节点待传出-目的节点待传入文件绝对路径列表:"
@@ -1580,7 +1597,7 @@ BackupLocateFiles(){
     elif [ "${markBackupSourceFindFile1}" -eq 0 ]; then
         _error "源节点不存在指定日期格式${backupDate}的文件，退出中"
         ErrorWarningBackupLog
-        echo "源与目标同步节点均不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
+        echo "源与目的同步节点均不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
         exit 1
     fi
 
