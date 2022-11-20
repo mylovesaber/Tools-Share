@@ -1030,7 +1030,7 @@ CheckTransmissionStatus(){
         syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
         local folderCount needDetectPath needDetectPathList pathElement
         folderCount=$(awk -F '/' '{print NF}' <<< "${syncSourcePath}")
-        needDetectPath="/"
+        needDetectPath=""
         needDetectPathList=()
         for ((i=2;i<=folderCount;i++)); do
             pathElement=$(awk -F '/' -v i="$i" '{print $i}' <<< "${syncSourcePath}")
