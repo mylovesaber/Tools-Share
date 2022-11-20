@@ -1987,7 +1987,7 @@ Main(){
     CheckExecOption
     CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论部署成功与否都会退出
     CheckTransmissionStatus
-#    SearchCondition
+    SearchCondition
 }
 
 # 只执行完就直接退出
