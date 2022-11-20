@@ -1299,6 +1299,9 @@ SyncLocateFiles(){
 #            break
 #        fi
 #    done
+
+    # 以下用printf会比find更快，但一万个文件只有 7ms 差距暂时不改了
+    # time echo x|printf '%s\n' /root/108/ttt/*20221120*
     local syncSourceFindFile1
     mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
@@ -1403,7 +1406,7 @@ SyncLocateFiles(){
         done
         if [ "${MARK}" -eq 0 ]; then
             mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
-            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameJ}\"")
+            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
         fi
     done
     echo "================================="
@@ -1500,7 +1503,7 @@ SyncLocateFiles(){
 #            locateDestOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
 #            locateSourceIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
             mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
-            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameJ}\"")
+            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
         fi
     done
     # 信息汇总
