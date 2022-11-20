@@ -1065,6 +1065,7 @@ CheckTransmissionStatus(){
                 fi;
             done;
         fi"
+        echo "第二轮"
         local fatherPathNotExist
         fatherPathNotExist=$(ssh "${syncSourceAlias}" "
         if [ ! -d \"${syncSourcePath}\" ]; then
