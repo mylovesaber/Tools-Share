@@ -1028,7 +1028,30 @@ CheckTransmissionStatus(){
     # 备份一下，忘了为什么之前会用这个写法，当时应该是能正常工作的，但现在无法工作： sed -e "s/'/'\\\\''/g"
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ]; then
         syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
-        if ! ssh "${syncSourceAlias}" "[ ! -d \"${syncSourcePath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\" && mkdir -p \"${syncSourcePath}\" && exit 1"; then
+        local folderCount needDetectPath needDetectPathList pathElement
+        folderCount=$(awk -F '/' '{print NF}' <<< "${syncSourcePath}")
+        needDetectPath="/"
+        needDetectPathList=()
+        for ((i=2;i<=folderCount;i++)); do
+            pathElement=$(awk -F '/' -v i="$i" '{print $i}' <<< "${syncSourcePath}")
+            needDetectPath="${needDetectPath}/${pathElement}"
+            mapfile -t -O ${#needDetectPathList[@]} needDetectPathList < <(echo "${needDetectPath}")
+        done
+        echo "=========================="
+        echo "层级文件夹"
+        for i in "${needDetectPathList[@]}"; do
+            echo "$i"
+        done
+        echo "=========================="
+        if ! ssh "${syncSourceAlias}" "
+        if [ ! -d \"${syncSourcePath}\" ]; then
+            echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\";
+#            for i in \"\${needDetectPathList[@]}\";do
+#
+#            done
+#            mkdir -p \"${syncSourcePath}\";
+            exit 1;
+        fi"; then
             createdTempSyncSourceFolder="${syncSourcePath}"
         fi
         _info "修正后的源同步节点路径: ${syncSourcePath}"
@@ -1965,7 +1988,7 @@ Main(){
     CheckExecOption
     CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论部署成功与否都会退出
     CheckTransmissionStatus
-    SearchCondition
+#    SearchCondition
 }
 
 # 只执行完就直接退出
