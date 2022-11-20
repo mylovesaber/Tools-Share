@@ -1309,15 +1309,12 @@ SyncLocateFiles(){
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        echo \"正在检索\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)生成的待备份文件\";
         mapfile -t syncSourceFindFile1 < <(find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_\${shaValue}\";
             done;
-        else
-            echo \"\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)未生成待备份文件\";
         fi;
     done")
     _success "源节点检索并计算完成"
@@ -1329,15 +1326,12 @@ SyncLocateFiles(){
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        echo \"正在检索\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)的文件\";
         mapfile -t syncDestFindFile1 < <(find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncDestFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_\${shaValue}\";
             done;
-        else
-            echo \"\$(date -d -\"\${LOOP}\"days +%Y年%m月%d日)未生成待备份文件\";
         fi;
     done")
     _success "目的节点检索并计算完成"
