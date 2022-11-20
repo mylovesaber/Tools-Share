@@ -1059,10 +1059,10 @@ CheckTransmissionStatus(){
             echo \"needDetectPathList数组长度: \${#needDetectPathList[@]}\";
             for i in \"\${needDetectPathList[@]}\";do
                 echo \"\$i\";
-#                if [ ! -d \"\$i\" ]; then
-#                    echo \"\$i\";
-#                    break;
-#                fi;
+                if [ ! -d \"\$i\" ]; then
+                    echo \"\$i\";
+                    break;
+                fi;
             done;
         fi"
         local fatherPathNotExist
