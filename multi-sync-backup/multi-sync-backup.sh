@@ -1086,12 +1086,20 @@ SearchCondition(){
 OperationCondition(){
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         _info "开始执行同步操作"
-        SyncOperation
+        if SyncOperation; then
+            _success "同步完成"
+        else
+            _error "同步异常，请检查问题来源"
+        fi
     fi
     
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
         _info "开始执行备份操作"
-        BackupOperation
+        if BackupOperation; then
+            _success "备份完成"
+        else
+            _error "备份异常，请检查问题来源"
+        fi
     fi
 }
 
@@ -1266,39 +1274,6 @@ SyncLocateFiles(){
     local markSyncDestFindFile1
     markSyncSourceFindFile1=0
     markSyncDestFindFile1=0
-#    JUMP=0
-#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
-#        # 将文件夹允许的格式字符串替换成真实日期
-#        yearValue=$(date -d -"${LOOP}"days +%Y)
-#        monthValue=$(date -d -"${LOOP}"days +%m)
-#        dayValue=$(date -d -"${LOOP}"days +%d)
-#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-#        local syncSourceFindFile1
-#        local syncDestFindFile1
-#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-##        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-##        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
-#
-#
-#        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
-#        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
-#        [ "${JUMP}" -eq 1 ] && break
-#    done
-
-#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
-#        yearValue=$(date -d -"${LOOP}"days +%Y)
-#        monthValue=$(date -d -"${LOOP}"days +%m)
-#        dayValue=$(date -d -"${LOOP}"days +%d)
-#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-#        mapfile -t syncSourceFindFile1 < <(find "${syncSourcePath}" -maxdepth 1 -type f -name "*${syncDate}*")
-#        if [ "${#syncSourceFindFile1[@]}" -gt 0 ]; then
-#            for i in "${syncSourceFindFile1[@]}";do
-#                echo "$i"
-#            done
-#            break
-#        fi
-#    done
 
     # 以下用printf会比find更快，但一万个文件只有 7ms 差距暂时不改了
     # time echo x|printf '%s\n' /root/108/ttt/*20221120*
@@ -1347,24 +1322,6 @@ SyncLocateFiles(){
 #    done
 #    echo "================================="
 
-#    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
-#        # 将文件夹允许的格式字符串替换成真实日期
-#        yearValue=$(date -d -"${LOOP}"days +%Y)
-#        monthValue=$(date -d -"${LOOP}"days +%m)
-#        dayValue=$(date -d -"${LOOP}"days +%d)
-#        syncDate=$(echo "${syncDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-#        local syncSourceFindFile1
-#        local syncDestFindFile1
-#        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "find \"${syncSourcePath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-#        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "find \"${syncDestPath}\" -maxdepth 1 -type f -name \"*${syncDate}*\"")
-##        mapfile -t syncSourceFindFile1 < <(ssh "${syncSourceAlias}" "cd \"${syncSourcePath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'") # 如果全路径而不cd的话会出现find到的全是带中文单引号的情况，原因不明
-##        mapfile -t syncDestFindFile1 < <(ssh "${syncDestAlias}" "cd \"${syncDestPath}\";find . -maxdepth 1 -type f -name \"*${syncDate}*\"|sed 's/^\.\///g'")
-#
-#
-#        [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1 && JUMP=1
-#        [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1 && JUMP=1
-#        [ "${JUMP}" -eq 1 ] && break
-#    done
     [ "${#syncSourceFindFile1[@]}" -gt 0 ] && markSyncSourceFindFile1=1
     [ "${#syncDestFindFile1[@]}" -gt 0 ] && markSyncDestFindFile1=1
     if [ "${markSyncSourceFindFile1}" -eq 1 ] && [ "${markSyncDestFindFile1}" -eq 0 ]; then
@@ -1426,47 +1383,6 @@ SyncLocateFiles(){
 #        echo "$i"
 #    done
 #    echo "================================="
-
-#    for i in "${syncSourceFindFile1[@]}"; do
-#        MARK=0
-#        for j in "${syncDestFindFile1[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"$j\"|awk '{print \$1}'") ]]; then
-#                    _warning "源节点: \"$i\"，目的节点:\"$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-#                    conflictFile+=("源节点: \"$i\"，目的节点: \"$j\"")
-#                else
-#                    _success "源节点: \"$i\"，目的节点: \"$j\" 文件校验值一致"
-#                fi
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            locateSourceOutgoingFile+=("\"$i\"")
-#            locateDestIncomingFile+=("\"$j\"")
-##            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
-##            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
-#        fi
-#    done
-#    for i in "${syncSourceFindFile1[@]}"; do
-#        MARK=0
-#        for j in "${syncDestFindFile1[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
-#                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-#                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
-#                else
-#                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
-#                fi
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
-#            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
-#        fi
-#    done
     
     # 将同名不同内容的冲突文件列表写入日志
     if [[ "${#conflictFile[@]}" -gt 0 ]]; then
@@ -1478,24 +1394,9 @@ SyncLocateFiles(){
         done
         _success "冲突文件记录完成"
     fi
-    _success "冲突文件检索完成，已定位从源节点到目的节点待同步的文件"
+    _success "文件检索完成，已定位从源节点到目的节点待同步的文件"
 
     # 锁定末到始需传送的文件的绝对路径
-#    for i in "${syncDestFindFile1[@]}"; do
-#        MARK=0
-#        for j in "${syncSourceFindFile1[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            locateDestOutgoingFile+=("\"$i\"")
-#            locateSourceIncomingFile+=("\"$j\"")
-##            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
-##            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
-#        fi
-#    done
     _info "开始比对索引中目的与源节点每个文件的校验值"
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
@@ -1508,8 +1409,6 @@ SyncLocateFiles(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-#            locateDestOutgoingFile+=("\"${syncSourcePath}/${fileNameI}\"")
-#            locateSourceIncomingFile+=("\"${syncDestPath}/${fileNameJ}\"")
             mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
             mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
         fi
