@@ -1057,9 +1057,10 @@ CheckTransmissionStatus(){
             done;
             echo \"needDetectPathList数组长度: \${#needDetectPathList[@]}\";
             for i in \"\${needDetectPathList[@]}\";do
-                if [ ! -d \"\$i\" ]; then
-                    echo \"\$i\";
-                    break;
+                echo \"\$i\";
+#                if [ ! -d \"\$i\" ]; then
+#                    echo \"\$i\";
+#                    break;
                 fi;
             done;
         fi"
