@@ -1027,6 +1027,7 @@ CheckTransmissionStatus(){
     # 源同步节点指定的路径可以不存在，但源备份节点指定的路径必须存在否则没意义了
     # 备份一下，忘了为什么之前会用这个写法，当时应该是能正常工作的，但现在无法工作： sed -e "s/'/'\\\\''/g"
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ]; then
+        # 源同步节点路径修正
         syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
         local fatherPathNotExist
         fatherPathNotExist=$(ssh "${syncSourceAlias}" "
@@ -1055,13 +1056,21 @@ CheckTransmissionStatus(){
         echo "确定的createdTempSyncSourceFolder的值: $createdTempSyncSourceFolder"
         _info "修正后的源同步节点路径: ${syncSourcePath}"
 
+        # 目的同步节点路径修正
         syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
-        if ! ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\" && exit 1"; then
+        if ! ssh "${syncDestAlias}" "
+        if [ ! -d \"${syncDestPath}\" ]; then
+            echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\";
+            mkdir -p \"${syncDestPath}\";
+            exit 1;
+        fi"; then
             createdTempSyncDestFolder="${syncDestPath}"
         fi
         _info "修正后的目的同步节点路径: ${syncDestPath}"
     fi
+
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ]; then
+        # 源备份节点路径修正
         backupSourcePath=$(echo "${backupSourcePath}" | sed -e "s/\/$//g")
         if ssh "${backupSourceAlias}" "[ -d \"${backupSourcePath}\" ]"; then
             _info "修正后的源备份节点路径: ${backupSourcePath}"
@@ -1070,9 +1079,15 @@ CheckTransmissionStatus(){
             exit 1
         fi
 
+        # 目的备份节点路径修正
         backupDestPath=$(echo "${backupDestPath}" | sed -e "s/\/$//g")
-        if ! ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\" && exit 1"; then
-            createdTempBackupDestFolder="${syncDestPath}"
+        if ! ssh "${backupDestAlias}" "
+        if [ ! -d \"${backupDestPath}\" ]; then
+            echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\";
+            mkdir -p \"${backupDestPath}\";
+            exit 1;
+        fi"; then
+            createdTempBackupDestFolder="${backupDestPath}"
         fi
         _info "修正后的目的备份节点路径: ${backupDestPath}"
     fi
@@ -1119,18 +1134,18 @@ SearchCondition(){
             fi
         fi
         if [[ -n "${createdTempSyncDestFolder}" ]]; then
-            _info "正在删除临时创建的目标同步节点文件夹"
+            _info "正在删除临时创建的目的同步节点文件夹"
             if ssh "${syncDestAlias}" "rm -rf \"${syncDestPath}\""; then
-                _success "已删除临时创建的目标同步节点文件夹"
+                _success "已删除临时创建的目的同步节点文件夹"
             else
                 _error "删除失败，请手动检查"
                 exit 1
             fi
         fi
         if [[ -n "${createdTempBackupDestFolder}" ]]; then
-            _info "正在删除临时创建的目标备份节点文件夹"
+            _info "正在删除临时创建的目的备份节点文件夹"
             if ssh "${backupDestAlias}" "rm -rf \"${backupDestPath}\""; then
-                _success "已删除临时创建的目标备份节点文件夹"
+                _success "已删除临时创建的目的备份节点文件夹"
             else
                 _error "删除失败，请手动检查"
                 exit 1
