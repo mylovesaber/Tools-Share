@@ -1050,7 +1050,7 @@ CheckTransmissionStatus(){
             needDetectPathList=();
             echo \"准备循环\";
             for ((i=2;i<=folderCount;i++)); do
-                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"\${syncSourcePath}\");
+                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"${syncSourcePath}\");
                 needDetectPath=\"\${needDetectPath}/\${pathElement}\";
                 echo \"\${needDetectPath}\";
                 mapfile -t -O \"\${#needDetectPathList[@]}\" needDetectPathList < <(echo \"\${needDetectPath}\");
