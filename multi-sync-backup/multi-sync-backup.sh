@@ -1328,17 +1328,17 @@ SyncLocateFiles(){
             done;
         fi;
     done")
-#    echo "================================="
-#    echo "源路径文件"
-#    for i in "${syncSourceFindFile1[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
-#    echo "目的路径文件"
-#    for i in "${syncDestFindFile1[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "源路径文件"
+    for i in "${syncSourceFindFile1[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "目的路径文件"
+    for i in "${syncDestFindFile1[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
 #    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
 #        # 将文件夹允许的格式字符串替换成真实日期
