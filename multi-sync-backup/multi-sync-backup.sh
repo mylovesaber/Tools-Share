@@ -1049,6 +1049,7 @@ CheckTransmissionStatus(){
         fi")
         if [ -n "${fatherPathNotExist}" ]; then
             ssh "${syncSourceAlias}" "
+                echo \"目的同步节点路径不存在，正在创建路径: ${syncSourcePath}\";
                 mkdir -p \"${syncSourcePath}\""
             createdTempSyncSourceFolder="${fatherPathNotExist}"
         fi
