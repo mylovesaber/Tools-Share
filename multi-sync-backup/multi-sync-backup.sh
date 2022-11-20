@@ -1028,32 +1028,47 @@ CheckTransmissionStatus(){
     # 备份一下，忘了为什么之前会用这个写法，当时应该是能正常工作的，但现在无法工作： sed -e "s/'/'\\\\''/g"
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ]; then
         syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
-        local folderCount needDetectPath needDetectPathList pathElement
-        folderCount=$(awk -F '/' '{print NF}' <<< "${syncSourcePath}")
-        needDetectPath=""
-        needDetectPathList=()
-        for ((i=2;i<=folderCount;i++)); do
-            pathElement=$(awk -F '/' -v i="$i" '{print $i}' <<< "${syncSourcePath}")
-            needDetectPath="${needDetectPath}/${pathElement}"
-            mapfile -t -O ${#needDetectPathList[@]} needDetectPathList < <(echo "${needDetectPath}")
-        done
-        echo "=========================="
-        echo "层级文件夹"
-        for i in "${needDetectPathList[@]}"; do
-            echo "$i"
-        done
-        echo "=========================="
-        if ! ssh "${syncSourceAlias}" "
+#        local folderCount needDetectPath needDetectPathList pathElement
+#        folderCount=$(awk -F '/' '{print NF}' <<< "${syncSourcePath}")
+#        needDetectPath=""
+#        needDetectPathList=()
+#        for ((i=2;i<=folderCount;i++)); do
+#            pathElement=$(awk -F '/' -v i="$i" '{print $i}' <<< "${syncSourcePath}")
+#            needDetectPath="${needDetectPath}/${pathElement}"
+#            mapfile -t -O ${#needDetectPathList[@]} needDetectPathList < <(echo "${needDetectPath}")
+#        done
+#        echo "=========================="
+#        echo "层级文件夹"
+#        for i in "${needDetectPathList[@]}"; do
+#            echo "$i"
+#        done
+#        echo "=========================="
+        local fatherPathNotExist
+        fatherPathNotExist=$(ssh "${syncSourceAlias}" "
         if [ ! -d \"${syncSourcePath}\" ]; then
-            echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\";
-#            for i in \"\${needDetectPathList[@]}\";do
-#
-#            done
-#            mkdir -p \"${syncSourcePath}\";
-            exit 1;
-        fi"; then
-            createdTempSyncSourceFolder="${syncSourcePath}"
+            folderCount=\$(awk -F '/' '{print NF}' <<< \"${syncSourcePath}\");
+            needDetectPath=\"\";
+            needDetectPathList=();
+            for ((i=2;i<=folderCount;i++)); do
+                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"\${syncSourcePath}\");
+                needDetectPath=\"\${needDetectPath}/\${pathElement}\";
+                mapfile -t -O \"\${#needDetectPathList[@]}\" needDetectPathList < <(echo \"\${needDetectPath}\");
+            done;
+            for i in \"\${needDetectPathList[@]}\";do
+                if [ ! -d \"\$i\" ]; then
+                    echo \"\$i\";
+                    break;
+                fi;
+            done;
+        fi")
+        echo "最开始不存在的路径: $fatherPathNotExist"
+        if [ -n "${fatherPathNotExist}" ]; then
+            ssh "${syncSourceAlias}" "
+                echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\";
+                mkdir -p \"${syncSourcePath}\""
+            createdTempSyncSourceFolder="${fatherPathNotExist}"
         fi
+        echo "确定的createdTempSyncSourceFolder的值: $createdTempSyncSourceFolder"
         _info "修正后的源同步节点路径: ${syncSourcePath}"
 
         syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
