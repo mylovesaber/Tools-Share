@@ -1065,7 +1065,7 @@ CheckTransmissionStatus(){
         if [ -n "${fatherPathNotExist}" ]; then
             ssh "${syncSourceAlias}" "
                 echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\";
-                mkdir -p \"${syncSourcePath}\""
+#                mkdir -p \"${syncSourcePath}\""
             createdTempSyncSourceFolder="${fatherPathNotExist}"
         fi
         echo "确定的createdTempSyncSourceFolder的值: $createdTempSyncSourceFolder"
