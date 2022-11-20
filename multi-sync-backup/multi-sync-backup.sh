@@ -1049,11 +1049,9 @@ CheckTransmissionStatus(){
         fi")
         if [ -n "${fatherPathNotExist}" ]; then
             ssh "${syncSourceAlias}" "
-                echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\";
                 mkdir -p \"${syncSourcePath}\""
             createdTempSyncSourceFolder="${fatherPathNotExist}"
         fi
-        echo "确定的createdTempSyncSourceFolder的值: $createdTempSyncSourceFolder"
         _info "修正后的源同步节点路径: ${syncSourcePath}"
 
         # 目的同步节点路径修正
@@ -1126,7 +1124,7 @@ SearchCondition(){
         _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
         if [[ -n "${createdTempSyncSourceFolder}" ]]; then
             _info "正在删除临时创建的源同步节点文件夹"
-            if ssh "${syncSourceAlias}" "rm -rf \"${syncSourcePath}\""; then
+            if ssh "${syncSourceAlias}" "rm -rf \"${createdTempSyncSourceFolder}\""; then
                 _success "已删除临时创建的源同步节点文件夹"
             else
                 _error "删除失败，请手动检查"
