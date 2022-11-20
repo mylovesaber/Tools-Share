@@ -94,6 +94,9 @@ deleteExpiredLog=0
 needClean=0
 confirmContinue=0
 needHelp=0
+createdTempSyncSourceFolder=""
+createdTempSyncDestFolder=""
+createdTempBackupDestFolder=""
 
 if ! ARGS=$(getopt -a -o G:,g:,T:,t:,D:,d:,N:,n:,O:,o:,L:,l:,R:,r:,F:,s,E:,e,c,y,h -l sync_source_path:,sync_dest_path:,backup_source_path:,backup_dest_path:,sync_source_alias:,sync_dest_alias:,backup_source_alias:,backup_dest_alias:,sync_group:,backup_group:,sync_type:,backup_type:,sync_operation_name:,backup_operation_name:,sync_date_type:,backup_date_type:,operation_cron:,operation_cron_name:,log_cron:,remove:,remove_group_info:,remove_operation_file:,deploy:,deploy_group_info:,days:,check_dep_sep,deploy,delete_expired_log,clean,yes,help -- "$@")
 then
@@ -1021,17 +1024,19 @@ CheckTransmissionStatus(){
     _success "节点连通性检测通过"
 
     _info "开始同步/备份节点路径检查和处理"
+    # 源同步节点指定的路径可以不存在，但源备份节点指定的路径必须存在否则没意义了
     # 备份一下，忘了为什么之前会用这个写法，当时应该是能正常工作的，但现在无法工作： sed -e "s/'/'\\\\''/g"
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ]; then
         syncSourcePath=$(echo "${syncSourcePath}" | sed -e "s/\/$//g")
-        if ssh "${syncSourceAlias}" "[ -d \"${syncSourcePath}\" ]"; then
-            _info "修正后的源同步节点路径: ${syncSourcePath}"
-        else
-            _error "源同步节点路径不存在，请检查: ${syncSourceAlias}"
-            exit 1
+        if ! ssh "${syncSourceAlias}" "[ ! -d \"${syncSourcePath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncSourcePath}\" && mkdir -p \"${syncSourcePath}\" && exit 1"; then
+            createdTempSyncSourceFolder="${syncSourcePath}"
         fi
+        _info "修正后的源同步节点路径: ${syncSourcePath}"
+
         syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
-        ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\""
+        if ! ssh "${syncDestAlias}" "[ ! -d \"${syncDestPath}\" ] && echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\" && mkdir -p \"${syncDestPath}\" && exit 1"; then
+            createdTempSyncDestFolder="${syncDestPath}"
+        fi
         _info "修正后的目的同步节点路径: ${syncDestPath}"
     fi
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ]; then
@@ -1042,8 +1047,11 @@ CheckTransmissionStatus(){
             _error "源备份节点路径不存在，请检查，退出中"
             exit 1
         fi
+
         backupDestPath=$(echo "${backupDestPath}" | sed -e "s/\/$//g")
-        ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\""
+        if ! ssh "${backupDestAlias}" "[ ! -d \"${backupDestPath}\" ] && echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\" && mkdir -p \"${backupDestPath}\" && exit 1"; then
+            createdTempBackupDestFolder="${syncDestPath}"
+        fi
         _info "修正后的目的备份节点路径: ${backupDestPath}"
     fi
     _success "节点路径检查和处理完毕"
@@ -1079,6 +1087,33 @@ SearchCondition(){
         OperationCondition
     else
         _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
+        if [[ -n "${createdTempSyncSourceFolder}" ]]; then
+            _info "正在删除临时创建的源同步节点文件夹"
+            if ssh "${syncSourceAlias}" "rm -rf \"${syncSourcePath}\""; then
+                _success "已删除临时创建的源同步节点文件夹"
+            else
+                _error "删除失败，请手动检查"
+                exit 1
+            fi
+        fi
+        if [[ -n "${createdTempSyncDestFolder}" ]]; then
+            _info "正在删除临时创建的目标同步节点文件夹"
+            if ssh "${syncDestAlias}" "rm -rf \"${syncDestPath}\""; then
+                _success "已删除临时创建的目标同步节点文件夹"
+            else
+                _error "删除失败，请手动检查"
+                exit 1
+            fi
+        fi
+        if [[ -n "${createdTempBackupDestFolder}" ]]; then
+            _info "正在删除临时创建的目标备份节点文件夹"
+            if ssh "${backupDestAlias}" "rm -rf \"${backupDestPath}\""; then
+                _success "已删除临时创建的目标备份节点文件夹"
+            else
+                _error "删除失败，请手动检查"
+                exit 1
+            fi
+        fi
         exit 0
     fi
 }
@@ -1090,6 +1125,7 @@ OperationCondition(){
             _success "同步完成"
         else
             _error "同步异常，请检查问题来源"
+            exit 1
         fi
     fi
     
@@ -1099,6 +1135,7 @@ OperationCondition(){
             _success "备份完成"
         else
             _error "备份异常，请检查问题来源"
+            exit 1
         fi
     fi
 }
@@ -1924,9 +1961,9 @@ Help(){
 Main(){
     EnvCheck
     # 卸载检测和执行
-    CheckRemoveOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论成功与否都不会走完此模块后往下执行
+    CheckRemoveOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入卸载分支，无论卸载成功与否都会退出
     CheckExecOption
-    CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论成功与否都不会走完此模块后往下执行
+    CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论部署成功与否都会退出
     CheckTransmissionStatus
     SearchCondition
 }
