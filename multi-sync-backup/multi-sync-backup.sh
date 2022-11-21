@@ -1233,7 +1233,6 @@ SyncLocateFolders(){
     for i in "${syncSourceFindFolderPath[@]}"; do
         echo "$i"
     done
-    declare -p syncSourceFindFolderPath
     echo "================================="
 
     if [ "${#syncSourceFindFolderPath[@]}" -gt 0 ]; then
