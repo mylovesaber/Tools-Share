@@ -1213,6 +1213,7 @@ SyncLocateFolders(){
     markSyncDestFindPath=0
 
     _info "开始检索源同步节点文件夹和文件并计算每个文件的校验值"
+    # 1. 从指定路径下获取包含指定日期和格式的目录对应绝对路径
     local syncSourceFindFolderPath
     mapfile -t -O "${#syncSourceFindFolderPath[@]}" syncSourceFindFolderPath < <(ssh "${syncSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
@@ -1227,13 +1228,14 @@ SyncLocateFolders(){
             exit 0;
         fi;
     done")
-    echo "================================="
-    echo "源同步节点单个文件夹"
-    for i in "${syncSourceFindFolderPath[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点主文件夹"
+#    for i in "${syncSourceFindFolderPath[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
+    # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     local syncSourceFindFolderPathList
     local syncSourceFindFolderPathPass
     syncSourceFindFolderPathPass=$(declare -p syncSourceFindFolderPath)
@@ -1243,13 +1245,14 @@ SyncLocateFolders(){
             find \"\${i}\" -type d;
         done;
     fi;")
-    echo "================================="
-    echo "源同步节点文件夹"
-    for i in "${testSyncSourceFindFolderPath[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点子文件夹"
+#    for i in "${syncSourceFindFolderPathList[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
+    # 3. 从第一步获取的主文件夹中检索出其中的所有文件的绝对路径
     if [ "${#syncSourceFindFolderPath[@]}" -gt 0 ]; then
         local syncSourceFindFolderPathPass
         syncSourceFindFolderPathPass=$(declare -p syncSourceFindFolderPath)
@@ -1262,21 +1265,20 @@ SyncLocateFolders(){
         if [ \"\${#syncSourceFindFile[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile[@]}\";do
                 shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
-                echo \"\${i}_-_\${shaValue}\";
+                echo \"\${i}_-_-_-_\${shaValue}\";
             done;
         fi")
         if [ "${#syncSourceFindFilePath[@]}" -gt 0 ]; then
             markSyncSourceFindPath=1
         fi
     fi
-    echo "================================="
-    echo "源同步节点文件"
-    for i in "${syncSourceFindFilePath[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点文件"
+#    for i in "${syncSourceFindFilePath[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
     _success "源同步节点检索并计算完成"
-    exit 0
 
 
 #    _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
@@ -1297,31 +1299,96 @@ SyncLocateFolders(){
 #        if [ \"\${#syncDestFindFile[@]}\" -gt 0 ]; then
 #            for i in \"\${syncDestFindFile[@]}\";do
 #                shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
-#                echo \"\${i}_-_\${shaValue}\";
+#                echo \"\${i}_-_-_-_\${shaValue}\";
 #            done;
 #        fi;
 #    done")
 #    _success "目的同步节点检索并计算完成"
-#
-#        [ "${#syncDestFindPath[@]}" -gt 0 ] && markSyncDestFindPath=1
-#
-#
-#    if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-#        _warning "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹"
-#        ErrorWarningSyncLog
-#        echo "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
-#    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
-#        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹"
-#        ErrorWarningSyncLog
-#        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
-#    elif [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
-#        _success "源与目的同步节点均找到指定日期格式${syncDateType}的文件夹"
-#    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
-#        _error "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中"
-#        ErrorWarningSyncLog
-#        echo "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
-#        exit 1
-#    fi
+
+    _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
+    # 1. 从指定路径下获取包含指定日期和格式的目录对应绝对路径
+    local syncDestFindFolderPath
+    mapfile -t -O "${#syncDestFindFolderPath[@]}" syncDestFindFolderPath < <(ssh "${syncDestAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t syncDestFindFolderPath < <(find \"${syncDestPath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\");
+        if [ \"\${#syncDestFindFolderPath[@]}\" -gt 0 ]; then
+            for i in \"\${syncDestFindFolderPath[@]}\"; do
+                echo \"\${i}\";
+            done;
+            exit 0;
+        fi;
+    done")
+    echo "================================="
+    echo "目的同步节点主文件夹"
+    for i in "${syncDestFindFolderPath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+
+    # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
+    local syncDestFindFolderPathList
+    local syncDestFindFolderPathPass
+    syncDestFindFolderPathPass=$(declare -p syncDestFindFolderPath)
+    mapfile -t -O "${#syncDestFindFolderPathList[@]}" syncDestFindFolderPathList < <(ssh "${syncDestAlias}" "${syncDestFindFolderPathPass}" "
+    if [ \"\${#syncDestFindFolderPath[@]}\" -gt 0 ]; then
+        for i in \"\${syncDestFindFolderPath[@]}\"; do
+            find \"\${i}\" -type d;
+        done;
+    fi;")
+    echo "================================="
+    echo "目的同步节点子文件夹"
+    for i in "${syncDestFindFolderPathList[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+
+    # 3. 从第一步获取的主文件夹中检索出其中的所有文件的绝对路径
+    if [ "${#syncDestFindFolderPath[@]}" -gt 0 ]; then
+        local syncDestFindFolderPathPass
+        syncDestFindFolderPathPass=$(declare -p syncDestFindFolderPath)
+        local syncDestFindFilePath
+        mapfile -t -O "${#syncDestFindFilePath[@]}" syncDestFindFilePath < <(ssh "${syncDestAlias}" "${syncDestFindFolderPathPass}" "
+        for i in \"\${syncDestFindFolderPath[@]}\"; do
+            mapfile -t -O \"\${#syncDestFindFile[@]}\" syncDestFindFile < <(find \"\${i}\" -type f);
+        done;
+
+        if [ \"\${#syncDestFindFile[@]}\" -gt 0 ]; then
+            for i in \"\${syncDestFindFile[@]}\";do
+                shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
+                echo \"\${i}_-_-_-_\${shaValue}\";
+            done;
+        fi")
+        if [ "${#syncDestFindFilePath[@]}" -gt 0 ]; then
+            markSyncDestFindPath=1
+        fi
+    fi
+    echo "================================="
+    echo "目的同步节点文件"
+    for i in "${syncDestFindFilePath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    _success "目的同步节点检索并计算完成"
+
+    if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
+        _warning "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹"
+        ErrorWarningSyncLog
+        echo "目的同步节点${syncDestAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
+        _warning "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹"
+        ErrorWarningSyncLog
+        echo "源同步节点${syncSourceAlias}不存在指定日期格式${syncDateType}的文件夹" >> "${execErrorWarningSyncLogFile}"
+    elif [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 1 ]; then
+        _success "源与目的同步节点均找到指定日期格式${syncDateType}的文件夹"
+    elif [ "${markSyncSourceFindPath}" -eq 0 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
+        _error "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中"
+        ErrorWarningSyncLog
+        echo "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
+        exit 1
+    fi
 #
 #    # 锁定目的节点需创建的文件夹的相对路径并转换成绝对路径存进数组
 #    locateDestNeedFolder=()
@@ -1445,7 +1512,7 @@ SyncLocateFiles(){
         if [ \"\${#syncSourceFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncSourceFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
-                echo \"\${i}_-_\${shaValue}\";
+                echo \"\${i}_-_-_-_\${shaValue}\";
             done;
         fi;
     done")
@@ -1462,7 +1529,7 @@ SyncLocateFiles(){
         if [ \"\${#syncDestFindFile1[@]}\" -gt 0 ]; then
             for i in \"\${syncDestFindFile1[@]}\";do
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
-                echo \"\${i}_-_\${shaValue}\";
+                echo \"\${i}_-_-_-_\${shaValue}\";
             done;
         fi;
     done")
@@ -1508,11 +1575,11 @@ SyncLocateFiles(){
     local shaValueJ
     for i in "${syncSourceFindFile1[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '_-_' '{print $1}' <<< "$i")
-        shaValueI=$(awk -F '_-_' '{print $2}' <<< "$i")
+        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
+        shaValueI=$(awk -F '_-_-_-_' '{print $2}' <<< "$i")
         for j in "${syncDestFindFile1[@]}"; do
-            fileNameJ=$(awk -F '_-_' '{print $1}' <<< "$j")
-            shaValueJ=$(awk -F '_-_' '{print $2}' <<< "$j")
+            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
+            shaValueJ=$(awk -F '_-_-_-_' '{print $2}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
                     _warning "源同步节点${syncSourceAlias}: \"${syncSourcePath}/${fileNameI}\"，目的同步节点${syncDestAlias}:\"${syncDestPath}/${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
@@ -1558,9 +1625,9 @@ SyncLocateFiles(){
     _info "开始比对索引中目的与源同步节点每个文件的校验值"
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '_-_' '{print $1}' <<< "$i")
+        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
         for j in "${syncSourceFindFile1[@]}"; do
-            fileNameJ=$(awk -F '_-_' '{print $1}' <<< "$j")
+            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 MARK=1
                 break
