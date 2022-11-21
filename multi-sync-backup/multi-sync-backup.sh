@@ -1442,7 +1442,7 @@ SyncLocateFolders(){
         fileNameI=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$i")
         shaValueI=$(awk -F '_-_-_-_|/' '{print $NF}' <<< "$i")
         for j in "${syncDestFindFilePath[@]}"; do
-            filePathAndNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$J")
+            filePathAndNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
             fileNameJ=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$j")
             shaValueJ=$(awk -F '_-_-_-_|/' '{print $NF}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
@@ -1495,7 +1495,7 @@ SyncLocateFolders(){
         filePathAndNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
         fileNameI=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$i")
         for j in "${syncSourceFindFile1[@]}"; do
-            filePathAndNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$J")
+            filePathAndNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
             fileNameJ=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 MARK=1
