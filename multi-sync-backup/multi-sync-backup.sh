@@ -1233,13 +1233,14 @@ SyncLocateFolders(){
     for i in "${syncSourceFindFolderPath[@]}"; do
         echo "$i"
     done
+    declare -p syncSourceFindFolderPath
     echo "================================="
 
     if [ "${#syncSourceFindFolderPath[@]}" -gt 0 ]; then
+        local syncSourceFindFolderPathPass
+        syncSourceFindFolderPathPass=$(declare -p syncSourceFindFolderPath)
         local syncSourceFindFilePath
-        mapfile -t -O "${#syncSourceFindFilePath[@]}" syncSourceFindFilePath < <(ssh "${syncSourceAlias}" "
-        syncSourceFindFolderPathString=\$(declare -p \"\$(echo ${syncSourceFindFolderPath[*]})\");
-        eval \"declare -A syncSourceFindFolderPath=\"\${syncSourceFindFolderPathString#*=};
+        mapfile -t -O "${#syncSourceFindFilePath[@]}" syncSourceFindFilePath < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderPathPass}" "
         for i in \"\${syncSourceFindFolderPath[@]}\"; do
             mapfile -t -O \"\${#syncSourceFindFile[@]}\" syncSourceFindFile < <(find \"\${i}\" -type f);
         done;
