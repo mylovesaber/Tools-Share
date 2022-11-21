@@ -1057,13 +1057,28 @@ CheckTransmissionStatus(){
 
         # 目的同步节点路径修正
         syncDestPath=$(echo "${syncDestPath}" | sed -e "s/\/$//g")
-        if ! ssh "${syncDestAlias}" "
+        fatherPathNotExist=$(ssh "${syncDestAlias}" "
         if [ ! -d \"${syncDestPath}\" ]; then
-            echo \"目的同步节点路径不存在，将创建路径: ${syncDestPath}\";
-            mkdir -p \"${syncDestPath}\";
-            exit 1;
-        fi"; then
-            createdTempSyncDestFolder="${syncDestPath}"
+            folderCount=\$(awk -F '/' '{print NF}' <<< \"${syncDestPath}\");
+            needDetectPath=\"\";
+            needDetectPathList=();
+            for ((i=2;i<=folderCount;i++)); do
+                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"${syncDestPath}\");
+                needDetectPath=\"\${needDetectPath}/\${pathElement}\";
+                mapfile -t -O \"\${#needDetectPathList[@]}\" needDetectPathList < <(echo \"\${needDetectPath}\");
+            done;
+            for i in \"\${needDetectPathList[@]}\";do
+                if [ ! -d \"\$i\" ]; then
+                    echo \"\$i\";
+                    break;
+                fi;
+            done;
+        fi")
+        if [ -n "${fatherPathNotExist}" ]; then
+            _warning "目的同步节点路径不存在，正在创建路径: ${syncDestPath}"
+            ssh "${syncDestAlias}" "
+                mkdir -p \"${syncDestPath}\""
+            createdTempSyncDestFolder="${fatherPathNotExist}"
         fi
         _info "修正后的目的同步节点路径: ${syncDestPath}"
     fi
@@ -1080,13 +1095,28 @@ CheckTransmissionStatus(){
 
         # 目的备份节点路径修正
         backupDestPath=$(echo "${backupDestPath}" | sed -e "s/\/$//g")
-        if ! ssh "${backupDestAlias}" "
+        fatherPathNotExist=$(ssh "${backupDestAlias}" "
         if [ ! -d \"${backupDestPath}\" ]; then
-            echo \"目的备份节点路径不存在，将创建路径: ${backupDestPath}\";
-            mkdir -p \"${backupDestPath}\";
-            exit 1;
-        fi"; then
-            createdTempBackupDestFolder="${backupDestPath}"
+            folderCount=\$(awk -F '/' '{print NF}' <<< \"${backupDestPath}\");
+            needDetectPath=\"\";
+            needDetectPathList=();
+            for ((i=2;i<=folderCount;i++)); do
+                pathElement=\$(awk -F '/' -v i=\"\$i\" '{print \$i}' <<< \"${backupDestPath}\");
+                needDetectPath=\"\${needDetectPath}/\${pathElement}\";
+                mapfile -t -O \"\${#needDetectPathList[@]}\" needDetectPathList < <(echo \"\${needDetectPath}\");
+            done;
+            for i in \"\${needDetectPathList[@]}\";do
+                if [ ! -d \"\$i\" ]; then
+                    echo \"\$i\";
+                    break;
+                fi;
+            done;
+        fi")
+        if [ -n "${fatherPathNotExist}" ]; then
+            _warning "目的备份节点路径不存在，正在创建路径: ${backupDestPath}"
+            ssh "${backupDestAlias}" "
+                mkdir -p \"${backupDestPath}\""
+            createdTempBackupDestFolder="${fatherPathNotExist}"
         fi
         _info "修正后的目的备份节点路径: ${backupDestPath}"
     fi
@@ -1126,7 +1156,7 @@ SearchCondition(){
         if [[ -n "${createdTempSyncSourceFolder}" ]]; then
             _info "正在删除临时创建的源同步节点文件夹"
             if ssh "${syncSourceAlias}" "rm -rf \"${createdTempSyncSourceFolder}\""; then
-                _success "已删除临时创建的源同步节点文件夹"
+                _success "已删除"
             else
                 _error "删除失败，请手动检查"
                 exit 1
@@ -1134,8 +1164,8 @@ SearchCondition(){
         fi
         if [[ -n "${createdTempSyncDestFolder}" ]]; then
             _info "正在删除临时创建的目的同步节点文件夹"
-            if ssh "${syncDestAlias}" "rm -rf \"${syncDestPath}\""; then
-                _success "已删除临时创建的目的同步节点文件夹"
+            if ssh "${syncDestAlias}" "rm -rf \"${createdTempSyncDestFolder}\""; then
+                _success "已删除"
             else
                 _error "删除失败，请手动检查"
                 exit 1
@@ -1143,8 +1173,8 @@ SearchCondition(){
         fi
         if [[ -n "${createdTempBackupDestFolder}" ]]; then
             _info "正在删除临时创建的目的备份节点文件夹"
-            if ssh "${backupDestAlias}" "rm -rf \"${backupDestPath}\""; then
-                _success "已删除临时创建的目的备份节点文件夹"
+            if ssh "${backupDestAlias}" "rm -rf \"${createdTempBackupDestFolder}\""; then
+                _success "已删除"
             else
                 _error "删除失败，请手动检查"
                 exit 1
