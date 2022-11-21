@@ -1434,14 +1434,14 @@ SyncLocateFolders(){
     local shaValueJ
     for i in "${syncSourceFindFilePath[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
-        shaValueI=$(awk -F '_-_-_-_' '{print $2}' <<< "$i")
+        fileNameI=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$i")
+        shaValueI=$(awk -F '['_-_-_-_''/']' '{print $NF}' <<< "$i")
         for j in "${syncDestFindFilePath[@]}"; do
-            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
-            shaValueJ=$(awk -F '_-_-_-_' '{print $2}' <<< "$j")
+            fileNameJ=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$j")
+            shaValueJ=$(awk -F '['_-_-_-_''/']' '{print $NF}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
-                    _warning "源同步节点${syncSourceAlias}: \"${fileNameI}\"，目的同步节点${syncDestAlias}:\"${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    _warning "源同步节点${syncSourceAlias}: \"${fileNameI}\"，目的同步节点${syncDestAlias}: \"${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
                     conflictFile+=("源同步节点: \"${fileNameI}\"，目的同步节点: \"${fileNameJ}\"")
                 else
                     _success "源同步节点: \"${fileNameI}\"，目的同步节点: \"${fileNameJ}\" 文件校验值一致"
@@ -1451,8 +1451,8 @@ SyncLocateFolders(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
-            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
+            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${fileNameI}\"")
+            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${fileNameI}\"")
         fi
     done
     echo "================================="
@@ -1484,17 +1484,17 @@ SyncLocateFolders(){
     _info "开始比对索引中目的与源同步节点每个文件的校验值"
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
+        fileNameI=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$i")
         for j in "${syncSourceFindFile1[@]}"; do
-            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
+            fileNameJ=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
-            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
+            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${fileNameI}\"")
+            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${fileNameI}\"")
         fi
     done
     _success "文件检索完成，已定位从目的同步节点到源同步节点待同步的文件"
