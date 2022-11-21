@@ -1441,10 +1441,10 @@ SyncLocateFolders(){
             shaValueJ=$(awk -F '_-_-_-_' '{print $2}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
-                    _warning "源同步节点${syncSourceAlias}: \"${syncSourcePath}/${fileNameI}\"，目的同步节点${syncDestAlias}:\"${syncDestPath}/${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-                    conflictFile+=("源同步节点: \"${syncSourcePath}/${fileNameI}\"，目的同步节点: \"${syncDestPath}/${fileNameJ}\"")
+                    _warning "源同步节点${syncSourceAlias}: \"${fileNameI}\"，目的同步节点${syncDestAlias}:\"${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源同步节点: \"${fileNameI}\"，目的同步节点: \"${fileNameJ}\"")
                 else
-                    _success "源同步节点: \"${syncSourcePath}/${fileNameI}\"，目的同步节点: \"${syncDestPath}/${fileNameJ}\" 文件校验值一致"
+                    _success "源同步节点: \"${fileNameI}\"，目的同步节点: \"${fileNameJ}\" 文件校验值一致"
                 fi
                 MARK=1
                 break
