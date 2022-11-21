@@ -1434,11 +1434,11 @@ SyncLocateFolders(){
     local shaValueJ
     for i in "${syncSourceFindFilePath[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$i")
-        shaValueI=$(awk -F '['_-_-_-_''/']' '{print $NF}' <<< "$i")
+        fileNameI=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$i")
+        shaValueI=$(awk -F '_-_-_-_|/' '{print $NF}' <<< "$i")
         for j in "${syncDestFindFilePath[@]}"; do
-            fileNameJ=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$j")
-            shaValueJ=$(awk -F '['_-_-_-_''/']' '{print $NF}' <<< "$j")
+            fileNameJ=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$j")
+            shaValueJ=$(awk -F '_-_-_-_|/' '{print $NF}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
                     _warning "源同步节点${syncSourceAlias}: \"${fileNameI}\"，目的同步节点${syncDestAlias}: \"${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
@@ -1484,9 +1484,9 @@ SyncLocateFolders(){
     _info "开始比对索引中目的与源同步节点每个文件的校验值"
     for i in "${syncDestFindFile1[@]}"; do
         MARK=0
-        fileNameI=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$i")
+        fileNameI=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$i")
         for j in "${syncSourceFindFile1[@]}"; do
-            fileNameJ=$(awk -F '['_-_-_-_''/']' '{print $(NF-1)}' <<< "$j")
+            fileNameJ=$(awk -F '_-_-_-_|/' '{print $(NF-1)}' <<< "$j")
             if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
                 MARK=1
                 break
