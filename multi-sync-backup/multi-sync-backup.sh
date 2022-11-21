@@ -1390,22 +1390,8 @@ SyncLocateFolders(){
         exit 1
     fi
 
-    # 锁定目的节点需创建的文件夹的绝对路径存进数组
-    locateDestNeedFolder=()
-    for i in "${syncSourceFindFolderPathList[@]}"; do
-        MARK=0
-        for j in "${syncDestFindFolderPathList[@]}"; do
-            if [ "$i" = "$j" ]; then
-                MARK=1
-                break
-            fi
-        done
-        if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"$i\"")
-        fi
-    done
-
     # 锁定源节点需创建的文件夹的绝对路径存进数组
+    _info "开始检索源同步节点需创建的文件夹"
     locateSourceNeedFolder=()
     for i in "${syncDestFindFolderPathList[@]}"; do
         MARK=0
@@ -1419,6 +1405,24 @@ SyncLocateFolders(){
             mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"$i\"")
         fi
     done
+    _success "检索完成"
+
+    # 锁定目的节点需创建的文件夹的绝对路径存进数组
+    _info "开始检索目的同步节点需创建的文件夹"
+    locateDestNeedFolder=()
+    for i in "${syncSourceFindFolderPathList[@]}"; do
+        MARK=0
+        for j in "${syncDestFindFolderPathList[@]}"; do
+            if [ "$i" = "$j" ]; then
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"$i\"")
+        fi
+    done
+    _success "检索完成"
 
     # 锁定始到末需传送的文件的绝对路径
     _info "开始比对索引中源与目的同步节点每个文件的校验值"
@@ -1451,18 +1455,18 @@ SyncLocateFolders(){
             mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
         fi
     done
-#    echo "================================="
-#    echo "源路径发出文件"
-#    for i in "${locateSourceOutgoingFile[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
-#    echo "================================="
-#    echo "目的路径传入文件"
-#    for i in "${locateDestIncomingFile[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "源路径发出文件"
+    for i in "${locateSourceOutgoingFile[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "================================="
+    echo "目的路径传入文件"
+    for i in "${locateDestIncomingFile[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
     # 将同名不同内容的冲突文件列表写入日志
     if [[ "${#conflictFile[@]}" -gt 0 ]]; then
