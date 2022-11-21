@@ -1321,12 +1321,12 @@ SyncLocateFolders(){
             exit 0;
         fi;
     done")
-    echo "================================="
-    echo "目的同步节点主文件夹"
-    for i in "${syncDestFindFolderPath[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点主文件夹"
+#    for i in "${syncDestFindFolderPath[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     local syncDestFindFolderPathList
@@ -1338,12 +1338,12 @@ SyncLocateFolders(){
             find \"\${i}\" -type d;
         done;
     fi;")
-    echo "================================="
-    echo "目的同步节点子文件夹"
-    for i in "${syncDestFindFolderPathList[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点子文件夹"
+#    for i in "${syncDestFindFolderPathList[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 3. 从第一步获取的主文件夹中检索出其中的所有文件的绝对路径
     if [ "${#syncDestFindFolderPath[@]}" -gt 0 ]; then
@@ -1365,12 +1365,12 @@ SyncLocateFolders(){
             markSyncDestFindPath=1
         fi
     fi
-    echo "================================="
-    echo "目的同步节点文件"
-    for i in "${syncDestFindFilePath[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点文件"
+#    for i in "${syncDestFindFilePath[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
     _success "目的同步节点检索并计算完成"
 
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
@@ -1389,37 +1389,112 @@ SyncLocateFolders(){
         echo "源与目的同步节点均不存在指定日期格式${syncDateType}的文件夹，退出中" >> "${execErrorWarningSyncLogFile}"
         exit 1
     fi
-#
-#    # 锁定目的节点需创建的文件夹的相对路径并转换成绝对路径存进数组
-#    locateDestNeedFolder=()
-#    for i in "${syncSourceFindPath[@]}"; do
-#        MARK=0
-#        for j in "${syncDestFindPath[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"${syncDestPath}/$i\"")
-#        fi
+
+    # 锁定目的节点需创建的文件夹的绝对路径存进数组
+    locateDestNeedFolder=()
+    for i in "${syncSourceFindFolderPathList[@]}"; do
+        MARK=0
+        for j in "${syncDestFindFolderPathList[@]}"; do
+            if [ "$i" = "$j" ]; then
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"$i\"")
+        fi
+    done
+
+    # 锁定源节点需创建的文件夹的绝对路径存进数组
+    locateSourceNeedFolder=()
+    for i in "${syncDestFindFolderPathList[@]}"; do
+        MARK=0
+        for j in "${syncSourceFindFolderPathList[@]}"; do
+            if [ "$i" = "$j" ]; then
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"$i\"")
+        fi
+    done
+
+    # 锁定始到末需传送的文件的绝对路径
+    _info "开始比对索引中源与目的同步节点每个文件的校验值"
+    local conflictFile
+    conflictFile=()
+    local fileNameI
+    local shaValueI
+    local fileNameJ
+    local shaValueJ
+    for i in "${syncSourceFindFilePath[@]}"; do
+        MARK=0
+        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
+        shaValueI=$(awk -F '_-_-_-_' '{print $2}' <<< "$i")
+        for j in "${syncDestFindFilePath[@]}"; do
+            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
+            shaValueJ=$(awk -F '_-_-_-_' '{print $2}' <<< "$j")
+            if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
+                if [[ ! "${shaValueI}" = "${shaValueJ}" ]]; then
+                    _warning "源同步节点${syncSourceAlias}: \"${syncSourcePath}/${fileNameI}\"，目的同步节点${syncDestAlias}:\"${syncDestPath}/${fileNameJ}\" 文件校验值不同，请检查日志，同步时将跳过此文件"
+                    conflictFile+=("源同步节点: \"${syncSourcePath}/${fileNameI}\"，目的同步节点: \"${syncDestPath}/${fileNameJ}\"")
+                else
+                    _success "源同步节点: \"${syncSourcePath}/${fileNameI}\"，目的同步节点: \"${syncDestPath}/${fileNameJ}\" 文件校验值一致"
+                fi
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
+            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
+        fi
+    done
+#    echo "================================="
+#    echo "源路径发出文件"
+#    for i in "${locateSourceOutgoingFile[@]}"; do
+#        echo "$i"
 #    done
-#
-#    # 锁定源节点需创建的文件夹的相对路径并转换成绝对路径存进数组
-#    locateSourceNeedFolder=()
-#    for i in "${syncDestFindPath[@]}"; do
-#        MARK=0
-#        for j in "${syncSourceFindPath[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"${syncSourcePath}/$i\"")
-#        fi
+#    echo "================================="
+#    echo "================================="
+#    echo "目的路径传入文件"
+#    for i in "${locateDestIncomingFile[@]}"; do
+#        echo "$i"
 #    done
-#
+#    echo "================================="
+
+    # 将同名不同内容的冲突文件列表写入日志
+    if [[ "${#conflictFile[@]}" -gt 0 ]]; then
+        _warning "检测到存在冲突文件，开始写入日志"
+        ErrorWarningSyncLog
+        echo "始末节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
+        for i in "${conflictFile[@]}"; do
+            echo "$i" >> "${execErrorWarningSyncLogFile}"
+        done
+        _success "冲突文件记录完成"
+    fi
+    _success "文件检索完成，已定位从源同步节点到目的同步节点待同步的文件"
+
+    # 锁定末到始需传送的文件的绝对路径
+    _info "开始比对索引中目的与源同步节点每个文件的校验值"
+    for i in "${syncDestFindFile1[@]}"; do
+        MARK=0
+        fileNameI=$(awk -F '_-_-_-_' '{print $1}' <<< "$i")
+        for j in "${syncSourceFindFile1[@]}"; do
+            fileNameJ=$(awk -F '_-_-_-_' '{print $1}' <<< "$j")
+            if [[ "${fileNameI}" == "${fileNameJ}" ]]; then
+                MARK=1
+                break
+            fi
+        done
+        if [ "${MARK}" -eq 0 ]; then
+            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${fileNameI}\"")
+            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${fileNameI}\"")
+        fi
+    done
+    _success "文件检索完成，已定位从目的同步节点到源同步节点待同步的文件"
+    echo ""
 #    # 锁定始到末需传送的文件的绝对路径
 #    conflictFile=()
 #    for i in "${syncSourceFindFile[@]}"; do
@@ -1463,34 +1538,34 @@ SyncLocateFolders(){
 #            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
 #        fi
 #    done
-#
-#    # 信息汇总
-#    _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
-#    _warning "源同步节点 —— 待创建文件夹绝对路径列表:"
-#    for i in "${locateSourceNeedFolder[@]}"; do
-#        echo "$i"
-#    done
-#    echo ""
-#    _warning "目的同步节点 —— 待创建文件夹绝对路径列表:"
-#    for i in "${locateDestNeedFolder[@]}"; do
-#        echo "$i"
-#    done
-#    echo ""
-#    _warning "传输方向: 源节点 -> 目的节点 —— 源同步节点待传出-目的同步节点待传入文件绝对路径列表:"
-#    for i in "${!locateSourceOutgoingFile[@]}"; do
-#        echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}"
-#    done
-#    echo ""
-#    _warning "传输方向: 目的节点 -> 源节点 —— 目的同步节点待传出-源同步节点待传入文件绝对路径列表:"
-#    for i in "${!locateDestOutgoingFile[@]}"; do
-#        echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}"
-#    done
-#    echo ""
-#    _warning "基于指定路径的始末同步节点存在冲突的文件绝对路径列表:"
-#    for i in "${conflictFile[@]}"; do
-#        echo "$i"
-#    done
-#    echo ""
+
+    # 信息汇总
+    _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
+    _warning "源同步节点 —— 待创建文件夹绝对路径列表:"
+    for i in "${locateSourceNeedFolder[@]}"; do
+        echo "$i"
+    done
+    echo ""
+    _warning "目的同步节点 —— 待创建文件夹绝对路径列表:"
+    for i in "${locateDestNeedFolder[@]}"; do
+        echo "$i"
+    done
+    echo ""
+    _warning "传输方向: 源节点 -> 目的节点 —— 源同步节点待传出-目的同步节点待传入文件绝对路径列表:"
+    for i in "${!locateSourceOutgoingFile[@]}"; do
+        echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}"
+    done
+    echo ""
+    _warning "传输方向: 目的节点 -> 源节点 —— 目的同步节点待传出-源同步节点待传入文件绝对路径列表:"
+    for i in "${!locateDestOutgoingFile[@]}"; do
+        echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}"
+    done
+    echo ""
+    _warning "基于指定路径的始末同步节点存在冲突的文件绝对路径列表:"
+    for i in "${conflictFile[@]}"; do
+        echo "$i"
+    done
+    echo ""
 }
 
 SyncLocateFiles(){
