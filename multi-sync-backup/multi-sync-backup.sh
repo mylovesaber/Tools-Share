@@ -1221,6 +1221,7 @@ SyncLocateFolders(){
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
         mapfile -t syncSourceFindFolderPath < <(find \"${syncSourcePath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\");
         if [ \"\${#syncSourceFindFolderPath[@]}\" -gt 0 ]; then
+            testSyncSourceFindFolderPath=\$(declare -p syncSourceFindFolderPath);
             for i in \"\${syncSourceFindFolderPath[@]}\"; do
                 find \"\${i}\" -type d;
             done;
@@ -1231,6 +1232,11 @@ SyncLocateFolders(){
     echo "================================="
     echo "源同步节点文件夹"
     for i in "${syncSourceFindFolderPath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "源同步节点单个文件夹"
+    for i in "${testSyncSourceFindFolderPath[@]}"; do
         echo "$i"
     done
     echo "================================="
