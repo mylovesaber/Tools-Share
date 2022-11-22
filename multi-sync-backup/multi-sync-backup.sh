@@ -1567,12 +1567,12 @@ SyncLocateFolders(){
         echo "$i"
     done
     echo ""
-    _warning "传输方向: 源节点 -> 目的节点 —— 源同步节点待传出-目的同步节点待传入文件绝对路径列表:"
+    _warning "传输方向: 源节点 -> 目的节点 —— 源同步节点待传出-目的同步节点待传入文件的绝对路径列表:"
     for i in "${!locateSourceOutgoingFile[@]}"; do
         echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}"
     done
     echo ""
-    _warning "传输方向: 目的节点 -> 源节点 —— 目的同步节点待传出-源同步节点待传入文件绝对路径列表:"
+    _warning "传输方向: 目的节点 -> 源节点 —— 目的同步节点待传出-源同步节点待传入文件的绝对路径列表:"
     for i in "${!locateDestOutgoingFile[@]}"; do
         echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}"
     done
@@ -1893,7 +1893,7 @@ SyncOperation(){
                 locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${i}"
             done
             locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine}}"
-            
+            echo "${locateSourceOutgoingFileLine}"
             # 将 locateDestIncomingFile 数组写成一行
             local locateDestIncomingFileLine
             locateDestIncomingFileLine="{"
@@ -1901,6 +1901,7 @@ SyncOperation(){
                 locateDestIncomingFileLine="${locateDestIncomingFileLine},${i}"
             done
             locateDestIncomingFileLine="${locateDestIncomingFileLine}}"
+            echo "${locateDestIncomingFileLine}"
             
             # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
             if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${locateDestIncomingFileLine}"; then
