@@ -1889,15 +1889,16 @@ SyncOperation(){
             # 将 locateSourceOutgoingFile 数组写成一行
             local locateSourceOutgoingFileLine
             locateSourceOutgoingFileLine="{"
-            for i in "${!locateSourceOutgoingFile[@]}"; do
+            for i in "${locateSourceOutgoingFile[@]}"; do
                 locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${i}"
             done
             locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine}}"
             echo "${locateSourceOutgoingFileLine}"
+
             # 将 locateDestIncomingFile 数组写成一行
             local locateDestIncomingFileLine
             locateDestIncomingFileLine="{"
-            for i in "${!locateSourceOutgoingFile[@]}"; do
+            for i in "${locateSourceOutgoingFile[@]}"; do
                 locateDestIncomingFileLine="${locateDestIncomingFileLine},${i}"
             done
             locateDestIncomingFileLine="${locateDestIncomingFileLine}}"
