@@ -1186,23 +1186,11 @@ SearchCondition(){
 
 OperationCondition(){
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
-        _info "开始执行同步操作"
-        if SyncOperation; then
-            _success "同步完成"
-        else
-            _error "同步异常，请检查问题来源"
-            exit 1
-        fi
+        SyncOperation
     fi
     
     if [ -n "${backupSourcePath}" ] && [ -n "${backupDestPath}" ] && [ -n "${backupSourceAlias}" ] && [ -n "${backupDestAlias}" ] && [ -n "${backupGroupInfo}" ] && [ -n "${backupType}" ] && [ -n "${backupDateType}" ] && [ -n "${allowDays}" ]; then
-        _info "开始执行备份操作"
-        if BackupOperation; then
-            _success "备份完成"
-        else
-            _error "备份异常，请检查问题来源"
-            exit 1
-        fi
+        BackupOperation
     fi
 }
 
@@ -1820,6 +1808,10 @@ BackupLocateFiles(){
 }
 
 SyncOperation(){
+    _warningNoBlank "==========================="
+    _info "开始执行同步操作"
+    local isFailed
+    isFailed=0
     case "${syncType}" in
     "dir")
         # 源节点需创建的文件夹
@@ -1884,9 +1876,14 @@ SyncOperation(){
         fi
     ;;
     "file")
-        # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
+        if [ "${#locateSourceOutgoingFile[@]}" -eq 0 ] && [ "${#locateDestOutgoingFile[@]}" -eq 0 ]; then
+            _success "没有生成任何文件，无事可做，退出中"
+            exit 0
+        fi
+
+        # 传输方向: 源节点 -> 目的节点 —— 源同步节点待传出文件
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-            _info "正在整合目的节点待传出文件列表"
+            _info "正在整合源同步节点待传出文件列表"
             # 将 locateSourceOutgoingFile 数组写成一行
             local locateSourceOutgoingFileLine
             locateSourceOutgoingFileLine="${locateSourceOutgoingFile[0]}"
@@ -1896,12 +1893,15 @@ SyncOperation(){
                 done
                 locateSourceOutgoingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateSourceOutgoingFileLine}")
             fi
+            _success "整合完成"
+        else
+            _warning "源同步节点无待传出文件，跳过"
         fi
-        echo "${locateSourceOutgoingFileLine}"
+#        echo "${locateSourceOutgoingFileLine}"
 
-        # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
+        # 传输方向: 目的节点 -> 源节点 —— 目的同步节点待传出文件
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
-            _info "正在整合目的节点待传出文件列表"
+            _info "正在整合目的同步节点待传出文件列表"
             # 将 locateDestOutgoingFile 数组写成一行
             local locateDestOutgoingFileLine
             locateDestOutgoingFileLine="${locateDestOutgoingFile[0]}"
@@ -1911,12 +1911,15 @@ SyncOperation(){
                 done
                 locateDestOutgoingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateDestOutgoingFileLine}")
             fi
+            _success "整合完成"
+        else
+            _warning "目的同步节点无待传出文件，跳过"
         fi
-        echo "${locateDestOutgoingFileLine}"
+#        echo "${locateDestOutgoingFileLine}"
 
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-            _info "源节点 -> 目的节点 开始传输"
+            _info "源同步节点 -> 目的同步节点 开始传输"
             if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${syncDestPath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
@@ -1924,12 +1927,15 @@ SyncOperation(){
                 for i in "${!locateSourceOutgoingFile[@]}" ; do
                     echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
+                isFailed=1
+            else
+                _success "传输完成"
             fi
         fi
 
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
-            _info "目的节点 -> 源节点 开始传输"
+            _info "目的同步节点 -> 源同步节点 开始传输"
             if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFileLine}" "${syncSourceAlias}":"${syncSourcePath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
@@ -1937,6 +1943,9 @@ SyncOperation(){
                 for i in "${!locateDestOutgoingFile[@]}" ; do
                     echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
+                isFailed=1
+            else
+                _success "传输完成"
             fi
         fi
     ;;
@@ -1946,43 +1955,16 @@ SyncOperation(){
         _errorNoBlank "同步文件夹填写 dir"
         exit 1
     esac
-#    if [ "${syncType}" = "file" ]; then
-#        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-#            for i in "${!locateSourceOutgoingFile[@]}"; do
-#                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
-#                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
-#                fi
-#            done
-#            if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
-#                _warning "部分文件传输失败，请查看报错日志"
-#                ErrorWarningSyncLog
-#                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-#                for i in "${sourceToDestFailed[@]}"; do
-#                    echo "$i" >> "${execErrorWarningSyncLogFile}"
-#                done
-#            fi
-#        fi
-#        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
-#            _info "目的节点 -> 源节点 开始传输"
-#            destToSourceFailed=()
-#            for i in "${!locateDestOutgoingFile[@]}"; do
-#                if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
-#                    destToSourceFailed+=("${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}")
-#                fi
-#            done
-#            if [ "${#destToSourceFailed[@]}" -gt 0 ]; then
-#                _warning "部分文件传输失败，请查看报错日志"
-#                ErrorWarningSyncLog
-#                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-#                for i in "${destToSourceFailed[@]}"; do
-#                    echo "$i" >> "${execErrorWarningSyncLogFile}"
-#                done
-#            fi
-#        fi
-#    fi
+
+    if [[ "${isFailed}" -eq 0 ]]; then
+        _success "同步操作执行完成"
+    else
+        _error "同步操作执行失败"
+    fi
 }
 
 BackupOperation(){
+    _info "开始执行备份操作"
     if [ "${backupType}" = "dir" ]; then
         _info "源节点文件夹备份开始"
         sourceToDestFailed=()
