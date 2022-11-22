@@ -1886,40 +1886,93 @@ SyncOperation(){
         # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
             _info "源节点 -> 目的节点 开始传输"
-            sourceToDestFailed=()
+            # 将 locateSourceOutgoingFile 数组写成一行
+            local locateSourceOutgoingFileLine
+            locateSourceOutgoingFileLine="{"
             for i in "${!locateSourceOutgoingFile[@]}"; do
-                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
-                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
-                fi
+                locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${i}"
             done
-            if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
-                _warning "部分文件传输失败，请查看报错日志"
+            locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine}}"
+            
+            # 将 locateDestIncomingFile 数组写成一行
+            local locateDestIncomingFileLine
+            locateDestIncomingFileLine="{"
+            for i in "${!locateSourceOutgoingFile[@]}"; do
+                locateDestIncomingFileLine="${locateDestIncomingFileLine},${i}"
+            done
+            locateDestIncomingFileLine="${locateDestIncomingFileLine}}"
+            
+            # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
+            if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${locateDestIncomingFileLine}"; then
+                _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-                for i in "${sourceToDestFailed[@]}"; do
-                    echo "$i" >> "${execErrorWarningSyncLogFile}"
+                for i in "${!locateSourceOutgoingFile[@]}" ; do
+                    echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
+
+#            for i in "${!locateSourceOutgoingFile[@]}"; do
+#                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
+#                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
+#                fi
+#            done
+#            if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
+#                _warning "部分文件传输失败，请查看报错日志"
+#                ErrorWarningSyncLog
+#                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+#                for i in "${sourceToDestFailed[@]}"; do
+#                    echo "$i" >> "${execErrorWarningSyncLogFile}"
+#                done
+#            fi
         fi
         
         # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
             _info "目的节点 -> 源节点 开始传输"
-            destToSourceFailed=()
+            # 将 locateDestOutgoingFile 数组写成一行
+            local locateDestOutgoingFileLine
+            locateDestOutgoingFileLine="{"
             for i in "${!locateDestOutgoingFile[@]}"; do
-                if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
-                    destToSourceFailed+=("${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}")
-                fi
+                locateDestOutgoingFileLine="${locateDestOutgoingFileLine},${i}"
             done
-            if [ "${#destToSourceFailed[@]}" -gt 0 ]; then
-                _warning "部分文件传输失败，请查看报错日志"
+            locateDestOutgoingFileLine="${locateDestOutgoingFileLine}}"
+
+            # 将 locateSourceIncomingFile 数组写成一行
+            local locateSourceIncomingFileLine
+            locateSourceIncomingFileLine="{"
+            for i in "${!locateDestOutgoingFile[@]}"; do
+                locateSourceIncomingFileLine="${locateSourceIncomingFileLine},${i}"
+            done
+            locateSourceIncomingFileLine="${locateSourceIncomingFileLine}}"
+
+            # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
+            if ! scp -r "${syncSourceAlias}":"${locateDestOutgoingFileLine}" "${syncDestAlias}":"${locateSourceIncomingFileLine}"; then
+                _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-                for i in "${destToSourceFailed[@]}"; do
-                    echo "$i" >> "${execErrorWarningSyncLogFile}"
+                for i in "${!locateDestOutgoingFile[@]}" ; do
+                    echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
         fi
+#        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
+#            _info "目的节点 -> 源节点 开始传输"
+#            destToSourceFailed=()
+#            for i in "${!locateDestOutgoingFile[@]}"; do
+#                if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFile[$i]}" "${syncSourceAlias}":"${locateSourceIncomingFile[$i]}"; then
+#                    destToSourceFailed+=("${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}")
+#                fi
+#            done
+#            if [ "${#destToSourceFailed[@]}" -gt 0 ]; then
+#                _warning "部分文件传输失败，请查看报错日志"
+#                ErrorWarningSyncLog
+#                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+#                for i in "${destToSourceFailed[@]}"; do
+#                    echo "$i" >> "${execErrorWarningSyncLogFile}"
+#                done
+#            fi
+#        fi
     fi
 }
 
