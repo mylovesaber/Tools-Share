@@ -1885,26 +1885,49 @@ SyncOperation(){
     elif [ "${syncType}" = "file" ]; then
         # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-            _info "源节点 -> 目的节点 开始传输"
-            # 将 locateSourceOutgoingFile 数组写成一行
+            _info "正在整合目的节点待传出文件列表"
+            # 将 locateSourceOutgoingFile 和 locateDestIncomingFile 数组写成一行
             local locateSourceOutgoingFileLine
-            locateSourceOutgoingFileLine="{"
-            for i in "${locateSourceOutgoingFile[@]}"; do
-                locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${i}"
-            done
-            locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine}}"
-            echo "${locateSourceOutgoingFileLine}"
-
-            # 将 locateDestIncomingFile 数组写成一行
             local locateDestIncomingFileLine
-            locateDestIncomingFileLine="{"
-            for i in "${locateSourceOutgoingFile[@]}"; do
-                locateDestIncomingFileLine="${locateDestIncomingFileLine},${i}"
-            done
-            locateDestIncomingFileLine="${locateDestIncomingFileLine}}"
-            echo "${locateDestIncomingFileLine}"
-            
-            # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
+            locateSourceOutgoingFileLine="${locateSourceOutgoingFile[0]}"
+            locateDestIncomingFileLine="${locateDestIncomingFile[0]}"
+            if [ "${#locateSourceOutgoingFile[@]}" -gt 1 ]; then
+                for (( i = 1; i < "${#locateSourceOutgoingFile[@]}"; i++ )); do
+                    locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${locateSourceOutgoingFile[$i]}"
+                    locateDestIncomingFileLine="${locateDestIncomingFileLine},${locateDestIncomingFile[$i]}"
+                done
+                locateSourceOutgoingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateSourceOutgoingFileLine}")
+                locateDestIncomingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateDestIncomingFileLine}")
+            fi
+        fi
+        echo "${locateSourceOutgoingFileLine}"
+        echo
+        echo "${locateDestIncomingFileLine}"
+        
+        # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
+        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
+            _info "正在整合目的节点待传出文件列表"
+            # 将 locateDestOutgoingFile 和 locateSourceIncomingFile 数组写成一行
+            local locateDestOutgoingFileLine
+            local locateSourceIncomingFileLine
+            locateDestOutgoingFileLine="${locateDestOutgoingFile[0]}"
+            locateSourceIncomingFileLine="${locateSourceIncomingFile[0]}"
+            if [ "${#locateDestOutgoingFile[@]}" -gt 1 ]; then
+                for (( i = 1; i < "${#locateDestOutgoingFile[@]}"; i++ )); do
+                    locateDestOutgoingFileLine="${locateDestOutgoingFileLine},${locateDestOutgoingFile[$i]}"
+                    locateSourceIncomingFileLine="${locateSourceIncomingFileLine},${locateSourceIncomingFile[$i]}"
+                done
+                locateDestOutgoingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateDestOutgoingFileLine}")
+                locateSourceIncomingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateSourceIncomingFileLine}")
+            fi
+        fi
+        echo "${locateDestOutgoingFileLine}"
+        echo
+        echo "${locateSourceIncomingFileLine}"
+        exit 0
+        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
+        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
+            _info "源节点 -> 目的节点 开始传输"
             if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${locateDestIncomingFileLine}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
@@ -1913,7 +1936,21 @@ SyncOperation(){
                     echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
             fi
+        fi
 
+        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
+        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
+            _info "目的节点 -> 源节点 开始传输"
+            if ! scp -r "${syncSourceAlias}":"${locateDestOutgoingFileLine}" "${syncDestAlias}":"${locateSourceIncomingFileLine}"; then
+                _error "本次批量传输失败，请查看报错日志并手动重传"
+                ErrorWarningSyncLog
+                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${!locateDestOutgoingFile[@]}" ; do
+                    echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
+                done
+            fi
+        fi
+#        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
 #            for i in "${!locateSourceOutgoingFile[@]}"; do
 #                if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFile[$i]}" "${syncDestAlias}":"${locateDestIncomingFile[$i]}"; then
 #                    sourceToDestFailed+=("${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}")
@@ -1927,37 +1964,7 @@ SyncOperation(){
 #                    echo "$i" >> "${execErrorWarningSyncLogFile}"
 #                done
 #            fi
-        fi
-        
-        # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
-        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
-            _info "目的节点 -> 源节点 开始传输"
-            # 将 locateDestOutgoingFile 数组写成一行
-            local locateDestOutgoingFileLine
-            locateDestOutgoingFileLine="{"
-            for i in "${!locateDestOutgoingFile[@]}"; do
-                locateDestOutgoingFileLine="${locateDestOutgoingFileLine},${i}"
-            done
-            locateDestOutgoingFileLine="${locateDestOutgoingFileLine}}"
-
-            # 将 locateSourceIncomingFile 数组写成一行
-            local locateSourceIncomingFileLine
-            locateSourceIncomingFileLine="{"
-            for i in "${!locateDestOutgoingFile[@]}"; do
-                locateSourceIncomingFileLine="${locateSourceIncomingFileLine},${i}"
-            done
-            locateSourceIncomingFileLine="${locateSourceIncomingFileLine}}"
-
-            # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
-            if ! scp -r "${syncSourceAlias}":"${locateDestOutgoingFileLine}" "${syncDestAlias}":"${locateSourceIncomingFileLine}"; then
-                _error "本次批量传输失败，请查看报错日志并手动重传"
-                ErrorWarningSyncLog
-                echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-                for i in "${!locateDestOutgoingFile[@]}" ; do
-                    echo "${locateDestOutgoingFile[$i]} -> ${locateSourceIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
-                done
-            fi
-        fi
+#        fi
 #        if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
 #            _info "目的节点 -> 源节点 开始传输"
 #            destToSourceFailed=()
