@@ -2018,10 +2018,8 @@ Deploy(){
     echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc;
 
     # 删除历史日志功能处理
-    if [ \"${deleteExpiredLog}\" -eq 1 ]; then
-        sed -i \"/${shName})\ -e/d\" /etc/crontab;
-        echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab;
-    fi;
+    sed -i \"/${shName})\ -e/d\" /etc/crontab;
+    echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab;
 
     # 创建具体执行任务(/etc/crontab 中只增加指向命令，具体执行细节由创建的功能脚本本身来实现)
     if [ ! -f /var/log/${shName}/exec/run-\"${operationCronName}\" ]; then
