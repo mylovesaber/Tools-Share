@@ -2316,7 +2316,6 @@ Help(){
 
 Main(){
     EnvCheck
-    # 卸载检测和执行
     CheckRemoveOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入卸载分支，无论卸载成功与否都会退出
     CheckExecOption
     CheckDeployOption  # 这里有一个检测退出和确认执行完成后退出的功能，只要进入此模块后成功进入部署分支，无论部署成功与否都会退出
