@@ -1509,6 +1509,8 @@ SyncLocateFolders(){
     done
     _success "文件检索完成，已定位从目的同步节点到源同步节点待同步的文件"
     echo ""
+    _error "此功能暂未调试完成，将自动退出，不会对系统文件有任何改动"
+    exit 1
 #    # 锁定始到末需传送的文件的绝对路径
 #    conflictFile=()
 #    for i in "${syncSourceFindFile[@]}"; do
@@ -1786,25 +1788,25 @@ BackupLocateFolders(){
 BackupLocateFiles(){
     local markBackupSourceFindFile1
     markBackupSourceFindFile1=0
-    JUMP=0
-    for ((LOOP=0;LOOP<"${allowDays}";LOOP++));do
-        # 将文件夹允许的格式字符串替换成真实日期
-        yearValue=$(date -d -"${LOOP}"days +%Y)
-        monthValue=$(date -d -"${LOOP}"days +%m)
-        dayValue=$(date -d -"${LOOP}"days +%d)
-        backupDate=$(echo "${backupDateTypeConverted}"|sed -e "s/YYYY/${yearValue}/g; s/MMMM/${monthValue}/g; s/DDDD/${dayValue}/g")
-        mapfile -t backupSourceFindFile1 < <(ssh "${backupSourceAlias}" "find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*${backupDate}*\"")
 
-        [ "${#backupSourceFindFile1[@]}" -gt 0 ] && markBackupSourceFindFile1=1 && JUMP=1
-        [ "${JUMP}" -eq 1 ] && break
-    done
+    _info "开始检索源备份节点待备份文件"
+    local backupSourceFindFile1
+    mapfile -t backupSourceFindFile1 < <(ssh "${backupSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}';
+    done")
+    _success "源同步节点检索完成"
+    [ "${#backupSourceFindFile1[@]}" -gt 0 ] && markBackupSourceFindFile1=1
         
     if [ "${markBackupSourceFindFile1}" -eq 1 ]; then
         _success "源备份节点已找到指定日期格式${backupDate}的文件"
     elif [ "${markBackupSourceFindFile1}" -eq 0 ]; then
-        _error "源节点不存在指定日期格式${backupDate}的文件，退出中"
+        _error "源备份节点不存在指定日期格式${backupDate}的文件，退出中"
         ErrorWarningBackupLog
-        echo "源与目的同步节点均不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
+        echo "源备份节点不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
         exit 1
     fi
 
@@ -1999,40 +2001,81 @@ DeleteExpiredLog(){
 }
 
 Deploy(){
+    _warningNoBlank "============================="
     _info "开始部署..."
-    ssh "${deployNodeAlias}" "mkdir -p /var/log/${shName}/{exec,log}"
-    scp "$(pwd)"/"${shName}".sh "${deployNodeAlias}":/var/log/${shName}/exec/${shName}
-    ssh "${deployNodeAlias}" "chmod +x /var/log/${shName}/exec/${shName}"
-    ssh "${deployNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
-    ssh "${deployNodeAlias}" "echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc"
-    ssh "${deployNodeAlias}" "sed -i \"/${shName})\ -e/d\" /etc/crontab"
-    ssh "${deployNodeAlias}" "echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab"
+    scp "$(pwd)"/"${shName}".sh "${deployNodeAlias}":/${shName}
+    ssh "${deployNodeAlias}" "
+    # 放置脚本本身
+    mkdir -p /var/log/${shName}/{exec,log};
+    if [ -f /var/log/${shName}/exec/${shName} ]; then
+        rm -rf /var/log/${shName}/exec/${shName};
+    fi;
+    mv -f /${shName} /var/log/${shName}/exec/${shName};
+    chmod +x /var/log/${shName}/exec/${shName};
 
-    # 集合定时任务，里面将存放各种同步或备份的执行功能(if判断如果写在ssh命令会出现判断功能失效的毛病)
-    ssh "${deployNodeAlias}" "[ ! -f /var/log/${shName}/exec/run-\"${operationCronName}\" ] && echo \"#!/bin/bash\" >/var/log/${shName}/exec/run-\"${operationCronName}\" && chmod +x /var/log/${shName}/exec/run-\"${operationCronName}\""
-    if [ "$(ssh "${deployNodeAlias}" "grep -c \"${operationCronName}\" /etc/crontab")" -eq 0 ]; then
-        ssh "${deployNodeAlias}" "echo \"${operationCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/run-${operationCronName})'\" >> /etc/crontab"
-    fi
-    # 向集合定时任务添加具体执行功能
-    if [ -n "${syncOperationName}" ]; then
-        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --sync_source_path \"\"${syncSourcePath}\"\" --sync_dest_path \"\"${syncDestPath}\"\" --sync_source_alias \"\"${syncSourceAlias}\"\" --sync_dest_alias \"\"${syncDestAlias}\"\" --sync_group \"\"${syncGroupInfo}\"\" --sync_type \"\"${syncType}\"\" --sync_date_type \"\"${syncDateType}\"\" --sync_operation_name \"\"${syncOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
-    fi
-    if [ -n "${backupOperationName}" ]; then
-        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --backup_source_path \"\"${backupSourcePath}\"\" --backup_dest_path \"\"${backupDestPath}\"\" --backup_source_alias \"\"${backupSourceAlias}\"\" --backup_dest_alias \"\"${backupDestAlias}\"\" --backup_group \"\"${backupGroupInfo}\"\" --backup_type \"\"${backupType}\"\" --backup_date_type \"\"${backupDateType}\"\" --backup_operation_name \"\"${backupOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
-    fi
+    # 添加快捷指令
+    sed -i \"/${shName}/d\" /etc/bashrc;
+    echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc;
+
+    # 删除历史日志功能处理
+    if [ \"${deleteExpiredLog}\" -eq 1 ]; then
+        sed -i \"/${shName})\ -e/d\" /etc/crontab;
+        echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab;
+    fi;
+
+    # 创建具体执行任务(/etc/crontab 中只增加指向命令，具体执行细节由创建的功能脚本本身来实现)
+    if [ ! -f /var/log/${shName}/exec/run-\"${operationCronName}\" ]; then
+        echo \"#!/bin/bash\" >/var/log/${shName}/exec/run-\"${operationCronName}\";
+        chmod +x /var/log/${shName}/exec/run-\"${operationCronName}\";
+    fi;
+    if [ \"\$(grep -c \"${operationCronName}\" /etc/crontab)\" -eq 0 ]; then
+        echo \"${operationCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/run-${operationCronName})'\" >> /etc/crontab;
+    fi;
+    if [ -n \"${syncOperationName}\" ]; then
+        echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --sync_source_path \"\"${syncSourcePath}\"\" --sync_dest_path \"\"${syncDestPath}\"\" --sync_source_alias \"\"${syncSourceAlias}\"\" --sync_dest_alias \"\"${syncDestAlias}\"\" --sync_group \"\"${syncGroupInfo}\"\" --sync_type \"\"${syncType}\"\" --sync_date_type \"\"${syncDateType}\"\" --sync_operation_name \"\"${syncOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\";
+    fi;
+    if [ -n \"${backupOperationName}\" ]; then
+        echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --backup_source_path \"\"${backupSourcePath}\"\" --backup_dest_path \"\"${backupDestPath}\"\" --backup_source_alias \"\"${backupSourceAlias}\"\" --backup_dest_alias \"\"${backupDestAlias}\"\" --backup_group \"\"${backupGroupInfo}\"\" --backup_type \"\"${backupType}\"\" --backup_date_type \"\"${backupDateType}\"\" --backup_operation_name \"\"${backupOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\";
+    fi;
+    "
     _success "部署成功"
+#    ssh "${deployNodeAlias}" "chmod +x /var/log/${shName}/exec/${shName}"
+#    ssh "${deployNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
+#    ssh "${deployNodeAlias}" "echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc"
+#    ssh "${deployNodeAlias}" "sed -i \"/${shName})\ -e/d\" /etc/crontab"
+#    ssh "${deployNodeAlias}" "echo \"${logCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/${shName}) -e'\" >> /etc/crontab"
+#
+#    # 集合定时任务，里面将存放各种同步或备份的执行功能(if判断如果写在ssh命令会出现判断功能失效的毛病)
+#    ssh "${deployNodeAlias}" "[ ! -f /var/log/${shName}/exec/run-\"${operationCronName}\" ] && echo \"#!/bin/bash\" >/var/log/${shName}/exec/run-\"${operationCronName}\" && chmod +x /var/log/${shName}/exec/run-\"${operationCronName}\""
+#    if [ "$(ssh "${deployNodeAlias}" "grep -c \"${operationCronName}\" /etc/crontab")" -eq 0 ]; then
+#        ssh "${deployNodeAlias}" "echo \"${operationCron} root /usr/bin/bash -c 'bash <(cat /var/log/${shName}/exec/run-${operationCronName})'\" >> /etc/crontab"
+#    fi
+#    # 向集合定时任务添加具体执行功能
+#    if [ -n "${syncOperationName}" ]; then
+#        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --sync_source_path \"\"${syncSourcePath}\"\" --sync_dest_path \"\"${syncDestPath}\"\" --sync_source_alias \"\"${syncSourceAlias}\"\" --sync_dest_alias \"\"${syncDestAlias}\"\" --sync_group \"\"${syncGroupInfo}\"\" --sync_type \"\"${syncType}\"\" --sync_date_type \"\"${syncDateType}\"\" --sync_operation_name \"\"${syncOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
+#    fi
+#    if [ -n "${backupOperationName}" ]; then
+#        ssh "${deployNodeAlias}" "echo \"bash <(cat /var/log/${shName}/exec/${shName}) --days \"\"${allowDays}\"\" --backup_source_path \"\"${backupSourcePath}\"\" --backup_dest_path \"\"${backupDestPath}\"\" --backup_source_alias \"\"${backupSourceAlias}\"\" --backup_dest_alias \"\"${backupDestAlias}\"\" --backup_group \"\"${backupGroupInfo}\"\" --backup_type \"\"${backupType}\"\" --backup_date_type \"\"${backupDateType}\"\" --backup_operation_name \"\"${backupOperationName}\"\" -y\" >> /var/log/${shName}/exec/run-\"${operationCronName}\""
+#    fi
 }
 
 Remove(){
     if [ "${removeOperationFile}" = "all" ]; then
         _info "开始卸载工具本身和生成的日志，不会对同步或备份文件产生任何影响"
-        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}"
-        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
-        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/crontab"
+        ssh "${removeNodeAlias}" "
+        rm -rf /var/log/${shName};
+        sed -i \"/${shName}/d\" /etc/bashrc;
+        sed -i \"/${shName}/d\" /etc/crontab"
+#        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}"
+#        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/bashrc"
+#        ssh "${removeNodeAlias}" "sed -i \"/${shName}/d\" /etc/crontab"
     else
         _info "开始卸载指定的方案组，不会对其他方案组、同步或备份文件产生任何影响"
-        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}/exec/run-${removeOperationFile}"
-        ssh "${removeNodeAlias}" "sed -i \"/${removeOperationFile}/d\" /etc/crontab"
+        ssh "${removeNodeAlias}" "
+        rm -rf /var/log/${shName}/exec/run-${removeOperationFile};
+        sed -i \"/${removeOperationFile}/d\" /etc/crontab"
+#        ssh "${removeNodeAlias}" "rm -rf /var/log/${shName}/exec/run-${removeOperationFile}"
+#        ssh "${removeNodeAlias}" "sed -i \"/${removeOperationFile}/d\" /etc/crontab"
     fi
     _success "卸载成功"
 }
