@@ -1924,7 +1924,7 @@ SyncOperation(){
         echo "${locateDestOutgoingFileLine}"
         echo
         echo "${locateSourceIncomingFileLine}"
-        exit 0
+
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
             _info "源节点 -> 目的节点 开始传输"
