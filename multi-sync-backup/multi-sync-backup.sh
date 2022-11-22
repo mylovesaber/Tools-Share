@@ -2001,7 +2001,6 @@ BackupOperation(){
 }
 
 ErrorWarningSyncLog(){
-    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
     cat >> /var/log/${shName}/log/exec-error-warning-sync-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
@@ -2011,7 +2010,6 @@ EOF
 }
 
 ErrorWarningBackupLog(){
-    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
     cat >> /var/log/${shName}/log/exec-error-warning-backup-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
@@ -2021,7 +2019,6 @@ EOF
 }
 
 CommonLog(){
-    [ ! -d /var/log/${shName}/log ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
     cat >> /var/log/${shName}/log/exec-"$(date +"%Y-%m-%d")".log <<EOF
 
 ------------------------------------------------
@@ -2332,6 +2329,9 @@ Main(){
 [ "${deleteExpiredLog}" -eq 1 ] && DeleteExpiredLog && exit 0
 [ "${needClean}" -eq 1 ] && Clean && exit 0
 
-[ ! -d /var/log/${shName} ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+if [ ! -d /var/log/${shName}/exec ] || [ ! -d /var/log/${shName}/log ]; then
+    _warning "未创建必要文件夹，开始创建"
+    mkdir -p /var/log/${shName}/{exec,log}
+fi
 CommonLog
 Main | tee -a "${execCommonLogFile}"
