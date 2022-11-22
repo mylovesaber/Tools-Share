@@ -2333,4 +2333,5 @@ Main(){
 [ "${needClean}" -eq 1 ] && Clean && exit 0
 
 [ ! -d /var/log/${shName} ] && _warning "未创建日志文件夹，开始创建" && mkdir -p /var/log/${shName}/{exec,log}
+CommonLog
 Main | tee -a "${execCommonLogFile}"
