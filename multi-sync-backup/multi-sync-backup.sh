@@ -2002,7 +2002,7 @@ BackupOperation(){
                 for (( i = 1; i < "${#backupSourceFindFileName[@]}"; i++ )); do
                     backupSourceFindFileNameLine="${backupSourceFindFileNameLine},${backupSourceFindFileName[$i]}"
                 done
-                backupSourceFindFileNameLine=$(sed -e "s/^/{/g; s/$/}/g; s/^/${backupSourcePath}\//g" <<< "${backupSourceFindFileNameLine}")
+                backupSourceFindFileNameLine=$(sed -e "s/^/{/g; s/$/}/g; s|^|${backupSourcePath}\/|g" <<< "${backupSourceFindFileNameLine}") # 用 | 是因为变量 backupSourcePath 字符串中包含 /，必须换个分隔符
             fi
             _success "整合完成"
         else
