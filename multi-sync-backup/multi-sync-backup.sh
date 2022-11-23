@@ -1784,11 +1784,11 @@ BackupLocateFiles(){
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
-        syncDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t backupSourceFindFile < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
-        if [ \"\${#backupSourceFindFile[@]}\" -gt 0 ]; then
-            for i in \"\${backupSourceFindFile[@]}\"; do
-                echo \"\${i}\";
+        backupDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t backupSourceFindFileName < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#backupSourceFindFileName[@]}\" -gt 0 ]; then
+            for i in \"\${backupSourceFindFileName[@]}\"; do
+                echo \"${backupSourcePath}/\${i}\";
             done;
             break;
         fi;
@@ -1809,7 +1809,7 @@ BackupLocateFiles(){
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
     _warningNoBlank "源节点待备份文件绝对路径列表:"
     for i in "${backupSourceFindFile[@]}"; do
-        echo "${i}"
+        echo "${backupSourcePath}/${i}"
     done
     echo ""
 }
