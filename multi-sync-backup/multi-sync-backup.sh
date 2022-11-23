@@ -1776,7 +1776,7 @@ BackupLocateFolders(){
 BackupLocateFiles(){
     local markBackupSourceFindFile
     markBackupSourceFindFile=0
-
+    echo "BackupLocateFiles进入这了"
     _info "开始检索源备份节点待备份文件"
     local backupSourceFindFile
     mapfile -t backupSourceFindFile < <(ssh "${backupSourceAlias}" "
