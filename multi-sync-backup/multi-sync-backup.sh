@@ -1778,16 +1778,16 @@ BackupLocateFiles(){
     markBackupSourceFindFile1=0
 
     _info "开始检索源备份节点待备份文件"
-    local backupSourceFindFile1
-    mapfile -t backupSourceFindFile1 < <(ssh "${backupSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+    local backupSourceFindFile
+    mapfile -t backupSourceFindFile < <(ssh "${backupSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
         find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}';
     done")
-    _success "源同步节点检索完成"
-    [ "${#backupSourceFindFile1[@]}" -gt 0 ] && markBackupSourceFindFile1=1
+    _success "源备份节点检索完成"
+    [ "${#backupSourceFindFile[@]}" -gt 0 ] && markBackupSourceFindFile1=1
         
     if [ "${markBackupSourceFindFile1}" -eq 1 ]; then
         _success "源备份节点已找到指定日期格式${backupDate}的文件"
@@ -1801,8 +1801,8 @@ BackupLocateFiles(){
     # 信息汇总
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
     _warning "源节点待备份文件绝对路径列表:"
-    for i in "${!backupSourceFindFile1[@]}"; do
-        echo "${backupSourceFindFile1[$i]}"
+    for i in "${backupSourceFindFile[@]}"; do
+        echo "${i}"
     done
     echo ""
 }
@@ -1965,7 +1965,10 @@ SyncOperation(){
 
 BackupOperation(){
     _info "开始执行备份操作"
-    if [ "${backupType}" = "dir" ]; then
+    local isFailed
+    isFailed=0
+    case "${backupType}" in
+    "dir")
         _info "源节点文件夹备份开始"
         sourceToDestFailed=()
         for i in "${!backupSourceFindFolderFullPath[@]}"; do
@@ -1981,22 +1984,52 @@ BackupOperation(){
                 echo "$i" >> "${execErrorWarningBackupLogFile}"
             done
         fi
-    elif [ "${backupType}" = "file" ]; then
+    ;;
+    "file")
         _info "源节点文件备份开始"
-        sourceToDestFailed=()
-        for i in "${!backupSourceFindFile1[@]}"; do
-            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFile1[$i]}" "${backupDestAlias}":"${backupDestPath}"; then
-                sourceToDestFailed+=("${backupSourceFindFile1[$i]} -> ${backupDestPath}")
+        if [ "${#backupSourceFindFile[@]}" -gt 0 ]; then
+            _info "正在整合源备份节点待备份文件列表"
+            # 将 backupSourceFindFile 数组写成一行
+            local backupSourceFindFileLine
+            backupSourceFindFileLine="${backupSourceFindFile[0]}"
+            if [ "${#backupSourceFindFile[@]}" -gt 1 ]; then
+                for (( i = 1; i < "${#backupSourceFindFile[@]}"; i++ )); do
+                    backupSourceFindFileLine="${backupSourceFindFileLine},${backupSourceFindFile[$i]}"
+                done
+                backupSourceFindFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${backupSourceFindFileLine}")
             fi
-        done
-        if [ "${#sourceToDestFailed[@]}" -gt 0 ]; then
-            _warning "部分文件传输失败，请查看报错日志"
-            ErrorWarningBackupLog
-            echo "源节点部分文件备份失败，请检查" >> "${execErrorWarningBackupLogFile}"
-            for i in "${sourceToDestFailed[@]}"; do
-                echo "$i" >> "${execErrorWarningBackupLogFile}"
-            done
+            _success "整合完成"
+        else
+            _warning "源备份节点无待备份文件，跳过"
         fi
+        
+        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFile 数组内容
+        if [ "${#backupSourceFindFile[@]}" -gt 0 ]; then
+            _info "源备份节点 -> 目的备份节点 开始传输"
+            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFileLine}" "${backupDestAlias}":"${backupDestPath}"; then
+                _error "本次批量传输失败，请查看报错日志并手动重传"
+                ErrorWarningSyncLog
+                echo "传输方向: 源节点 -> 目的节点 存在部分文件备份失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                for i in "${!backupSourceFindFile[@]}" ; do
+                    echo "${backupSourceFindFile[$i]} -> ${backupDestPath}" >> "${execErrorWarningSyncLogFile}"
+                done
+                isFailed=1
+            else
+                _success "传输完成"
+            fi
+        fi
+    ;;
+    *)
+        _error "同步的内容类型指定错误！"
+        _errorNoBlank "同步文件填写 file"
+        _errorNoBlank "同步文件夹填写 dir"
+        exit 1
+    esac
+
+    if [[ "${isFailed}" -eq 0 ]]; then
+        _success "备份操作执行完成"
+    else
+        _error "备份操作执行失败"
     fi
 }
 
