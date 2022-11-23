@@ -1785,7 +1785,13 @@ BackupLocateFiles(){
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}';
+        mapfile -t backupSourceFindFile < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#backupSourceFindFile[@]}\" -gt 0 ]; then
+            for i in \"\${backupSourceFindFile[@]}\"; do
+                echo \"\${i}\";
+            done;
+            break;
+        fi;
     done")
     _success "源备份节点检索完成"
     [ "${#backupSourceFindFile[@]}" -gt 0 ] && markBackupSourceFindFile=1
