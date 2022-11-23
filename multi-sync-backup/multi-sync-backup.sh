@@ -1774,12 +1774,12 @@ BackupLocateFolders(){
 }
 
 BackupLocateFiles(){
-    local markBackupSourceFindFile
-    markBackupSourceFindFile=0
-    echo "BackupLocateFiles进入这了"
+    local markBackupSourceFindFileName
+    markBackupSourceFindFileName=0
+
     _info "开始检索源备份节点待备份文件"
-    local backupSourceFindFile
-    mapfile -t backupSourceFindFile < <(ssh "${backupSourceAlias}" "
+    local backupSourceFindFileName
+    mapfile -t backupSourceFindFileName < <(ssh "${backupSourceAlias}" "
     for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
@@ -1788,17 +1788,17 @@ BackupLocateFiles(){
         mapfile -t backupSourceFindFileName < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
         if [ \"\${#backupSourceFindFileName[@]}\" -gt 0 ]; then
             for i in \"\${backupSourceFindFileName[@]}\"; do
-                echo \"${backupSourcePath}/\${i}\";
+                echo \"\${i}\";
             done;
             break;
         fi;
     done")
     _success "源备份节点检索完成"
-    [ "${#backupSourceFindFile[@]}" -gt 0 ] && markBackupSourceFindFile=1
+    [ "${#backupSourceFindFileName[@]}" -gt 0 ] && markBackupSourceFindFileName=1
         
-    if [ "${markBackupSourceFindFile}" -eq 1 ]; then
+    if [ "${markBackupSourceFindFileName}" -eq 1 ]; then
         _success "源备份节点${backupSourceAlias}已找到指定日期格式${backupDateType}的文件"
-    elif [ "${markBackupSourceFindFile}" -eq 0 ]; then
+    elif [ "${markBackupSourceFindFileName}" -eq 0 ]; then
         _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中"
         ErrorWarningBackupLog
         echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
@@ -1808,7 +1808,7 @@ BackupLocateFiles(){
     # 信息汇总
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
     _warningNoBlank "源节点待备份文件绝对路径列表:"
-    for i in "${backupSourceFindFile[@]}"; do
+    for i in "${backupSourceFindFileName[@]}"; do
         echo "${backupSourcePath}/${i}"
     done
     echo ""
@@ -1994,31 +1994,32 @@ BackupOperation(){
     ;;
     "file")
         _info "源节点文件备份开始"
-        if [ "${#backupSourceFindFile[@]}" -gt 0 ]; then
+        if [ "${#backupSourceFindFileName[@]}" -gt 0 ]; then
             _info "正在整合源备份节点待备份文件列表"
-            # 将 backupSourceFindFile 数组写成一行
-            local backupSourceFindFileLine
-            backupSourceFindFileLine="${backupSourceFindFile[0]}"
-            if [ "${#backupSourceFindFile[@]}" -gt 1 ]; then
-                for (( i = 1; i < "${#backupSourceFindFile[@]}"; i++ )); do
-                    backupSourceFindFileLine="${backupSourceFindFileLine},${backupSourceFindFile[$i]}"
+            # 将 backupSourceFindFileName 数组写成一行
+            local backupSourceFindFileNameLine
+            backupSourceFindFileNameLine="${backupSourceFindFileName[0]}"
+            if [ "${#backupSourceFindFileName[@]}" -gt 1 ]; then
+                for (( i = 1; i < "${#backupSourceFindFileName[@]}"; i++ )); do
+                    backupSourceFindFileNameLine="${backupSourceFindFileNameLine},${backupSourceFindFileName[$i]}"
                 done
-                backupSourceFindFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${backupSourceFindFileLine}")
+                backupSourceFindFileNameLine=$(sed -e "s/^/{/g; s/$/}/g; s/^/${backupSourcePath}\//g" <<< "${backupSourceFindFileNameLine}")
             fi
             _success "整合完成"
         else
             _warning "源备份节点无待备份文件，跳过"
         fi
-        
-        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFile 数组内容
-        if [ "${#backupSourceFindFile[@]}" -gt 0 ]; then
+        echo "${backupSourceFindFileNameLine}"
+        exit 0
+        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFileName 数组内容
+        if [ "${#backupSourceFindFileName[@]}" -gt 0 ]; then
             _info "源备份节点 -> 目的备份节点 开始传输"
-            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFileLine}" "${backupDestAlias}":"${backupDestPath}"; then
+            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFileNameLine}" "${backupDestAlias}":"${backupDestPath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 源节点 -> 目的节点 存在部分文件备份失败，请检查" >> "${execErrorWarningSyncLogFile}"
-                for i in "${!backupSourceFindFile[@]}" ; do
-                    echo "${backupSourceFindFile[$i]} -> ${backupDestPath}" >> "${execErrorWarningSyncLogFile}"
+                for i in "${!backupSourceFindFileName[@]}" ; do
+                    echo "${backupSourcePath}/${backupSourceFindFileName[$i]} -> ${backupDestPath}/${backupSourceFindFileName[$i]}" >> "${execErrorWarningSyncLogFile}"
                 done
                 isFailed=1
             else
