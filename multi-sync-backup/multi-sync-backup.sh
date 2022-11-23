@@ -1774,33 +1774,34 @@ BackupLocateFolders(){
 }
 
 BackupLocateFiles(){
-    local markBackupSourceFindFile1
-    markBackupSourceFindFile1=0
+    local markBackupSourceFindFile
+    markBackupSourceFindFile=0
 
     _info "开始检索源备份节点待备份文件"
     local backupSourceFindFile
-    mapfile -t backupSourceFindFile < <(ssh "${backupSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+    mapfile -t backupSourceFindFile < <(ssh "${backupSourceAlias}" "
+    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
-        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        syncDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
         find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}';
     done")
     _success "源备份节点检索完成"
-    [ "${#backupSourceFindFile[@]}" -gt 0 ] && markBackupSourceFindFile1=1
+    [ "${#backupSourceFindFile[@]}" -gt 0 ] && markBackupSourceFindFile=1
         
-    if [ "${markBackupSourceFindFile1}" -eq 1 ]; then
-        _success "源备份节点已找到指定日期格式${backupDate}的文件"
-    elif [ "${markBackupSourceFindFile1}" -eq 0 ]; then
-        _error "源备份节点不存在指定日期格式${backupDate}的文件，退出中"
+    if [ "${markBackupSourceFindFile}" -eq 1 ]; then
+        _success "源备份节点${backupSourceAlias}已找到指定日期格式${backupDateType}的文件"
+    elif [ "${markBackupSourceFindFile}" -eq 0 ]; then
+        _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中"
         ErrorWarningBackupLog
-        echo "源备份节点不存在指定日期格式${backupDate}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
+        echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
         exit 1
     fi
 
     # 信息汇总
     _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
-    _warning "源节点待备份文件绝对路径列表:"
+    _warningNoBlank "源节点待备份文件绝对路径列表:"
     for i in "${backupSourceFindFile[@]}"; do
         echo "${i}"
     done
