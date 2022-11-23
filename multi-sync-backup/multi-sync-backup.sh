@@ -1150,7 +1150,7 @@ SearchCondition(){
     fi
 
     if [ "${confirmContinue}" -eq 1 ]; then
-        OperationCondition
+        OperationSelection
     else
         _info "如确认汇总的检测信息无误，请重新运行命令并添加选项 -y 或 --yes 以实现检测完成后自动执行工作"
         if [[ -n "${createdTempSyncSourceFolder}" ]]; then
@@ -1184,7 +1184,7 @@ SearchCondition(){
     fi
 }
 
-OperationCondition(){
+OperationSelection(){
     if [ -n "${syncSourcePath}" ] && [ -n "${syncDestPath}" ] && [ -n "${syncSourceAlias}" ] && [ -n "${syncDestAlias}" ] && [ -n "${syncGroupInfo}" ] && [ -n "${syncType}" ] && [ -n "${syncDateType}" ] && [ -n "${allowDays}" ]; then
         SyncOperation
     fi
@@ -1741,86 +1741,6 @@ SyncLocateFiles(){
     echo ""
 }
 
-BackupLocateFolders(){
-    local markBackupSourceFindFolderName
-    markBackupSourceFindFolderName=0
-
-    _info "开始检索源备份节点待备份文件夹"
-    mapfile -t backupSourceFindFolderName < <(ssh "${backupSourceAlias}" "
-    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
-        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
-        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
-        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
-        backupDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t backupSourceFindFolderName < <(find \"${backupSourcePath}\" -maxdepth 1 -type d -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
-        if [ \"\${#backupSourceFindFolderName[@]}\" -gt 0 ]; then
-            for i in \"\${backupSourceFindFolderName[@]}\"; do
-                echo \"\${i}\";
-            done;
-            break;
-        fi;
-    done")
-    _success "源备份节点检索完成"
-    [ "${#backupSourceFindFolderName[@]}" -gt 0 ] && markBackupSourceFindFolderName=1
-
-    if [ "${markBackupSourceFindFolderName}" -eq 1 ]; then
-        _success "源备份节点${backupSourceAlias}存在指定日期格式${backupDateType}的文件夹"
-    elif [ "${markBackupSourceFindFolderName}" -eq 0 ]; then
-        _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件夹，退出中"
-        ErrorWarningBackupLog
-        echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件夹，退出中" >> "${execErrorWarningBackupLogFile}"
-        exit 1
-    fi
-    
-    # 信息汇总
-    _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
-    _warning "源节点待备份文件夹绝对路径列表:"
-    for i in "${!backupSourceFindFolderName[@]}"; do
-        echo "${backupSourcePath}/${backupSourceFindFolderName[$i]}"
-    done
-    echo ""
-}
-
-BackupLocateFiles(){
-    local markBackupSourceFindFileName
-    markBackupSourceFindFileName=0
-
-    _info "开始检索源备份节点待备份文件"
-    mapfile -t backupSourceFindFileName < <(ssh "${backupSourceAlias}" "
-    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
-        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
-        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
-        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
-        backupDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t backupSourceFindFileName < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
-        if [ \"\${#backupSourceFindFileName[@]}\" -gt 0 ]; then
-            for i in \"\${backupSourceFindFileName[@]}\"; do
-                echo \"\${i}\";
-            done;
-            break;
-        fi;
-    done")
-    _success "源备份节点检索完成"
-    [ "${#backupSourceFindFileName[@]}" -gt 0 ] && markBackupSourceFindFileName=1
-        
-    if [ "${markBackupSourceFindFileName}" -eq 1 ]; then
-        _success "源备份节点${backupSourceAlias}已找到指定日期格式${backupDateType}的文件"
-    elif [ "${markBackupSourceFindFileName}" -eq 0 ]; then
-        _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中"
-        ErrorWarningBackupLog
-        echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
-        exit 1
-    fi
-
-    # 信息汇总
-    _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
-    _warningNoBlank "源节点待备份文件绝对路径列表:"
-    for i in "${backupSourceFindFileName[@]}"; do
-        echo "${backupSourcePath}/${i}"
-    done
-    echo ""
-}
-
 SyncOperation(){
     _warningNoBlank "==========================="
     _info "开始执行同步操作"
@@ -1975,6 +1895,86 @@ SyncOperation(){
     else
         _error "同步操作执行失败"
     fi
+}
+
+BackupLocateFolders(){
+    local markBackupSourceFindFolderName
+    markBackupSourceFindFolderName=0
+
+    _info "开始检索源备份节点待备份文件夹"
+    mapfile -t backupSourceFindFolderName < <(ssh "${backupSourceAlias}" "
+    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        backupDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t backupSourceFindFolderName < <(find \"${backupSourcePath}\" -maxdepth 1 -type d -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#backupSourceFindFolderName[@]}\" -gt 0 ]; then
+            for i in \"\${backupSourceFindFolderName[@]}\"; do
+                echo \"\${i}\";
+            done;
+            break;
+        fi;
+    done")
+    _success "源备份节点检索完成"
+    [ "${#backupSourceFindFolderName[@]}" -gt 0 ] && markBackupSourceFindFolderName=1
+
+    if [ "${markBackupSourceFindFolderName}" -eq 1 ]; then
+        _success "源备份节点${backupSourceAlias}存在指定日期格式${backupDateType}的文件夹"
+    elif [ "${markBackupSourceFindFolderName}" -eq 0 ]; then
+        _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件夹，退出中"
+        ErrorWarningBackupLog
+        echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件夹，退出中" >> "${execErrorWarningBackupLogFile}"
+        exit 1
+    fi
+    
+    # 信息汇总
+    _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
+    _warning "源节点待备份文件夹绝对路径列表:"
+    for i in "${!backupSourceFindFolderName[@]}"; do
+        echo "${backupSourcePath}/${backupSourceFindFolderName[$i]}"
+    done
+    echo ""
+}
+
+BackupLocateFiles(){
+    local markBackupSourceFindFileName
+    markBackupSourceFindFileName=0
+
+    _info "开始检索源备份节点待备份文件"
+    mapfile -t backupSourceFindFileName < <(ssh "${backupSourceAlias}" "
+    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
+        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
+        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
+        backupDate=\$(echo \"${backupDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
+        mapfile -t backupSourceFindFileName < <(find \"${backupSourcePath}\" -maxdepth 1 -type f -name \"*\${backupDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#backupSourceFindFileName[@]}\" -gt 0 ]; then
+            for i in \"\${backupSourceFindFileName[@]}\"; do
+                echo \"\${i}\";
+            done;
+            break;
+        fi;
+    done")
+    _success "源备份节点检索完成"
+    [ "${#backupSourceFindFileName[@]}" -gt 0 ] && markBackupSourceFindFileName=1
+        
+    if [ "${markBackupSourceFindFileName}" -eq 1 ]; then
+        _success "源备份节点${backupSourceAlias}已找到指定日期格式${backupDateType}的文件"
+    elif [ "${markBackupSourceFindFileName}" -eq 0 ]; then
+        _error "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中"
+        ErrorWarningBackupLog
+        echo "源备份节点${backupSourceAlias}不存在指定日期格式${backupDateType}的文件，退出中" >> "${execErrorWarningBackupLogFile}"
+        exit 1
+    fi
+
+    # 信息汇总
+    _success "已锁定需传送信息，以下将显示已锁定信息，请检查"
+    _warningNoBlank "源节点待备份文件绝对路径列表:"
+    for i in "${backupSourceFindFileName[@]}"; do
+        echo "${backupSourcePath}/${i}"
+    done
+    echo ""
 }
 
 BackupOperation(){
