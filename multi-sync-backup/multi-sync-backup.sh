@@ -2053,9 +2053,9 @@ BackupOperation(){
         fi
     ;;
     *)
-        _error "同步的内容类型指定错误！"
-        _errorNoBlank "同步文件填写 file"
-        _errorNoBlank "同步文件夹填写 dir"
+        _error "备份的内容类型指定错误！"
+        _errorNoBlank "备份文件填写 file"
+        _errorNoBlank "备份文件夹填写 dir"
         exit 1
     esac
 
