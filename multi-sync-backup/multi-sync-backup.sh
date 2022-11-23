@@ -1778,7 +1778,6 @@ BackupLocateFiles(){
     markBackupSourceFindFileName=0
 
     _info "开始检索源备份节点待备份文件"
-    local backupSourceFindFileName
     mapfile -t backupSourceFindFileName < <(ssh "${backupSourceAlias}" "
     for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
