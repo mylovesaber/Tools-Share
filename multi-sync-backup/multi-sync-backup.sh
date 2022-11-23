@@ -2008,8 +2008,8 @@ BackupOperation(){
         else
             _warning "源备份节点无待备份文件，跳过"
         fi
-        echo "${backupSourceFindFileNameLine}"
-        exit 0
+#        echo "${backupSourceFindFileNameLine}"
+#        exit 0
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFileName 数组内容
         if [ "${#backupSourceFindFileName[@]}" -gt 0 ]; then
             _info "源备份节点 -> 目的备份节点 开始传输"
