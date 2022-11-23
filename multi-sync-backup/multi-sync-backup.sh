@@ -1593,6 +1593,7 @@ SyncLocateFiles(){
                 shaValue=\$(sha256sum \"${syncSourcePath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_-_-_\${shaValue}\";
             done;
+            break;
         fi;
     done")
     _success "源同步节点检索并计算完成"
@@ -1610,6 +1611,7 @@ SyncLocateFiles(){
                 shaValue=\$(sha256sum \"${syncDestPath}/\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_-_-_\${shaValue}\";
             done;
+            break;
         fi;
     done")
     _success "目的同步节点检索并计算完成"
