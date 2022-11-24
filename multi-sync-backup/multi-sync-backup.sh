@@ -1408,8 +1408,8 @@ SyncLocateFolders(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "\"${syncSourcePath}/${filePathAndNameI}\"")
-            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "\"${syncDestPath}/${filePathAndNameI}\"")
+            mapfile -t -O "${#locateSourceOutgoingFile[@]}" locateSourceOutgoingFile < <(echo "${syncSourcePath}/${filePathAndNameI}")
+            mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "${syncDestPath}/${filePathAndNameI}")
         fi
     done
     echo "================================="
@@ -1449,8 +1449,8 @@ SyncLocateFolders(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "\"${syncDestPath}/${filePathAndNameI}\"")
-            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "\"${syncSourcePath}/${filePathAndNameI}\"")
+            mapfile -t -O "${#locateDestOutgoingFile[@]}" locateDestOutgoingFile < <(echo "${syncDestPath}/${filePathAndNameI}")
+            mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "${syncSourcePath}/${filePathAndNameI}")
         fi
     done
     echo "================================="
