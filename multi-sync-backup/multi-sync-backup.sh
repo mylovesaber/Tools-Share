@@ -1682,7 +1682,7 @@ SyncOperation(){
         if [ "${#locateDestNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建目的同步节点所需文件夹"
             locateDestNeedFolderPass=$(declare -p locateDestNeedFolder)
-            ssh "${syncSourceAlias}" "${locateDestNeedFolderPass}" "
+            ssh "${syncDestAlias}" "${locateDestNeedFolderPass}" "
             for i in \"\${locateDestNeedFolder[@]}\";do
                 echo \"正在创建文件夹: \${i}\";
                 mkdir -p \"\${i}\";
