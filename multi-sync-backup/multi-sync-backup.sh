@@ -1359,7 +1359,7 @@ SyncLocateFolders(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"${syncSourcePath}/$i\"")
+            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "${syncSourcePath}/$i")
         fi
     done
     _success "检索完成"
@@ -1376,7 +1376,7 @@ SyncLocateFolders(){
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"${syncDestPath}/$i\"")
+            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "${syncDestPath}/$i")
         fi
     done
     _success "检索完成"
