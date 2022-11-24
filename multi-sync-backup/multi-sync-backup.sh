@@ -1673,7 +1673,7 @@ SyncOperation(){
             ssh "${syncSourceAlias}" "${locateSourceNeedFolderPass}" "
             for i in \"\${locateSourceNeedFolder[@]}\";do
                 echo \"正在创建文件夹: \${i}\";
-                mkdir -p \"\${i}\";
+                mkdir -p \${i};
             done"
             _info "源同步节点所需文件夹已创建成功"
         fi
@@ -1685,7 +1685,7 @@ SyncOperation(){
             ssh "${syncDestAlias}" "${locateDestNeedFolderPass}" "
             for i in \"\${locateDestNeedFolder[@]}\";do
                 echo \"正在创建文件夹: \${i}\";
-                mkdir -p \"\${i}\";
+                mkdir -p \${i};
             done"
             _info "目的同步节点所需文件夹已创建成功"
         fi
