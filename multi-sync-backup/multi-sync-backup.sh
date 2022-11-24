@@ -1200,58 +1200,65 @@ SyncLocateFolders(){
     markSyncSourceFindPath=0
     markSyncDestFindPath=0
 
+    # 为了满足后续各种操作，需要检索出三个部分:
+    # 1. 当前路径下需要备份的最新日期的文件夹名，以此与指定的路径进行拼接成为后面的基本检索路径
+    # 2. 遍历基本检索路径，获取所有子文件夹的相对路径用于同步时创建对应目录以及传输和汇总时的信息显示
+    # 3. 遍历基本检索路径，找到其中所有层级文件夹中的文件，获取他们相对于基本检索路径的相对路径
     _info "开始检索源同步节点文件夹和文件并计算每个文件的校验值"
-    # 1. 从指定路径下获取包含指定日期和格式的目录对应绝对路径
-    local syncSourceFindFolderPath
-    mapfile -t -O "${#syncSourceFindFolderPath[@]}" syncSourceFindFolderPath < <(ssh "${syncSourceAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+    # 1. 从指定路径下获取包含指定日期和格式的目录名
+    mapfile -t -O "${#syncSourceFindFolderName[@]}" syncSourceFindFolderName < <(ssh "${syncSourceAlias}" "
+    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t syncSourceFindFolderPath < <(find \"${syncSourcePath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\");
-        if [ \"\${#syncSourceFindFolderPath[@]}\" -gt 0 ]; then
-            for i in \"\${syncSourceFindFolderPath[@]}\"; do
+        mapfile -t syncSourceFindFolderName < <(find \"${syncSourcePath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#syncSourceFindFolderName[@]}\" -gt 0 ]; then
+            for i in \"\${syncSourceFindFolderName[@]}\"; do
                 echo \"\${i}\";
             done;
             exit 0;
         fi;
     done")
-#    echo "================================="
-#    echo "源同步节点主文件夹"
-#    for i in "${syncSourceFindFolderPath[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    for i in "${syncSourceFindFolderName[@]}"; do
+        mapfile -t -O "${#baseSourceSearchPath[@]}" baseSourceSearchPath < <(echo "${syncSourcePath}/${i}")
+    done
+    echo "================================="
+    echo "源同步节点主文件夹名"
+    for i in "${syncSourceFindFolderName[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "源同步节点主文件夹绝对路径"
+    for i in "${baseSourceSearchPath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
-    # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
-    local syncSourceFindFolderPathList
-    local syncSourceFindFolderPathPass
-    syncSourceFindFolderPathPass=$(declare -p syncSourceFindFolderPath)
-    mapfile -t -O "${#syncSourceFindFolderPathList[@]}" syncSourceFindFolderPathList < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderPathPass}" "
-    if [ \"\${#syncSourceFindFolderPath[@]}\" -gt 0 ]; then
-        for i in \"\${syncSourceFindFolderPath[@]}\"; do
-            find \"\${i}\" -type d;
+    # 2. 从第一步获取的文件夹名与设置的路径进行拼接，并从拼接后的绝对路径中获取那些文件夹内的所有层级文件夹(相对于第一步获取的文件夹名)的相对路径(此功能仅为后续执行同步时创建对应文件夹而用)
+    baseSourceSearchPathPass=$(declare -p baseSourceSearchPath)
+    mapfile -t -O "${#syncSourceFindSubFolderPathList[@]}" syncSourceFindSubFolderPathList < <(ssh "${syncSourceAlias}" "${baseSourceSearchPathPass}" "
+    if [ \"\${#baseSourceSearchPath[@]}\" -gt 0 ]; then
+        for i in \"\${baseSourceSearchPath[@]}\"; do
+            find \"\${i}\" -type d|sed \"s|^\${i}/||g\";
         done;
     fi;")
-#    echo "================================="
-#    echo "源同步节点子文件夹"
-#    for i in "${syncSourceFindFolderPathList[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "源同步节点子文件夹(相对于获取的文件夹名内)的相对路径"
+    for i in "${syncSourceFindSubFolderPathList[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
-    # 3. 从第一步获取的主文件夹中检索出其中的所有文件的绝对路径
-    if [ "${#syncSourceFindFolderPath[@]}" -gt 0 ]; then
-        local syncSourceFindFolderPathPass
-        syncSourceFindFolderPathPass=$(declare -p syncSourceFindFolderPath)
-        local syncSourceFindFilePath
-        mapfile -t -O "${#syncSourceFindFilePath[@]}" syncSourceFindFilePath < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderPathPass}" "
-        for i in \"\${syncSourceFindFolderPath[@]}\"; do
-            mapfile -t -O \"\${#syncSourceFindFile[@]}\" syncSourceFindFile < <(find \"\${i}\" -type f);
+    # 3. 从第一步获取的主文件夹中检索出其中的所有子文件夹内文件的相对路径(相对于指定的路径)
+    if [ "${#baseSourceSearchPath[@]}" -gt 0 ]; then
+        mapfile -t -O "${#syncSourceFindFilePath[@]}" syncSourceFindFilePath < <(ssh "${syncSourceAlias}" "${baseSourceSearchPathPass}" "
+        for i in \"\${baseSourceSearchPath[@]}\"; do
+            mapfile -t -O \"\${#syncSourceFindFilePath[@]}\" syncSourceFindFilePath < <(find \"\${i}\" -type f|sed \"s|^\${i}/||g\");
         done;
 
-        if [ \"\${#syncSourceFindFile[@]}\" -gt 0 ]; then
-            for i in \"\${syncSourceFindFile[@]}\";do
+        if [ \"\${#syncSourceFindFilePath[@]}\" -gt 0 ]; then
+            for i in \"\${syncSourceFindFilePath[@]}\";do
                 shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_-_-_\${shaValue}\";
             done;
@@ -1260,91 +1267,69 @@ SyncLocateFolders(){
             markSyncSourceFindPath=1
         fi
     fi
-#    echo "================================="
-#    echo "源同步节点文件"
-#    for i in "${syncSourceFindFilePath[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "源同步节点文件相对路径(需要同步的主文件夹内的路径)"
+    for i in "${syncSourceFindFilePath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
     _success "源同步节点检索并计算完成"
-
-
-#    _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
-#    local syncDestFindFolder
-#    mapfile -t syncDestFindFolder < <(ssh "${syncDestAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
-#        yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
-#        monthValue=\$(date -d -\"\${LOOP}\"days +%m);
-#        dayValue=\$(date -d -\"\${LOOP}\"days +%d);
-#        syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-#        mapfile -t syncDestFindFolderPath < <(find \"${syncDestPath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\");
-#        for i in \"\${syncDestFindFolderPath[@]}\"; do
-#            mapfile -t -O \"\${#syncDestFindPath[@]}\" syncDestFindPath < <(find \"\${i}\" -type d);
-#        done;
-#        for i in \"\${syncDestFindFolderPath[@]}\"; do
-#            mapfile -t -O \"\${#syncDestFindFile[@]}\" syncDestFindFile < <(find \"\${i}\" -type f);
-#        done;
-#
-#        if [ \"\${#syncDestFindFile[@]}\" -gt 0 ]; then
-#            for i in \"\${syncDestFindFile[@]}\";do
-#                shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
-#                echo \"\${i}_-_-_-_\${shaValue}\";
-#            done;
-#        fi;
-#    done")
-#    _success "目的同步节点检索并计算完成"
 
     _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
     # 1. 从指定路径下获取包含指定日期和格式的目录对应绝对路径
-    local syncDestFindFolderPath
-    mapfile -t -O "${#syncDestFindFolderPath[@]}" syncDestFindFolderPath < <(ssh "${syncDestAlias}" "for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
+    mapfile -t -O "${#syncDestFindFolderName[@]}" syncDestFindFolderName < <(ssh "${syncDestAlias}" "
+    for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
         monthValue=\$(date -d -\"\${LOOP}\"days +%m);
         dayValue=\$(date -d -\"\${LOOP}\"days +%d);
         syncDate=\$(echo \"${syncDateTypeConverted}\"|sed -e \"s/YYYY/\${yearValue}/g; s/MMMM/\${monthValue}/g; s/DDDD/\${dayValue}/g\");
-        mapfile -t syncDestFindFolderPath < <(find \"${syncDestPath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\");
-        if [ \"\${#syncDestFindFolderPath[@]}\" -gt 0 ]; then
-            for i in \"\${syncDestFindFolderPath[@]}\"; do
+        mapfile -t syncDestFindFolderName < <(find \"${syncDestPath}\" -maxdepth 1 -type d -name \"*\${syncDate}*\"|awk -F '/' '{print \$NF}');
+        if [ \"\${#syncDestFindFolderName[@]}\" -gt 0 ]; then
+            for i in \"\${syncDestFindFolderName[@]}\"; do
                 echo \"\${i}\";
             done;
             exit 0;
         fi;
     done")
-#    echo "================================="
-#    echo "目的同步节点主文件夹"
-#    for i in "${syncDestFindFolderPath[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    for i in "${syncDestFindFolderName[@]}"; do
+        mapfile -t -O "${#baseDestSearchPath[@]}" baseDestSearchPath < <(echo "${syncDestPath}/${i}")
+    done
+    echo "================================="
+    echo "目的同步节点主文件夹名"
+    for i in "${syncDestFindFolderName[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
+    echo "目的同步节点主文件夹绝对路径"
+    for i in "${baseDestSearchPath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
     # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
-    local syncDestFindFolderPathList
-    local syncDestFindFolderPathPass
-    syncDestFindFolderPathPass=$(declare -p syncDestFindFolderPath)
-    mapfile -t -O "${#syncDestFindFolderPathList[@]}" syncDestFindFolderPathList < <(ssh "${syncDestAlias}" "${syncDestFindFolderPathPass}" "
-    if [ \"\${#syncDestFindFolderPath[@]}\" -gt 0 ]; then
-        for i in \"\${syncDestFindFolderPath[@]}\"; do
-            find \"\${i}\" -type d;
+    baseDestSearchPathPass=$(declare -p baseDestSearchPath)
+    mapfile -t -O "${#syncDestFindSubFolderPathList[@]}" syncDestFindSubFolderPathList < <(ssh "${syncSourceAlias}" "${baseDestSearchPathPass}" "
+    if [ \"\${#baseDestSearchPath[@]}\" -gt 0 ]; then
+        for i in \"\${baseDestSearchPath[@]}\"; do
+            find \"\${i}\" -type d|sed \"s|^\${i}/||g\";
         done;
     fi;")
-#    echo "================================="
-#    echo "目的同步节点子文件夹"
-#    for i in "${syncDestFindFolderPathList[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "目的同步节点子文件夹(相对于获取的文件夹名内)的相对路径"
+    for i in "${syncDestFindSubFolderPathList[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
 
-    # 3. 从第一步获取的主文件夹中检索出其中的所有文件的绝对路径
-    if [ "${#syncDestFindFolderPath[@]}" -gt 0 ]; then
-        local syncDestFindFolderPathPass
-        syncDestFindFolderPathPass=$(declare -p syncDestFindFolderPath)
-        local syncDestFindFilePath
-        mapfile -t -O "${#syncDestFindFilePath[@]}" syncDestFindFilePath < <(ssh "${syncDestAlias}" "${syncDestFindFolderPathPass}" "
-        for i in \"\${syncDestFindFolderPath[@]}\"; do
-            mapfile -t -O \"\${#syncDestFindFile[@]}\" syncDestFindFile < <(find \"\${i}\" -type f);
+    # 3. 从第一步获取的主文件夹中检索出其中的所有子文件夹内文件的相对路径(相对于指定的路径)
+    if [ "${#baseDestSearchPath[@]}" -gt 0 ]; then
+        mapfile -t -O "${#syncDestFindFilePath[@]}" syncDestFindFilePath < <(ssh "${syncSourceAlias}" "${baseDestSearchPathPass}" "
+        for i in \"\${baseDestSearchPath[@]}\"; do
+            mapfile -t -O \"\${#syncDestFindFilePath[@]}\" syncDestFindFilePath < <(find \"\${i}\" -type f|sed \"s|^\${i}/||g\");
         done;
 
-        if [ \"\${#syncDestFindFile[@]}\" -gt 0 ]; then
-            for i in \"\${syncDestFindFile[@]}\";do
+        if [ \"\${#syncDestFindFilePath[@]}\" -gt 0 ]; then
+            for i in \"\${syncDestFindFilePath[@]}\";do
                 shaValue=\$(sha256sum \"\$i\"|awk '{print \$1}');
                 echo \"\${i}_-_-_-_\${shaValue}\";
             done;
@@ -1353,12 +1338,12 @@ SyncLocateFolders(){
             markSyncDestFindPath=1
         fi
     fi
-#    echo "================================="
-#    echo "目的同步节点文件"
-#    for i in "${syncDestFindFilePath[@]}"; do
-#        echo "$i"
-#    done
-#    echo "================================="
+    echo "================================="
+    echo "目的同步节点文件相对路径(需要同步的主文件夹内的路径)"
+    for i in "${syncDestFindFilePath[@]}"; do
+        echo "$i"
+    done
+    echo "================================="
     _success "目的同步节点检索并计算完成"
 
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
@@ -1381,16 +1366,16 @@ SyncLocateFolders(){
     # 锁定源节点需创建的文件夹的绝对路径存进数组
     _info "开始检索源同步节点需创建的文件夹"
     locateSourceNeedFolder=()
-    for i in "${syncDestFindFolderPathList[@]}"; do
+    for i in "${syncDestFindSubFolderPathList[@]}"; do
         MARK=0
-        for j in "${syncSourceFindFolderPathList[@]}"; do
+        for j in "${syncSourceFindSubFolderPathList[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"$i\"")
+            mapfile -t -O "${#locateSourceNeedFolder[@]}" locateSourceNeedFolder < <(echo "\"${syncSourcePath}/$i\"")
         fi
     done
     _success "检索完成"
@@ -1398,16 +1383,16 @@ SyncLocateFolders(){
     # 锁定目的节点需创建的文件夹的绝对路径存进数组
     _info "开始检索目的同步节点需创建的文件夹"
     locateDestNeedFolder=()
-    for i in "${syncSourceFindFolderPathList[@]}"; do
+    for i in "${syncSourceFindSubFolderPathList[@]}"; do
         MARK=0
-        for j in "${syncDestFindFolderPathList[@]}"; do
+        for j in "${syncDestFindSubFolderPathList[@]}"; do
             if [ "$i" = "$j" ]; then
                 MARK=1
                 break
             fi
         done
         if [ "${MARK}" -eq 0 ]; then
-            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"$i\"")
+            mapfile -t -O "${#locateDestNeedFolder[@]}" locateDestNeedFolder < <(echo "\"${syncDestPath}/$i\"")
         fi
     done
     _success "检索完成"
@@ -1499,49 +1484,6 @@ SyncLocateFolders(){
     echo ""
     _error "此功能暂未调试完成，将自动退出，不会对系统文件有任何改动"
     exit 1
-#    # 锁定始到末需传送的文件的绝对路径
-#    conflictFile=()
-#    for i in "${syncSourceFindFile[@]}"; do
-#        MARK=0
-#        for j in "${syncDestFindFile[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                if [[ ! $(ssh "${syncSourceAlias}" "sha256sum \"${syncSourcePath}/$i\"|awk '{print \$1}'") = $(ssh "${syncDestAlias}" "sha256sum \"${syncDestPath}/$j\"|awk '{print \$1}'") ]]; then
-#                    _warning "源节点: \"${syncSourcePath}/$i\"，目的节点:\"${syncDestPath}/$j\" 文件校验值不同，请检查日志，同步时将跳过此文件"
-#                    conflictFile+=("源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\"")
-#                else
-#                    _success "源节点: \"${syncSourcePath}/$i\"，目的节点: \"${syncDestPath}/$j\" 文件校验值一致"
-#                fi
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            locateSourceOutgoingFile+=("\"${syncSourcePath}/$i\"")
-#            locateDestIncomingFile+=("\"${syncDestPath}/$i\"")
-#        fi
-#    done
-#
-#    # 将同名不同内容的冲突文件列表写入日志
-#    ErrorWarningSyncLog
-#    echo "始末同步节点中的同名文件存在冲突，请检查" >> "${execErrorWarningSyncLogFile}"
-#    for i in "${conflictFile[@]}"; do
-#        echo "$i" >> "${execErrorWarningSyncLogFile}"
-#    done
-#
-#    # 锁定末到始需传送的文件的绝对路径
-#    for i in "${syncDestFindFile[@]}"; do
-#        MARK=0
-#        for j in "${syncSourceFindFile[@]}"; do
-#            if [ "$i" = "$j" ]; then
-#                MARK=1
-#                break
-#            fi
-#        done
-#        if [ "${MARK}" -eq 0 ]; then
-#            locateDestOutgoingFile+=("\"${syncDestPath}/$i\"")
-#            locateSourceIncomingFile+=("\"${syncSourcePath}/$i\"")
-#        fi
-#    done
 
     # 信息汇总
     _success "已锁定需传送信息，以下将显示各类已锁定信息，请检查"
@@ -1745,28 +1687,30 @@ SyncOperation(){
     _warningNoBlank "==========================="
     _info "开始执行同步操作"
     local isFailed
-    isFailed=0
     case "${syncType}" in
     "dir")
+        isFailed=0
         # 源节点需创建的文件夹
         if [ "${#locateSourceNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建源同步节点所需文件夹"
-            # ssh "${syncSourceAlias}" "for i in \"${locateSourceNeedFolder[@]}\";do echo \"$i\";mkdir -p \"$i\";done"  # 这行可能会调用 conflictFile 数组导致出错
-            for i in "${locateSourceNeedFolder[@]}";do
-                echo "正在创建文件夹: $i"
-                ssh "${syncSourceAlias}" "mkdir -p \"$i\""
-            done
+            locateSourceNeedFolderPass=$(declare -p locateSourceNeedFolder)
+            ssh "${syncSourceAlias}" "${locateSourceNeedFolderPass}" "
+            for i in \"\${locateSourceNeedFolder[@]}\";do
+                echo \"正在创建文件夹: \${i}\";
+                mkdir -p \"\${i}\";
+            done"
             _info "源同步节点所需文件夹已创建成功"
         fi
 
         # 目的节点需创建的文件夹
         if [ "${#locateDestNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建目的同步节点所需文件夹"
-            # ssh "${syncDestAlias}" "for i in \"${locateDestNeedFolder[@]}\";do echo \"$i\";mkdir -p \"$i\";done"
-            for i in "${locateDestNeedFolder[@]}";do
-                echo "正在创建文件夹: $i"
-                ssh "${syncDestAlias}" "mkdir -p \"$i\""
-            done
+            locateDestNeedFolderPass=$(declare -p locateDestNeedFolder)
+            ssh "${syncSourceAlias}" "${locateDestNeedFolderPass}" "
+            for i in \"\${locateDestNeedFolder[@]}\";do
+                echo \"正在创建文件夹: \${i}\";
+                mkdir -p \"\${i}\";
+            done"
             _info "目的同步节点所需文件夹已创建成功"
         fi
 
@@ -1810,6 +1754,7 @@ SyncOperation(){
         fi
     ;;
     "file")
+        isFailed=0
         if [ "${#locateSourceOutgoingFile[@]}" -eq 0 ] && [ "${#locateDestOutgoingFile[@]}" -eq 0 ]; then
             _success "没有生成任何文件，无事可做，退出中"
             exit 0
@@ -1980,9 +1925,9 @@ BackupLocateFiles(){
 BackupOperation(){
     _info "开始执行备份操作"
     local isFailed
-    isFailed=0
     case "${backupType}" in
     "dir")
+        isFailed=0
         _info "源节点文件夹备份开始"
         if [ "${#backupSourceFindFolderName[@]}" -gt 0 ]; then
             _info "正在整合源备份节点待备份文件夹列表"
@@ -2018,6 +1963,7 @@ BackupOperation(){
         fi
     ;;
     "file")
+        isFailed=0
         _info "源节点文件备份开始"
         if [ "${#backupSourceFindFileName[@]}" -gt 0 ]; then
             _info "正在整合源备份节点待备份文件列表"
