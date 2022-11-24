@@ -1232,7 +1232,7 @@ SyncLocateFolders(){
     mapfile -t -O "${#syncSourceFindSubFolderPathList[@]}" syncSourceFindSubFolderPathList < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderNamePass}" "
     if [ \"\${#syncSourceFindFolderName[@]}\" -gt 0 ]; then
         for i in \"\${syncSourceFindFolderName[@]}\"; do
-            find \"${syncSourcePath}\${i}\" -type d|sed \"s|^${syncSourcePath}/||g\";
+            find \"${syncSourcePath}/\${i}\" -type d|sed \"s|^${syncSourcePath}/||g\";
         done;
     fi;")
     echo "================================="
@@ -1295,7 +1295,7 @@ SyncLocateFolders(){
     mapfile -t -O "${#syncDestFindSubFolderPathList[@]}" syncDestFindSubFolderPathList < <(ssh "${syncDestAlias}" "${syncDestFindFolderNamePass}" "
     if [ \"\${#syncDestFindFolderName[@]}\" -gt 0 ]; then
         for i in \"\${syncDestFindFolderName[@]}\"; do
-            find \"\${i}\" -type d|sed \"s|^\${i}/||g\";
+            find \"${syncDestPath}/\${i}\" -type d|sed \"s|^${syncDestPath}/||g\";
         done;
     fi;")
     echo "================================="
