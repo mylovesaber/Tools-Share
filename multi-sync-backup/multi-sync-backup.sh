@@ -2,6 +2,7 @@
 # 作者: Oliver
 # 功能: 为多机同步和备份数据方案提供安装卸载基本控制功能
 # 修改日期: 2022-07-22
+# 版本号: v1.0.1
 
 # 全局颜色
 if ! which tput >/dev/null 2>&1;then
@@ -1201,9 +1202,11 @@ SyncLocateFolders(){
     markSyncDestFindPath=0
 
     # 为了满足后续各种操作，需要检索出三个部分:
-    # 1. 获取当前路径下需要备份的最新日期的文件夹名作为主文件夹名(指定路径下会有海量带日期的文件夹，而且每个文件夹内都有不限制层级和数量的子文件夹和文件，所以此步骤用于定位首层需备份的文件夹)
-    # 2. 遍历路径(指定路径拼接主文件夹名)并记录删除指定的路径后的路径
-    # 3. 遍历路径(指定路径拼接主文件夹名)并找到其中所有层级文件夹中文件的绝对路径并记录删除指定的路径后的路径
+    # 1. 获取当前路径下需要同步的最新日期的文件夹名作为主文件夹名(指定路径下会有海量带日期的文件夹，而且每个文件夹内都有不限制层级和数量的子文件夹和文件，所以此步骤用于定位首层需备份的文件夹)
+    # 2. 遍历路径(指定路径拼接主文件夹名)并记录删除指定的路径及末尾 / 后的相对路径为子路径数组，此数组内每个路径均会在之后的传输时各自单独开一次scp传输窗口，即每次传输都是传输一个路径下的深度为1的全部子文件
+    # 3. 分别遍历第二步获取的子路径数组(需要与指定路径和主文件夹名拼接后)，为子路径数组的每个元素(包含主文件夹的相对路径)创建一个数组，并找到此层级下深度为1的文件名并计算每个文件校验值并拼接到文件名后的名称整合成一行，加上前后{}后在前面拼接已有路径(指定路径/主文件夹名/子路径)，删掉指定路径并记录进文件数组
+    # 创建文件夹层级时就是将第二步的数组传送进 ssh 会话，然后遍历数组创建好所有需要创建的目录
+    # 传输文件是遍历第三步的文件数组，将每个元素作为发送内容，然后切割出{}之前的路径用于接收文件的路径，拼接进scp进行传输，所以文件数组元素个数就是scp传输时需要打开的会话数
     _info "开始检索源同步节点文件夹和文件并计算每个文件的校验值"
     # 1. 从指定路径下获取包含指定日期和格式的文件夹名
     mapfile -t -O "${#syncSourceFindFolderName[@]}" syncSourceFindFolderName < <(ssh "${syncSourceAlias}" "
@@ -1228,6 +1231,8 @@ SyncLocateFolders(){
     echo "================================="
 
     # 2. 从第一步获取的文件夹名与设置的路径进行拼接，并从拼接后的绝对路径中获取那些文件夹内的所有层级文件夹(相对于第一步获取的文件夹名)的相对路径(此功能仅为后续执行同步时创建对应文件夹而用)
+    local syncSourceFindFolderNamePass
+    local syncSourceFindSubFolderPathList
     syncSourceFindFolderNamePass=$(declare -p syncSourceFindFolderName)
     mapfile -t -O "${#syncSourceFindSubFolderPathList[@]}" syncSourceFindSubFolderPathList < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderNamePass}" "
     if [ \"\${#syncSourceFindFolderName[@]}\" -gt 0 ]; then
@@ -1244,6 +1249,7 @@ SyncLocateFolders(){
 
     # 3. 从第一步获取的主文件夹中检索出其中所有文件的相对路径(相对于指定的路径)
     if [ "${#syncSourceFindFolderName[@]}" -gt 0 ]; then
+        local syncSourceFindFilePathWithShaValue
         mapfile -t -O "${#syncSourceFindFilePathWithShaValue[@]}" syncSourceFindFilePathWithShaValue < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderNamePass}" "
         for i in \"\${syncSourceFindFolderName[@]}\"; do
             mapfile -t -O \"\${#syncSourceFindFilePath[@]}\" syncSourceFindFilePath < <(find \"${syncSourcePath}/\${i}\" -type f|sed \"s|^${syncSourcePath}/||g\");
@@ -1703,25 +1709,51 @@ SyncOperation(){
 
         # 传输方向: 源节点 -> 目的节点 —— 源节点待传出文件
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-            _info "正在整合源同步节点待传出文件列表"
-            # 将 locateSourceOutgoingFile 数组写成一行
-            local locateSourceOutgoingFileLine
-            locateSourceOutgoingFileLine="${locateSourceOutgoingFile[0]}"
-            if [ "${#locateSourceOutgoingFile[@]}" -gt 1 ]; then
-                for (( i = 1; i < "${#locateSourceOutgoingFile[@]}"; i++ )); do
-                    locateSourceOutgoingFileLine="${locateSourceOutgoingFileLine},${locateSourceOutgoingFile[$i]}"
+            _info "正在根据目录分类整合并批量从源同步节点传出文件"
+            local fileNameWithSamePath
+            local fileNameWithSamePathLine
+            for i in "${syncSourceFindSubFolderPathList[@]}"; do
+                _info "正在筛选属于此目录非嵌套层级的待传文件: ${syncSourcePath}/${i}"
+                fileNameWithSamePath=()
+                for j in "${locateSourceOutgoingFile[@]}" ; do
+                    if [ "$(dirname "${j}")" == "${i}" ]; then
+                        mapfile -t -O "${#fileNameWithSamePath[@]}" fileNameWithSamePath < <(basename "${j}")
+                    fi
                 done
-                locateSourceOutgoingFileLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${locateSourceOutgoingFileLine}")
-            fi
-            _success "整合完成"
+                # 将 fileNameWithSamePath 数组写成一行后批量传送
+                fileNameWithSamePathLine="${fileNameWithSamePath[0]}"
+                if [ "${#fileNameWithSamePath[@]}" -gt 1 ]; then
+                    for (( k = 1; k < "${#fileNameWithSamePath[@]}"; k++ )); do
+                        fileNameWithSamePathLine="${fileNameWithSamePathLine},${fileNameWithSamePath[$k]}"
+                    done
+                    fileNameWithSamePathLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${fileNameWithSamePathLine}")
+                fi
+                _success "整合完成"
+                echo "${fileNameWithSamePathLine}"
+                echo
+                echo "${syncSourcePath}/${i}/${fileNameWithSamePathLine}"
+                continue
+                # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 fileNameWithSamePath 和 locateDestIncomingFile 数组内容
+                _info "源同步节点 -> 目的同步节点 开始传输"
+                if ! scp -r "${syncSourceAlias}":"${syncSourcePath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncDestPath}/${i}"; then
+                    _error "本次批量传输失败，请查看报错日志并手动重传"
+                    ErrorWarningSyncLog
+                    echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
+                    for h in "${fileNameWithSamePath[@]}" ; do
+                        echo "${syncSourcePath}/${i}/${h} -> ${syncDestPath}/${i}/${h}" >> "${execErrorWarningSyncLogFile}"
+                    done
+                    isFailed=1
+                else
+                    _success "传输完成"
+                fi
+            done
         else
             _warning "源同步节点无待传出文件，跳过"
         fi
-        echo "${locateSourceOutgoingFileLine}"
-
+        exit 0
         # 传输方向: 目的节点 -> 源节点 —— 目的节点待传出文件
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
-            _info "正在整合目的同步节点待传出文件列表"
+            _info "正在根据目录分类整合并批量从目的同步节点传出文件"
             # 将 locateDestOutgoingFile 数组写成一行
             local locateDestOutgoingFileLine
             locateDestOutgoingFileLine="${locateDestOutgoingFile[0]}"
@@ -1737,21 +1769,6 @@ SyncOperation(){
         fi
         echo "${locateDestOutgoingFileLine}"
 
-        # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
-        if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
-            _info "源同步节点 -> 目的同步节点 开始传输"
-            if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${syncDestPath}"; then
-                _error "本次批量传输失败，请查看报错日志并手动重传"
-                ErrorWarningSyncLog
-                echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
-                for i in "${!locateSourceOutgoingFile[@]}" ; do
-                    echo "${locateSourceOutgoingFile[$i]} -> ${locateDestIncomingFile[$i]}" >> "${execErrorWarningSyncLogFile}"
-                done
-                isFailed=1
-            else
-                _success "传输完成"
-            fi
-        fi
 
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
