@@ -1725,6 +1725,7 @@ SyncOperation(){
                     _success "此路径下不存在非嵌套层级的待传文件，跳过"
                     continue
                 fi
+                echo "test"
                 # 将 fileNameWithSamePath 数组写成一行后批量传送
                 fileNameWithSamePathLine="${fileNameWithSamePath[0]}"
                 if [ "${#fileNameWithSamePath[@]}" -gt 1 ]; then
