@@ -1223,12 +1223,12 @@ SyncLocateFolders(){
             exit 0;
         fi;
     done")
-    echo "================================="
-    echo "源同步节点主文件夹名"
-    for i in "${syncSourceFindFolderName[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点主文件夹名"
+#    for i in "${syncSourceFindFolderName[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 2. 从第一步获取的文件夹名与设置的路径进行拼接，并从拼接后的绝对路径中获取那些文件夹内的所有层级文件夹(相对于第一步获取的文件夹名)的相对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     local syncSourceFindFolderNamePass
@@ -1239,12 +1239,12 @@ SyncLocateFolders(){
             find \"${syncSourcePath}/\${i}\" -type d|sed \"s|^${syncSourcePath}/||g\";
         done;
     fi;")
-    echo "================================="
-    echo "源同步节点指定路径中需要备份的所有子文件夹的相对路径"
-    for i in "${syncSourceFindSubFolderPathList[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点指定路径中需要备份的所有子文件夹的相对路径"
+#    for i in "${syncSourceFindSubFolderPathList[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 3. 从第一步获取的主文件夹中检索出其中所有文件的相对路径(相对于指定的路径)
     if [ "${#syncSourceFindFolderName[@]}" -gt 0 ]; then
@@ -1264,12 +1264,12 @@ SyncLocateFolders(){
             markSyncSourceFindPath=1
         fi
     fi
-    echo "================================="
-    echo "源同步节点文件相对路径(需要同步的主文件夹内的路径)"
-    for i in "${syncSourceFindFilePathWithShaValue[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源同步节点文件相对路径(需要同步的主文件夹内的路径)"
+#    for i in "${syncSourceFindFilePathWithShaValue[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
     _success "源同步节点检索并计算完成"
     #========================================================================================================
     _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
@@ -1288,12 +1288,12 @@ SyncLocateFolders(){
             exit 0;
         fi;
     done")
-    echo "================================="
-    echo "目的同步节点主文件夹名"
-    for i in "${syncDestFindFolderName[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点主文件夹名"
+#    for i in "${syncDestFindFolderName[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     syncDestFindFolderNamePass=$(declare -p syncDestFindFolderName)
@@ -1303,12 +1303,12 @@ SyncLocateFolders(){
             find \"${syncDestPath}/\${i}\" -type d|sed \"s|^${syncDestPath}/||g\";
         done;
     fi;")
-    echo "================================="
-    echo "目的同步节点子文件夹(相对于获取的文件夹名内)的相对路径"
-    for i in "${syncDestFindSubFolderPathList[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点子文件夹(相对于获取的文件夹名内)的相对路径"
+#    for i in "${syncDestFindSubFolderPathList[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 3. 从第一步获取的主文件夹中检索出其中的所有子文件夹内文件的相对路径(相对于指定的路径)
     if [ "${#syncDestFindFolderName[@]}" -gt 0 ]; then
@@ -1327,12 +1327,12 @@ SyncLocateFolders(){
             markSyncDestFindPath=1
         fi
     fi
-    echo "================================="
-    echo "目的同步节点文件相对路径(需要同步的主文件夹内的路径)"
-    for i in "${syncDestFindFilePathWithShaValue[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的同步节点文件相对路径(需要同步的主文件夹内的路径)"
+#    for i in "${syncDestFindFilePathWithShaValue[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
     _success "目的同步节点检索并计算完成"
 
     if [ "${markSyncSourceFindPath}" -eq 1 ] && [ "${markSyncDestFindPath}" -eq 0 ]; then
@@ -1417,17 +1417,17 @@ SyncLocateFolders(){
             mapfile -t -O "${#locateDestIncomingFile[@]}" locateDestIncomingFile < <(echo "${syncDestPath}/${filePathAndNameI}")
         fi
     done
-    echo "================================="
-    echo "源路径发出文件"
-    for i in "${locateSourceOutgoingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
-    echo "目的路径传入文件"
-    for i in "${locateDestIncomingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "源路径发出文件"
+#    for i in "${locateSourceOutgoingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+#    echo "目的路径传入文件"
+#    for i in "${locateDestIncomingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
 
     # 将同名不同内容的冲突文件列表写入日志
     if [[ "${#conflictFile[@]}" -gt 0 ]]; then
@@ -1458,17 +1458,17 @@ SyncLocateFolders(){
             mapfile -t -O "${#locateSourceIncomingFile[@]}" locateSourceIncomingFile < <(echo "${syncSourcePath}/${filePathAndNameI}")
         fi
     done
-    echo "================================="
-    echo "目的路径发出文件"
-    for i in "${locateDestOutgoingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
-    echo "源路径传入文件"
-    for i in "${locateSourceIncomingFile[@]}"; do
-        echo "$i"
-    done
-    echo "================================="
+#    echo "================================="
+#    echo "目的路径发出文件"
+#    for i in "${locateDestOutgoingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
+#    echo "源路径传入文件"
+#    for i in "${locateSourceIncomingFile[@]}"; do
+#        echo "$i"
+#    done
+#    echo "================================="
     _success "文件检索完成，已定位从目的同步节点到源同步节点待同步的文件"
     echo ""
 
