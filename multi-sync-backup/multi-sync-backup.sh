@@ -1718,7 +1718,7 @@ SyncOperation(){
                 _info "正在筛选属于此目录非嵌套层级的待传文件: ${syncSourcePath}/${i}"
                 fileNameWithSamePath=()
                 for j in "${locateSourceOutgoingFile[@]}" ; do
-                    if [ "$(dirname "${j}")" == "${i}" ]; then
+                    if [ "$(dirname "${j}")" == "${syncSourcePath}/${i}" ]; then
                         mapfile -t -O "${#fileNameWithSamePath[@]}" fileNameWithSamePath < <(basename "${j}")
                     fi
                 done
