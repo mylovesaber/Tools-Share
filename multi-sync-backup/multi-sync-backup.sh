@@ -1725,7 +1725,6 @@ SyncOperation(){
                     _success "此路径下不存在非嵌套层级的待传文件，跳过"
                     continue
                 fi
-                echo "test"
                 # 将 fileNameWithSamePath 数组写成一行后批量传送
                 fileNameWithSamePathLine="${fileNameWithSamePath[0]}"
                 if [ "${#fileNameWithSamePath[@]}" -gt 1 ]; then
@@ -1738,7 +1737,7 @@ SyncOperation(){
 #                echo "${fileNameWithSamePathLine}"
 #                echo
 #                echo "${syncSourcePath}/${i}/${fileNameWithSamePathLine}"
-                continue
+#                continue
                 # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "源同步节点 -> 目的同步节点 开始传输"
                 if ! scp -r "${syncSourceAlias}":"${syncSourcePath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncDestPath}/${i}"; then
