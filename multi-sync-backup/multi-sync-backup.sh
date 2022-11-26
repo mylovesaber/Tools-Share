@@ -1713,7 +1713,6 @@ SyncOperation(){
             _info "正在根据目录分类整合并批量从源同步节点传出文件"
             local fileNameWithSamePath
             local fileNameWithSamePathLine
-            echo "${#syncSourceFindSubFolderPathList[@]}"
             for i in "${syncSourceFindSubFolderPathList[@]}"; do
                 _info "正在筛选属于此目录非嵌套层级的待传文件: ${syncSourcePath}/${i}"
                 fileNameWithSamePath=()
@@ -1722,6 +1721,9 @@ SyncOperation(){
                         mapfile -t -O "${#fileNameWithSamePath[@]}" fileNameWithSamePath < <(basename "${j}")
                     fi
                 done
+                if [ "${#fileNameWithSamePath[@]}" -eq 0 ]; then
+                    continue
+                fi
                 # 将 fileNameWithSamePath 数组写成一行后批量传送
                 fileNameWithSamePathLine="${fileNameWithSamePath[0]}"
                 if [ "${#fileNameWithSamePath[@]}" -gt 1 ]; then
