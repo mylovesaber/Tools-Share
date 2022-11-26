@@ -175,9 +175,40 @@ EnvCheck(){
         _error "未检测到网卡，请联系脚本作者进行适配"
         exit 1
     elif [ "${#LOCAL_NIC_NAMES[@]}" -gt 1 ]; then
-        _error "检测到多个网卡，请联系脚本作者进行适配"
-        exit 1
+        local COUNT
+        COUNT=0
+        local NICAvailableList
+        NICAvailableList=()
+        for i in "${LOCAL_NIC_NAMES[@]}" ; do
+            if ip -f inet address show "$i"|grep "state UP" >/dev/null 2>&1; then
+                COUNT=$((COUNT + 1))
+                mapfile -t -O "${#NICAvailableList[@]}" NICAvailableList < <(echo "$i")
+            fi
+        done
+        case $COUNT in
+        0)
+            _error "检测到多张网卡均没有联网，请联系作者适配"
+            exit 1
+            ;;
+        1)
+            local IP_RESULT1
+            local IP_RESULT2
+            IP_RESULT1=$(ip -f inet address show "${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+            IP_RESULT2=$(ifconfig "${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+            if [ "${IP_RESULT1}" = "${IP_RESULT2}" ]; then
+                LOCAL_IP=${IP_RESULT1}
+                _success "本地 IP 地址已确定"
+                _print "IP 地址: ${LOCAL_IP}"
+            else
+                _error "本机已锁定的 IP 地址存在不同测试结果，请联系脚本作者适配"
+                exit 1
+            fi
+            ;;
+        *)
+            _error "检测到多张网卡已联网，请联系作者适配"
+        esac
     else
+        local LOCAL_NIC_NAME
         LOCAL_NIC_NAME="${LOCAL_NIC_NAMES[0]}"
         IP_RESULT1=$(ip -f inet address show "${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
         IP_RESULT2=$(ifconfig "${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
@@ -643,7 +674,7 @@ GenerateDeployScript(){
     _successnoblank "存放位置: /root/${GEN_SH_NAME}.sh"
     cat > /root/"${GEN_SH_NAME}".sh <<EOF
 #!/bin/bash
-# 作者: 欧阳剑宇
+# 作者: Oliver
 # 功能: 为后续所有脚本提供基于作者自定义规则的自检流程提供稳定免密环境的部署功能
 # 日期: 2022-07-23
 
@@ -720,19 +751,47 @@ _checkroot
 # [ "\${DELETE}" -eq 1 ] && rm -rf /root/.ssh && exit 0
 
 _info "开始检测此子脚本是否存在于可用的 IP 列表中"
-COUNT=0
-LOCAL_NIC_NAME=\$(find /sys/class/net -maxdepth 1 -type l | grep -v "lo\|docker\|br\|veth" | awk -F '/' '{print \$NF}')
-for i in \${LOCAL_NIC_NAME};do
-    COUNT=\$(( COUNT + 1 ))
+mapfile -t LOCAL_NIC_NAMES < <(find /sys/class/net -maxdepth 1 -type l | grep -v "lo\|docker\|br\|veth" | awk -F '/' '{print \$NF}')
+for i in "\${LOCAL_NIC_NAMES[@]}";do
     _print "本机网卡名: \$i"
 done
-if [ "\${COUNT}" -lt 1 ]; then
+if [ "\${#LOCAL_NIC_NAMES[@]}" -lt 1 ]; then
     _error "未检测到网卡，请联系脚本作者进行适配"
     exit 1
-elif [ "\${COUNT}" -gt 1 ]; then
-    _error "检测到多个网卡，请联系脚本作者进行适配"
-    exit 1
+elif [ "\${#LOCAL_NIC_NAMES[@]}" -gt 1 ]; then
+#        _error "检测到多个网卡，未能锁定唯一可用网口，请联系脚本作者进行适配"
+#        exit 1
+    COUNT=0
+    NICAvailableList=()
+    for i in "\${LOCAL_NIC_NAMES[@]}" ; do
+        if ip -f inet address show "\$i"|grep "state UP" >/dev/null 2>&1; then
+            COUNT=\$((COUNT + 1))
+            mapfile -t -O "\${#NICAvailableList[@]}" NICAvailableList < <(echo "\$i")
+        fi
+    done
+    case \$COUNT in
+    0)
+        _error "检测到多张网卡均没有联网，请联系作者适配"
+        exit 1
+        ;;
+    1)
+        IP_RESULT1=\$(ip -f inet address show "\${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+        IP_RESULT2=\$(ifconfig "\${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+        if [ "\${IP_RESULT1}" = "\${IP_RESULT2}" ]; then
+            LOCAL_IP=\${IP_RESULT1}
+            _success "本地 IP 地址已确定"
+            _print "IP 地址: \${LOCAL_IP}"
+        else
+            _error "本机已锁定的 IP 地址存在不同测试结果，请联系脚本作者适配"
+            exit 1
+        fi
+        ;;
+    *)
+        _error "检测到多张网卡已联网，请联系作者适配"
+    esac
 else
+    local LOCAL_NIC_NAME
+    LOCAL_NIC_NAME="\${LOCAL_NIC_NAMES[0]}"
     IP_RESULT1=\$(ip -f inet address show "\${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
     IP_RESULT2=\$(ifconfig "\${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
     if [ "\${IP_RESULT1}" = "\${IP_RESULT2}" ]; then
@@ -740,7 +799,7 @@ else
         _success "本地 IP 地址已确定"
         _print "IP 地址: \${LOCAL_IP}"
     else
-        _error "检测到多个 IP，请联系脚本作者适配"
+        _error "检测到本机存在多个 IP，请联系脚本作者适配"
         exit 1
     fi
 fi

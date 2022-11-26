@@ -48,8 +48,34 @@ if [ "${#LOCAL_NIC_NAMES[@]}" -lt 1 ]; then
     _error "未检测到网卡，请联系脚本作者进行适配"
     exit 1
 elif [ "${#LOCAL_NIC_NAMES[@]}" -gt 1 ]; then
-    _error "检测到多个网卡，请联系脚本作者进行适配"
-    exit 1
+    COUNT=0
+    NICAvailableList=()
+    for i in "${LOCAL_NIC_NAMES[@]}" ; do
+        if ip -f inet address show "$i"|grep "state UP" >/dev/null 2>&1; then
+            COUNT=$((COUNT + 1))
+            mapfile -t -O "${#NICAvailableList[@]}" NICAvailableList < <(echo "$i")
+        fi
+    done
+    case $COUNT in
+    0)
+        _error "检测到多张网卡均没有联网，请联系作者适配"
+        exit 1
+        ;;
+    1)
+        IP_RESULT1=$(ip -f inet address show "${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+        IP_RESULT2=$(ifconfig "${NICAvailableList[0]}" | grep -Po 'inet \K[\d.]+')
+        if [ "${IP_RESULT1}" = "${IP_RESULT2}" ]; then
+            LOCAL_IP=${IP_RESULT1}
+            _success "本地 IP 地址已确定"
+            _print "IP 地址: ${LOCAL_IP}"
+        else
+            _error "本机已锁定的 IP 地址存在不同测试结果，请联系脚本作者适配"
+            exit 1
+        fi
+        ;;
+    *)
+        _error "检测到多张网卡已联网，请联系作者适配"
+    esac
 else
     LOCAL_NIC_NAME="${LOCAL_NIC_NAMES[0]}"
     IP_RESULT1=$(ip -f inet address show "${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')

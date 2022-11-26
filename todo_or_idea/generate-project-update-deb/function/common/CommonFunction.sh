@@ -16,6 +16,8 @@ Usage(){
 ArchitectureDetect(){
     case $(dpkg-architecture |awk -F '=' /DEB_HOST_ARCH=/'{print $2}') in
         "mips64el") CPUArchitecture="mips64el";;
+        "loongarch64") CPUArchitecture="loongarch64";;
+        "amd64") CPUArchitecture="amd64";echo "暂未测试可用性，请自行测试";;
         *) _error "未知 CPU 架构或暂未适配此 CPU 架构，请检查"; exit 1
     esac
 }
@@ -36,7 +38,7 @@ CheckProfile(){
 
 PrepareBuildEnv(){
     _info "开始检查系统依赖包安装情况"
-    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen" "curl")
+    local buildDeps=("dh-make" "build-essential" "devscripts" "debhelper" "tree" "screen" "curl" "nano")
     local needInstall=0
     for i in "${buildDeps[@]}"; do
         if ! dpkg -l|awk -F ' ' '{print $2}'|grep "^$i" >/dev/null 2>&1; then
@@ -49,7 +51,7 @@ PrepareBuildEnv(){
         local COUNT=0
         if ! while [ $COUNT -le 5 ]; do
             apt update
-            if ! apt install dh-make build-essential devscripts debhelper tree screen curl -yqq; then
+            if ! apt install dh-make build-essential devscripts debhelper tree screen curl nano -yqq; then
                 _warning "系统源抽风，即将重试"
                 COUNT=$((COUNT + 1))
                 continue
@@ -64,12 +66,34 @@ PrepareBuildEnv(){
         done ; then
             exit 1
         fi
-
-#        if [ "$?" -ne 0 ]; then
-#            exit 1
-#        fi
     else
         _success "已安装打包所需的必要依赖包"
+    fi
+}
+
+
+SpendingTime(){
+    local time1
+    time1=$(date +%s)
+    $1
+    local time2
+    time2=$(date +%s)
+    local seconds=$(( time2 - time1 ))
+    if [ "$seconds" -ge 86400 ]; then
+        local dayCount=$((seconds/86400))
+        local hourCount=$((seconds%86400/3600))
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $dayCount 天 $hourCount 小时 $minuteCount 分钟 $secondCount 秒"
+    elif [ "$seconds" -ge 3600 ]; then
+        local hourCount=$((seconds%86400/3600))
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $hourCount 小时 $minuteCount 分钟 $secondCount 秒"
+    elif [ "$seconds" -ge 60 ]; then
+        local minuteCount=$((seconds%86400%3600/60))
+        local secondCount=$((seconds%86400%3600%60))
+        echo "总用时 $minuteCount 分钟 $secondCount 秒"
     fi
 }
 

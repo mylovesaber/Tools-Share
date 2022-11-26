@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Name=PROJECT_NAME
+Name[zh_CN]=PROJECT_NAME
+GenericName=PROJECT_NAME
+GenericName[zh_CN]=PROJECT_NAME
+Comment=PROJECT_NAME
+Comment[zh_CN]=PROJECT_NAME
+Exec=/usr/bin/browser360-cn-stable %U http://localhost:TOMCAT_NEW_PORT/REQUEST_MAPPING_NAME
+StartupNotify=true
+Terminal=false
+Icon=/usr/share/icons/hicolor/scalable/PROJECT_ICON_NAME
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=application/pdf;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xhtml_xml;application/xml;image/gif;image/jpeg;image/png;image/webp;text/html;text/xml;x-scheme-handler/ftp;x-scheme-handler/http;x-scheme-handler/https;
