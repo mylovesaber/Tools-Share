@@ -1782,10 +1782,10 @@ SyncOperation(){
                     fileNameWithSamePathLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${fileNameWithSamePathLine}")
                 fi
                 _success "整合完成"
-                echo "${fileNameWithSamePathLine}"
-                echo
-                echo "${syncDestPath}/${i}/${fileNameWithSamePathLine}"
-                continue
+#                echo "${fileNameWithSamePathLine}"
+#                echo
+#                echo "${syncDestPath}/${i}/${fileNameWithSamePathLine}"
+#                continue
                 # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "目的同步节点 -> 源同步节点 开始传输"
                 if ! scp -r "${syncDestAlias}":"${syncDestPath}/${i}/${fileNameWithSamePathLine}" "${syncSourceAlias}":"${syncSourcePath}/${i}"; then
