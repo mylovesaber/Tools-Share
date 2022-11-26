@@ -1232,7 +1232,6 @@ SyncLocateFolders(){
 
     # 2. 从第一步获取的文件夹名与设置的路径进行拼接，并从拼接后的绝对路径中获取那些文件夹内的所有层级文件夹(相对于第一步获取的文件夹名)的相对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     local syncSourceFindFolderNamePass
-    local syncSourceFindSubFolderPathList
     syncSourceFindFolderNamePass=$(declare -p syncSourceFindFolderName)
     mapfile -t -O "${#syncSourceFindSubFolderPathList[@]}" syncSourceFindSubFolderPathList < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderNamePass}" "
     if [ \"\${#syncSourceFindFolderName[@]}\" -gt 0 ]; then
