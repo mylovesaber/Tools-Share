@@ -1686,6 +1686,7 @@ SyncOperation(){
         # 源节点需创建的文件夹
         if [ "${#locateSourceNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建源同步节点所需文件夹"
+            local locateSourceNeedFolderPass
             locateSourceNeedFolderPass=$(declare -p locateSourceNeedFolder)
             ssh "${syncSourceAlias}" "${locateSourceNeedFolderPass}" "
             for i in \"\${locateSourceNeedFolder[@]}\";do
@@ -1698,6 +1699,7 @@ SyncOperation(){
         # 目的节点需创建的文件夹
         if [ "${#locateDestNeedFolder[@]}" -gt 0 ]; then
             _info "开始创建目的同步节点所需文件夹"
+            local locateDestNeedFolderPass
             locateDestNeedFolderPass=$(declare -p locateDestNeedFolder)
             ssh "${syncDestAlias}" "${locateDestNeedFolderPass}" "
             for i in \"\${locateDestNeedFolder[@]}\";do
@@ -1712,6 +1714,7 @@ SyncOperation(){
             _info "正在根据目录分类整合并批量从源同步节点传出文件"
             local fileNameWithSamePath
             local fileNameWithSamePathLine
+            echo "${#syncSourceFindSubFolderPathList[@]}"
             for i in "${syncSourceFindSubFolderPathList[@]}"; do
                 _info "正在筛选属于此目录非嵌套层级的待传文件: ${syncSourcePath}/${i}"
                 fileNameWithSamePath=()
