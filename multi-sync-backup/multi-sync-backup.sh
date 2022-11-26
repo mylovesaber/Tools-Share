@@ -1714,7 +1714,7 @@ SyncOperation(){
             local fileNameWithSamePath
             local fileNameWithSamePathLine
             for i in "${syncSourceFindSubFolderPathList[@]}"; do
-                _info "正在筛选属于此目录非嵌套层级的待传文件: ${syncSourcePath}/${i}"
+                _info "正在筛选属于此路径非嵌套层级的待传文件: ${syncSourcePath}/${i}"
                 fileNameWithSamePath=()
                 for j in "${locateSourceOutgoingFile[@]}" ; do
                     if [ "$(dirname "${j}")" == "${syncSourcePath}/${i}" ]; then
@@ -1722,6 +1722,7 @@ SyncOperation(){
                     fi
                 done
                 if [ "${#fileNameWithSamePath[@]}" -eq 0 ]; then
+                    _success "此路径下不存在非嵌套层级的待传文件，跳过"
                     continue
                 fi
                 # 将 fileNameWithSamePath 数组写成一行后批量传送
@@ -1733,11 +1734,11 @@ SyncOperation(){
                     fileNameWithSamePathLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${fileNameWithSamePathLine}")
                 fi
                 _success "整合完成"
-                echo "${fileNameWithSamePathLine}"
-                echo
-                echo "${syncSourcePath}/${i}/${fileNameWithSamePathLine}"
+#                echo "${fileNameWithSamePathLine}"
+#                echo
+#                echo "${syncSourcePath}/${i}/${fileNameWithSamePathLine}"
                 continue
-                # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 fileNameWithSamePath 和 locateDestIncomingFile 数组内容
+                # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "源同步节点 -> 目的同步节点 开始传输"
                 if ! scp -r "${syncSourceAlias}":"${syncSourcePath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncDestPath}/${i}"; then
                     _error "本次批量传输失败，请查看报错日志并手动重传"
