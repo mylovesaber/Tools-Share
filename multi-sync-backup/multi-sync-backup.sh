@@ -1782,13 +1782,13 @@ SyncOperation(){
                     fileNameWithSamePathLine=$(sed -e 's/^/{/g; s/$/}/g' <<< "${fileNameWithSamePathLine}")
                 fi
                 _success "整合完成"
-#                echo "${fileNameWithSamePathLine}"
-#                echo
-#                echo "${syncDestPath}/${i}/${fileNameWithSamePathLine}"
-#                continue
+                echo "${fileNameWithSamePathLine}"
+                echo
+                echo "${syncDestPath}/${i}/${fileNameWithSamePathLine}"
+                continue
                 # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "目的同步节点 -> 源同步节点 开始传输"
-                if ! scp -r "${syncSourceAlias}":"${syncDestPath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncSourcePath}/${i}"; then
+                if ! scp -r "${syncDestAlias}":"${syncDestPath}/${i}/${fileNameWithSamePathLine}" "${syncSourceAlias}":"${syncSourcePath}/${i}"; then
                     _error "本次批量传输失败，请查看报错日志并手动重传"
                     ErrorWarningSyncLog
                     echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
