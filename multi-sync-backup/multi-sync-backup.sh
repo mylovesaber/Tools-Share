@@ -1740,7 +1740,7 @@ SyncOperation(){
 #                continue
                 # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "源同步节点 -> 目的同步节点 开始传输"
-                if ! scp -r "${syncSourceAlias}":"${syncSourcePath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncDestPath}/${i}"; then
+                if ! scp -rp "${syncSourceAlias}":"${syncSourcePath}/${i}/${fileNameWithSamePathLine}" "${syncDestAlias}":"${syncDestPath}/${i}"; then
                     _error "本次批量传输失败，请查看报错日志并手动重传"
                     ErrorWarningSyncLog
                     echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
@@ -1788,7 +1788,7 @@ SyncOperation(){
 #                continue
                 # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志
                 _info "目的同步节点 -> 源同步节点 开始传输"
-                if ! scp -r "${syncDestAlias}":"${syncDestPath}/${i}/${fileNameWithSamePathLine}" "${syncSourceAlias}":"${syncSourcePath}/${i}"; then
+                if ! scp -rp "${syncDestAlias}":"${syncDestPath}/${i}/${fileNameWithSamePathLine}" "${syncSourceAlias}":"${syncSourcePath}/${i}"; then
                     _error "本次批量传输失败，请查看报错日志并手动重传"
                     ErrorWarningSyncLog
                     echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
@@ -1850,7 +1850,7 @@ SyncOperation(){
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateSourceOutgoingFile 和 locateDestIncomingFile 数组内容
         if [ "${#locateSourceOutgoingFile[@]}" -gt 0 ]; then
             _info "源同步节点 -> 目的同步节点 开始传输"
-            if ! scp -r "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${syncDestPath}"; then
+            if ! scp -rp "${syncSourceAlias}":"${locateSourceOutgoingFileLine}" "${syncDestAlias}":"${syncDestPath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 源节点 -> 目的节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
@@ -1866,7 +1866,7 @@ SyncOperation(){
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 locateDestOutgoingFile 和 locateSourceIncomingFile 数组内容
         if [ "${#locateDestOutgoingFile[@]}" -gt 0 ]; then
             _info "目的同步节点 -> 源同步节点 开始传输"
-            if ! scp -r "${syncDestAlias}":"${locateDestOutgoingFileLine}" "${syncSourceAlias}":"${syncSourcePath}"; then
+            if ! scp -rp "${syncDestAlias}":"${locateDestOutgoingFileLine}" "${syncSourceAlias}":"${syncSourcePath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 目的节点 -> 源节点 存在部分文件同步失败，请检查" >> "${execErrorWarningSyncLogFile}"
@@ -2000,7 +2000,7 @@ BackupOperation(){
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFolderName 数组内容
         if [ "${#backupSourceFindFolderName[@]}" -gt 0 ]; then
             _info "源备份节点 -> 目的备份节点 开始传输"
-            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFolderNameLine}" "${backupDestAlias}":"${backupDestPath}"; then
+            if ! scp -rp "${backupSourceAlias}":"${backupSourceFindFolderNameLine}" "${backupDestAlias}":"${backupDestPath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 源节点 -> 目的节点 存在部分文件夹备份失败，请检查" >> "${execErrorWarningSyncLogFile}"
@@ -2036,7 +2036,7 @@ BackupOperation(){
         # 传输，如果失败则输出本次传输的全部文件列表信息到报错日志，即 backupSourceFindFileName 数组内容
         if [ "${#backupSourceFindFileName[@]}" -gt 0 ]; then
             _info "源备份节点 -> 目的备份节点 开始传输"
-            if ! scp -r "${backupSourceAlias}":"${backupSourceFindFileNameLine}" "${backupDestAlias}":"${backupDestPath}"; then
+            if ! scp -rp "${backupSourceAlias}":"${backupSourceFindFileNameLine}" "${backupDestAlias}":"${backupDestPath}"; then
                 _error "本次批量传输失败，请查看报错日志并手动重传"
                 ErrorWarningSyncLog
                 echo "传输方向: 源节点 -> 目的节点 存在部分文件备份失败，请检查" >> "${execErrorWarningSyncLogFile}"
