@@ -1201,7 +1201,7 @@ SyncLocateFolders(){
     markSyncSourceFindPath=0
     markSyncDestFindPath=0
 
-    # 为了满足后续各种操作，需要检索出三个部分:
+    # 为了满足后续各种操作，源和目的同步节点各自均需要检索出三个部分:
     # 1. 获取当前路径下需要同步的最新日期的文件夹名作为主文件夹名(指定路径下会有海量带日期的文件夹，而且每个文件夹内都有不限制层级和数量的子文件夹和文件，所以此步骤用于定位首层需备份的文件夹)
     # 2. 遍历路径(指定路径拼接主文件夹名)并记录删除指定的路径及末尾 / 后的相对路径为子路径数组，此数组内每个路径均会在之后的传输时各自单独开一次scp传输窗口，即每次传输都是传输一个路径下的深度为1的全部子文件
     # 3. 分别遍历第二步获取的子路径数组(需要与指定路径和主文件夹名拼接后)，为子路径数组的每个元素(包含主文件夹的相对路径)创建一个数组，并找到此层级下深度为1的文件名并计算每个文件校验值并拼接到文件名后的名称整合成一行，加上前后{}后在前面拼接已有路径(指定路径/主文件夹名/子路径)，删掉指定路径并记录进文件数组
@@ -1246,7 +1246,7 @@ SyncLocateFolders(){
 #    done
 #    echo "================================="
 
-    # 3. 从第一步获取的主文件夹中检索出其中所有文件的相对路径(相对于指定的路径)
+    # 3. 从第一步获取的主文件夹中检索出其中所有文件的相对路径(相对于指定的路径)并为每个文件计算校验值并拼接进带有相对路径的名称中
     if [ "${#syncSourceFindFolderName[@]}" -gt 0 ]; then
         local syncSourceFindFilePathWithShaValue
         mapfile -t -O "${#syncSourceFindFilePathWithShaValue[@]}" syncSourceFindFilePathWithShaValue < <(ssh "${syncSourceAlias}" "${syncSourceFindFolderNamePass}" "
@@ -1273,7 +1273,7 @@ SyncLocateFolders(){
     _success "源同步节点检索并计算完成"
     #========================================================================================================
     _info "开始检索目的同步节点文件夹和文件并计算每个文件的校验值"
-    # 1. 从指定路径下获取包含指定日期和格式的目录对应绝对路径
+    # 1. 从指定路径下获取包含指定日期和格式的文件夹名
     mapfile -t -O "${#syncDestFindFolderName[@]}" syncDestFindFolderName < <(ssh "${syncDestAlias}" "
     for ((LOOP=0;LOOP<\"${allowDays}\";LOOP++));do
         yearValue=\$(date -d -\"\${LOOP}\"days +%Y);
@@ -1295,7 +1295,7 @@ SyncLocateFolders(){
 #    done
 #    echo "================================="
 
-    # 2. 从第一步获取的绝对路径中获取那些文件夹内的所有层级文件夹的绝对路径(此功能仅为后续执行同步时创建对应文件夹而用)
+    # 2. 从第一步获取的文件夹名与设置的路径进行拼接，并从拼接后的绝对路径中获取那些文件夹内的所有层级文件夹(相对于第一步获取的文件夹名)的相对路径(此功能仅为后续执行同步时创建对应文件夹而用)
     syncDestFindFolderNamePass=$(declare -p syncDestFindFolderName)
     mapfile -t -O "${#syncDestFindSubFolderPathList[@]}" syncDestFindSubFolderPathList < <(ssh "${syncDestAlias}" "${syncDestFindFolderNamePass}" "
     if [ \"\${#syncDestFindFolderName[@]}\" -gt 0 ]; then
@@ -1310,7 +1310,7 @@ SyncLocateFolders(){
 #    done
 #    echo "================================="
 
-    # 3. 从第一步获取的主文件夹中检索出其中的所有子文件夹内文件的相对路径(相对于指定的路径)
+    # 3. 从第一步获取的主文件夹中检索出其中所有文件的相对路径(相对于指定的路径)并为每个文件计算校验值并拼接进带有相对路径的名称中
     if [ "${#syncDestFindFolderName[@]}" -gt 0 ]; then
         mapfile -t -O "${#syncDestFindFilePathWithShaValue[@]}" syncDestFindFilePathWithShaValue < <(ssh "${syncDestAlias}" "${syncDestFindFolderNamePass}" "
         for i in \"\${syncDestFindFolderName[@]}\"; do
