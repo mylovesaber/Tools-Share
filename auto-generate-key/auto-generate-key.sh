@@ -372,7 +372,8 @@ DeployCheck(){
         mapfile -t EXIST_NODE_FILE_NAME < <(find /root/.ssh/"${DEPLOY_GROUP_NAME}" -maxdepth 1 -type f -name "config-${DEPLOY_GROUP_NAME}-*")
         for i in "${EXIST_NODE_FILE_NAME[@]}";do
             if [ "$(awk '/HostName/{print $2}' "${i}")" = "${LOCAL_IP}" ];then
-                LOCAL_ALIAS=$(awk '/Host\ /{print $2}' "${i}")
+                # 部分版本gawk无法识别反斜杠，所以先移除掉。LOCAL_ALIAS=$(awk '/Host\ /{print $2}' "${i}")
+                LOCAL_ALIAS=$(awk '/Host /{print $2}' "${i}")
             fi
         done
         if [ -z "${LOCAL_ALIAS}" ]; then

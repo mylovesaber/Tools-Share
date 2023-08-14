@@ -768,7 +768,8 @@ CheckDeployOption(){
             fi
         fi
         local operationCronNameFile
-        mapfile -t operationCronNameFile < <(ssh "${deployNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "*run-*"|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
+        # 这里需要改良下，首次运行没有这个路径的，导致find报错
+        mapfile -t operationCronNameFile < <(ssh "${deployNodeAlias}" "find /var/log/${shName}/exec -maxdepth 1 -type f -name "*run-*" 2>/dev/null|sed 's/run-//g'|awk -F '/' '{print \$NF}'")
         MARK=0
         for i in "${operationCronNameFile[@]}"; do
             [ "$i" = "${operationCronName}" ] && MARK=1
@@ -2115,8 +2116,10 @@ Deploy(){
     chmod +x /var/log/${shName}/exec/${shName};
 
     # 添加快捷指令
-    sed -i \"/${shName}/d\" /etc/bashrc;
-    echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc;
+    if [ -f /etc/bashrc ]; then
+        sed -i \"/${shName}/d\" /etc/bashrc;
+        echo \"alias msb='/usr/bin/bash <(cat /var/log/${shName}/exec/${shName})'\" >> /etc/bashrc;
+    fi
 
     # 删除历史日志功能处理
     sed -i \"/${shName})\ -e/d\" /etc/crontab;
