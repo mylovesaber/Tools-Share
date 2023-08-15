@@ -1,41 +1,19 @@
 #!/bin/bash
-# 前置全局检测参数初始化和收集
-# 规定sqlbak只通过安装包的形式安装，而非通过包内文件直接放置的方式实现部署
-# 只有非涉密系统且联网时才允许更新和[卸载(仅限root)]，其他情况一律禁用更新和卸载
-# 且更新也仅仅是联网下载安装包，卸载也是本地卸载安装包。
-# 即 isClassified=0 && networkValid=1
-isClassified=0
-networkValid=0
 
+isClassified=0
 IsClassifiedSystem(){
     # 0 = 否
     # 1 = 是
-    # 2 = 暂未见过的涉密系统
     echo "date" > /tmp/test_classified.sh
     if ! bash /tmp/test_classified.sh >/dev/null 2>&1; then
-        if bash <(cat /tmp/test_classified.sh) >/dev/null 2>&1; then
-            isClassified=1
-        else
-            isClassified=2
-        fi
+        isClassified=1
     else
         isClassified=0
     fi
     rm -rf /tmp/test_classified.sh
 }
 
-IsNetworkValid(){
-    # 0 = 无网络
-    # 1 = 网络正常
-    if timeout 5s ping -c2 -W1 www.baidu.com > /dev/null 2>&1; then
-        networkValid=1
-    else
-        networkValid=0
-    fi
-}
-
 IsClassifiedSystem
-IsNetworkValid
 
 # 全局颜色(适配涉密机)
 
@@ -81,7 +59,11 @@ _errornoblank() {
     printf "${_red} %s${_norm}\n" "$@"
 }
 
+# 变量初始化
+remoteYQLatestHTML=
 
+dirPath=
+localYQ=
 todayDate=
 isNonRootUser=
 binPath=
@@ -120,6 +102,9 @@ taskListNotExistList=()
 needRebuildSystemTimer=0
 
 SetConstantAndVariableByCurrentUser(){
+    # 找到本工具所在的绝对路径
+    dirPath=$(dirname "$(readlink -f "$0")")
+    localYQ="${dirPath}/yq"
     # 当前日期时间
     todayDate=$(date +%Y-%m-%d_%H:%M:%S)
 
@@ -171,12 +156,64 @@ ${yamlFile2}")
     elif [ -f "${yamlFile2}" ];then
         yamlFile="${yamlFile2}"
     fi
-    _success "变/常量初始化完成"
+}
+
+CheckRateLimit(){
+    # github有调用API的频率限制，必须先检测
+    # https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
+    _info "正在检查外网连接情况"
+    if timeout 5s ping -c2 -W1 www.baidu.com > /dev/null 2>&1; then
+        _info "正在检查 github API 调用限制信息"
+        local githubGetRateInfo postLimit postRemaining
+        githubGetRateInfo=$(curl -s https://api.github.com/rate_limit|xargs|grep -o "rate: {.*.}"|sed 's/,/\n/g; s/{/\n/g; s/}/\n/g; s/ \+//g')
+        postLimit=$(echo "${githubGetRateInfo}" | awk -F ':' /^limit/'{print $2}')
+        postRemaining=$(echo "${githubGetRateInfo}" | awk -F ':' /^remaining/'{print $2}')
+        _successnoblank "GitHub 调用速率为 ${postLimit} 次/小时"
+        if [ "${postRemaining}" -eq 0 ]; then
+            _error "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可可查询升级的次数为 ${postRemaining}，请过一小时再尝试升级，退出中"
+            exit 1
+        elif [ "${postRemaining}" -lt 10 ]; then
+            _errornoblank "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可查询升级的次数还剩 ${postRemaining} 次"
+        else
+            _infonoblank "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可可查询升级的次数还剩 ${postRemaining} 次"
+        fi
+        remoteYQLatestHTML="$(curl -s --max-time 15 https://api.github.com/repos/mikefarah/yq/releases/latest)"
+        if [ -z "${remoteYQLatestHTML}" ]; then
+            _error "获取 GitHub API 失败，与 GitHub 连接可能存在问题，请过一会再尝试"
+            exit 1
+        fi
+    else
+	    _error "网络不通，请检查网络，退出中"
+	    exit 1
+    fi
+}
+
+CheckUpdate(){
+    # 未来更新到网络上再在此模块中添加远程更新sqlbak的方法
+    CheckRateLimit
+    _info "开始解析yq最新版本号并比对本地yq版本(如果存在)"
+    local remoteYQVersion localYQVersion
+    remoteYQVersion=$(echo "${remoteYQLatestHTML}"|grep -o "tag_name.*.\""|awk -F '"' '{print $(NF-1)}')
+    if [ -f "${yqFile}" ]; then
+        if [ ! -x "${yqFile}" ]; then
+            chmod +x "${yqFile}"
+        fi
+        localYQVersion=$(${yqFile} -V|awk '{print $NF}')
+        if [[ ! "${remoteYQVersion}" == "${localYQVersion}" ]]; then
+            _warning "发现新版本yq，开始更新"
+            DownloadYQ
+        else
+            _success "yq已是最新版本，无需更新，跳过"
+        fi
+    else
+        _warning "系统不存在必要解析工具，将检查依赖并试图修复工作环境，修复后请重新运行本工具"
+        CheckDependence "skip"
+        exit 0
+    fi
 }
 
 CheckDependence(){
-    _info "开始检查环境依赖"
-    # 对备份工具进行定位，如果找不到则退出
+    # 对备份工具进行定位，如果找不到则整个工具退出
     if which mysqldump >/dev/null 2>&1; then
         mysqldumpPath=$(which mysqldump)
     else
@@ -184,14 +221,49 @@ CheckDependence(){
         exit 1
     fi
 
-	# 检查配置文件解析工具工作是否正常，如果不正常或丢失则退出
+    # 锁定yaml文件解析工具/本工具/本工具的配置文件的绝对路径
+	if [ "${isNonRootUser}" -eq 1 ]; then
+	    if [ "${isClassified}" -eq 0 ]; then
+	        [[ ! -d "${binPath}" ]] && mkdir -p "${binPath}"
+	    fi
+	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
+	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
+	fi
     if [ ! -f "${yqFile}" ]; then
-        _error "配置文件解析工具丢失，请重新安装此软件，退出中"
-        exit 1
-    else
-        if ! "${yqFile}" -V|awk '{print $NF}' >/dev/null 2>&1; then
-            _error "配置文件解析工具损坏，无法解析，请重新安装此软件，退出中"
+	    if [ "${isClassified}" -eq 0 ]; then
+            if [ "${1}" == "skip" ]; then
+                :
+            else
+                CheckRateLimit
+            fi
+            if [ -f "${localYQ}" ]; then
+                [ ! -x "${localYQ}" ] && chmod +x "${localYQ}"
+                if "${localYQ}" -V|awk '{print $NF}' >/dev/null 2>&1; then
+                    _success "系统不存在必要解析工具但本地存在，已处理并安装进系统"
+                    cp -a "${localYQ}" "${binPath}"
+                else
+                    _warning "系统不存在必要解析工具，本地存在的工具已损坏，开始下载yq，若下载过慢可通过组合键CTRL+C中断工具运行"
+                    _warning "之后手动下载并改名成yq放在此处(${dirPath})，系统会自动检测可用性，确认无误将自动安装进系统以跳过下载过程"
+                    rm -rf "${localYQ}"
+                    DownloadYQ
+                fi
+            else
+                _warning "系统和本工具同目录均不存在yq，开始下载yq，若下载过慢可通过组合键CTRL+C中断工具运行"
+                _warning "之后手动下载并改名成yq放在此处(${dirPath})，系统会自动检测可用性，确认无误将自动安装进系统以跳过下载过程"
+                DownloadYQ
+            fi
+        else
+            _error "解析工具yq不存在，程序不会进行任何操作，退出中"
             exit 1
+        fi
+    fi
+	if [ "${isClassified}" -eq 0 ]; then
+    # 这里这个本地自动覆盖的方式继续保留，未来更新到网络上再在update模块中添加远程更新的方法
+        if [ "${sqlBakFile}" != "$(readlink -f "$0")" ]; then
+            _info "正在更新 sqlbak"
+            cp -af "$(readlink -f "$0")" "${sqlBakFile}"
+            chmod +x "${sqlBakFile}"
+            _success "sqlbak 更新成功"
         fi
     fi
 
@@ -210,20 +282,71 @@ CheckDependence(){
     elif [ -f "${yamlFile2}" ];then
         yamlFile="${yamlFile2}"
     fi
+}
 
-    # 为非root用户创建工具正常工作所需的必要路径
-	if [ "${isNonRootUser}" -eq 1 ]; then
-	    if [ "${isClassified}" -eq 0 ]; then
-	        [[ ! -d "${binPath}" ]] && mkdir -p "${binPath}"
+DownloadYQ() {
+    local yqDownloadLink yqRemoteSize yqLocalSize
+	yqDownloadLink=$(echo "${remoteYQLatestHTML}" | grep "browser_download_url.*.yq_linux_amd64\"" | awk -F '[" ]' '{print $(NF-1)}')
+	yqRemoteSize=$(echo "${remoteYQLatestHTML}" | grep -B 10 "browser_download_url.*.yq_linux_amd64\"" | grep size | awk -F '[ ,]' '{print $(NF-1)}')
+	if [ -z "${yqDownloadLink}" ]; then
+	    _error "无法获取下载链接，请检查网络，退出中"
+	    exit 1
+	else
+	    _info "开始下载并放置yq到系统中"
+	    _warningnoblank "下载链接: ${yqDownloadLink}"
+	    if [ -f "${yqFile}.tmp" ]; then
+	        _warning "发现上次运行时的下载残留，正在清理"
+	        rm -rf "${yqFile}.tmp"
 	    fi
-	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
-	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
+
+	    if ! curl -L -o "${yqFile}.tmp" "${yqDownloadLink}"; then
+	        _error "下载失败，请重新运行脚本尝试下载"
+	        _error "清理下载残留，退出中"
+	        rm -rf "${yqFile}.tmp"
+	        exit 1
+	    else
+	        _info "开始校验完整性"
+	        yqLocalSize=$(stat --printf="%s" "${yqFile}.tmp")
+	        if [ "${yqLocalSize}" == "${yqRemoteSize}" ]; then
+	            mv -f "${yqFile}.tmp" "${yqFile}"
+	            chmod +x "${yqFile}"
+	            _success "完整性校验通过，下载并更新完成"
+	        else
+	            _error "下载版本和远程版本大小不一致，请重新运行脚本以尝试修正此问题，退出中"
+	            rm -rf "${yqFile}.tmp"
+	            exit 1
+	        fi
+	    fi
 	fi
-	_success "环境依赖检查完成"
+}
+
+CheckInputTasks(){
+    specifiedTaskList=("$@")
+    local wrongTaskName i
+    if [ "${#specifiedTaskList[@]}" -eq 0 ] ||
+    [ "${specifiedTaskList[0]}" == "help" ] ||
+    [ "${specifiedTaskList[0]}" == "all" ] ||
+    { [ "${specifiedTaskList[0]}" == "rest" ] && [ "${firstOption}" == "install" ]; }; then
+        return
+    fi
+    wrongTaskName=()
+    for i in "${specifiedTaskList[@]}" ; do
+        if ! printf '%s\0' "${taskList[@]}" | grep -Fxqz -- "${i}"; then
+            mapfile -t -O "${#wrongTaskName[@]}" wrongTaskName < <(echo "${i}")
+        fi
+    done
+
+    if [ "${#wrongTaskName[@]}" -gt 0 ]; then
+        _error "配置文件中不存在以下指定的任务名，请修正并重新运行: "
+        for i in "${wrongTaskName[@]}" ; do
+            _warningnoblank "${i}"
+        done
+        exit 1
+    fi
 }
 
 CheckInstallStatus(){
-    # 以下echo的内容就是注释，ide中颜色明亮点方便调试
+    # 以下echo的内容就是注释，ide中颜色明亮点
 echo "
 1: 配置存在
 0: 配置不存在
@@ -254,13 +377,12 @@ root：
         _error "配置文件出现异常，已输出报错信息，退出中"
         exit 1
     fi
+    mapfile -t taskList < <(${yqFile} '.*|key' "${yamlFile}")
+    mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
     # 重置数组防止被事先存入了元素
-    taskList=()
     loseControlTask=()
     installedTask=()
     notInstalledTask=()
-    mapfile -t taskList < <(${yqFile} '.*|key' "${yamlFile}")
-    mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
     if [ "${isNonRootUser}" -eq 0 ]; then
         # 配置文件中任务名对比系统已有定时的任务名，对比相同的名称组成：已安装任务数组
         for i in "${taskList[@]}" ; do
@@ -349,89 +471,6 @@ root：
     fi
 }
 
-AutoRepair(){
-    local i flag
-    flag=0
-    if [ "${isNonRootUser}" -eq 0 ]; then
-        if [ "${#loseControlTask[@]}" -gt 0 ]; then
-            for i in "${loseControlTask[@]}" ; do
-                rm -rf  "${cronPath}"/mysql-backup-task@_"${i}"
-            done
-            _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
-            flag=1
-        fi
-    elif [ "${isNonRootUser}" -eq 1 ]; then
-        [ -f "${cronPath}"/final-cron-install-file ] && rm -rf "${cronPath}"/final-cron-install-file
-        # 删除残留定时分段
-        if [ "${#taskListNotExistList[@]}" -gt 0 ]; then
-            for i in "${taskListNotExistList[@]}" ; do
-                rm -rf "${cronPath}"/mysql-backup-task@_"${i}"
-            done
-            needRebuildSystemTimer=1
-            _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
-            flag=1
-        fi
-
-        # 添加定时分段
-        if [ "${#repairSegmentTimerList[@]}" -gt 0 ]; then
-            for i in "${repairSegmentTimerList[@]}" ; do
-                ParseYaml "${i}"
-                InstallTask "${i}"
-            done
-            _warning "发现系统中存在部分配置丢失的备份任务！已修复"
-            flag=2
-        fi
-
-        # 重建系统定时
-        if [ "${needRebuildSystemTimer}" -eq 1 ]; then
-            timingSegmentList=()
-            mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
-            for i in "${timingSegmentList[@]}" ; do
-                cat "${cronPath}"/mysql-backup-task@_"${i}" >> "${cronPath}"/final-cron-install-file
-            done
-            if [ -f "${cronPath}"/final-cron-install-file ]; then
-                crontab "${cronPath}"/final-cron-install-file
-                rm -rf "${cronPath}"/final-cron-install-file
-                _warning "已根据已安装的备份任务重建系统备份计划"
-            fi
-            flag=3
-        fi
-    fi
-    if [ "${flag}" -gt 0 ]; then
-        CheckInstallStatus
-        _success "已重新读取修正后的任务安装环境"
-    else
-        _success "比对完成，未发现异常"
-    fi
-}
-
-CheckInputTasks(){
-    _info "正在解析输入信息"
-    specifiedTaskList=("$@")
-    local wrongTaskName i
-    if [ "${#specifiedTaskList[@]}" -eq 0 ] ||
-    [ "${specifiedTaskList[0]}" == "help" ] ||
-    [ "${specifiedTaskList[0]}" == "all" ] ||
-    { [ "${specifiedTaskList[0]}" == "rest" ] && [ "${firstOption}" == "install" ]; }; then
-        return
-    fi
-    wrongTaskName=()
-    for i in "${specifiedTaskList[@]}" ; do
-        if ! printf '%s\0' "${taskList[@]}" | grep -Fxqz -- "${i}"; then
-            mapfile -t -O "${#wrongTaskName[@]}" wrongTaskName < <(echo "${i}")
-        fi
-    done
-
-    if [ "${#wrongTaskName[@]}" -gt 0 ]; then
-        _error "配置文件中不存在以下指定的任务名，请修正并重新运行: "
-        for i in "${wrongTaskName[@]}" ; do
-            _warningnoblank "${i}"
-        done
-        exit 1
-    fi
-    _success "输入信息解析完成"
-}
-
 GenerateProfile() {
     cat >"${yamlFile}" <<EOF
 name1:
@@ -485,14 +524,14 @@ EOF
 ParseYaml() {
     local paramList specifiedTaskParamList paramName
     paramList=(
-        "ip"
-        "port"
-        "user"
-        "password"
-        "backup-path"
-        "expires-days"
-        "cron-format"
-        "database"
+        "ip" 
+        "port" 
+        "user" 
+        "password" 
+        "backup-path" 
+        "expires-days" 
+        "cron-format" 
+        "database" 
         "exclude-database"
     )
 
@@ -694,6 +733,62 @@ ParseYaml() {
     fi
 }
 
+AutoRepair(){
+    local i flag
+    flag=0
+    _info "开始检查系统定时环境"
+    if [ "${isNonRootUser}" -eq 0 ]; then
+        if [ "${#loseControlTask[@]}" -gt 0 ]; then
+            for i in "${loseControlTask[@]}" ; do
+                rm -rf  "${cronPath}"/mysql-backup-task@_"${i}"
+            done
+            _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
+            flag=1
+        fi
+    elif [ "${isNonRootUser}" -eq 1 ]; then
+        [ -f "${cronPath}"/final-cron-install-file ] && rm -rf "${cronPath}"/final-cron-install-file
+        # 删除残留定时分段
+        if [ "${#taskListNotExistList[@]}" -gt 0 ]; then
+            for i in "${taskListNotExistList[@]}" ; do
+                rm -rf "${cronPath}"/mysql-backup-task@_"${i}"
+            done
+            needRebuildSystemTimer=1
+            _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
+            flag=1
+        fi
+
+        # 添加定时分段
+        if [ "${#repairSegmentTimerList[@]}" -gt 0 ]; then
+            for i in "${repairSegmentTimerList[@]}" ; do
+                ParseYaml "${i}"
+                InstallTask "${i}"
+            done
+            _warning "发现系统中存在部分配置丢失的备份任务！已修复"
+            flag=2
+        fi
+
+        # 重建系统定时
+        if [ "${needRebuildSystemTimer}" -eq 1 ]; then
+            timingSegmentList=()
+            mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
+            for i in "${timingSegmentList[@]}" ; do
+                cat "${cronPath}"/mysql-backup-task@_"${i}" >> "${cronPath}"/final-cron-install-file
+            done
+            if [ -f "${cronPath}"/final-cron-install-file ]; then
+                crontab "${cronPath}"/final-cron-install-file
+                rm -rf "${cronPath}"/final-cron-install-file
+                _warning "已根据已安装的备份任务重建系统备份计划"
+            fi
+            flag=3
+        fi
+    fi
+    if [ "${flag}" -gt 0 ]; then
+        CheckInstallStatus
+        _success "已重新读取任务安装环境"
+    fi
+    _success "系统定时环境检查完成"
+}
+
 # 安装策略：
 # 无论一次安装多少个任务，总是一个任务设置一个任务记录文件，里面有已注释的该任务的详细配置和实际可用的定时写法，同任务被多次安装的话会完全覆盖而非追加，以下是root和非root用户安装区别
 # 1. root：每个任务记录文件都是一个定时功能，无需后续操作
@@ -760,7 +855,7 @@ RunTask() {
     fi
 
     # 备份并转写为压缩包，格式：任务名_-_表名_-_日期.sql.gz
-    local i execCommand
+    local i combineStr execCommand
     case "${dbType}" in
     "include")
         execCommand="${mysqldumpPath} -h ${mysqlIP} -P ${mysqlPort} -u ${mysqlUser} -p${mysqlPass} --default-character-set=utf8mb4 -B ${databaseList[@]} | gzip >"${backupPath}"/"${1}"_-_"${todayDate}".sql.gz 2>/tmp/sqlbak.tmp"
@@ -971,13 +1066,7 @@ else
 fi
 }
 
-# 主程序入口
-if [ "${isClassified}" -eq 2 ]; then
-    _error "未知的限制性或涉密系统，请联系作者检查并适配！本工具将不进行任何操作，退出中..."
-    exit 1
-fi
 SetConstantAndVariableByCurrentUser
-
 # 判断工具后跟的首个参数名以分配不同功能
 firstOption="${1}"
 specifiedTaskList=("${@:2}")
@@ -1000,12 +1089,11 @@ fi
 
 case "${firstOption}" in
     "update")
-        if [ "${isClassified}" -eq 0 ] && [ "${networkValid}" -eq 1 ]; then
-            _error "更新功能暂未开放，请等待版本更新，退出中"
-#            CheckUpdate
+        if [ "${isClassified}" -eq 0 ]; then
+            CheckUpdate
             exit 0
-        else
-            _error "检测到此工具安装在限制性/涉密系统中或无网络连接，更新功能无法使用，退出中"
+        elif [ "${isClassified}" -eq 1 ]; then
+            _error "此工具工作在限制性系统或涉密系统上，无法在线更新，退出中"
             exit 1
         fi
         ;;
@@ -1020,11 +1108,10 @@ case "${firstOption}" in
         ;;
     "destroy")
         if [ "${isClassified}" -eq 0 ]; then
-            _error "卸载功能暂未开放，请等待版本更新，退出中"
-#            Destroy
+            Destroy
             exit 0
-        else
-            _error "检测到此工具安装在限制性/涉密系统中，无法实现自我卸载功能，退出中"
+        elif [ "${isClassified}" -eq 1 ]; then
+            _error "此工具工作在限制性系统或涉密系统上，无法实现自我卸载功能，退出中"
             exit 1
         fi
         ;;
@@ -1035,15 +1122,15 @@ case "${firstOption}" in
 esac
 
 CheckDependence
-_info "开始比对本工具生成的系统定时任务和配置文件中指定的定时任务"
+_info "正在解析输入信息和配置文件"
 CheckInstallStatus
-AutoRepair
 CheckInputTasks "${@:2}"
 #echo "specifiedTaskList:"
 #echo "${specifiedTaskList[@]}"
 #echo "taskList:"
 #echo "${taskList[@]}"
 
+AutoRepair
 case "${firstOption}" in
     "install")
         if [ "${#specifiedTaskList[@]}" -eq 0 ] || { [ "${2}" == "help" ] && [ -z "${3}" ]; }; then
@@ -1304,154 +1391,3 @@ case "${firstOption}" in
         Help
         exit 1
 esac
-
-
-
-##############################################################################################################################
-# 以下是暂时未启用的功能对应的功能模块或暂时弃用的逻辑代码
-
-# 变量初始化
-#remoteYQLatestHTML=
-#
-#dirPath=
-#localYQ=
-
-
-#CheckRateLimit(){
-#    # github有调用API的频率限制，必须先检测
-#    # https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
-#    _info "正在检查外网连接情况"
-#    if timeout 5s ping -c2 -W1 www.baidu.com > /dev/null 2>&1; then
-#        _info "正在检查 github API 调用限制信息"
-#        local githubGetRateInfo postLimit postRemaining
-#        githubGetRateInfo=$(curl -s https://api.github.com/rate_limit|xargs|grep -o "rate: {.*.}"|sed 's/,/\n/g; s/{/\n/g; s/}/\n/g; s/ \+//g')
-#        postLimit=$(echo "${githubGetRateInfo}" | awk -F ':' /^limit/'{print $2}')
-#        postRemaining=$(echo "${githubGetRateInfo}" | awk -F ':' /^remaining/'{print $2}')
-#        _successnoblank "GitHub 调用速率为 ${postLimit} 次/小时"
-#        if [ "${postRemaining}" -eq 0 ]; then
-#            _error "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可可查询升级的次数为 ${postRemaining}，请过一小时再尝试升级，退出中"
-#            exit 1
-#        elif [ "${postRemaining}" -lt 10 ]; then
-#            _errornoblank "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可查询升级的次数还剩 ${postRemaining} 次"
-#        else
-#            _infonoblank "$(date +%Y年%m月%d日%k:00) 至 $(date +%Y年%m月%d日%k:00 -d "+1 hour") 时间段内剩余可可查询升级的次数还剩 ${postRemaining} 次"
-#        fi
-#        remoteYQLatestHTML="$(curl -s --max-time 15 https://api.github.com/repos/mikefarah/yq/releases/latest)"
-#        if [ -z "${remoteYQLatestHTML}" ]; then
-#            _error "获取 GitHub API 失败，与 GitHub 连接可能存在问题，请过一会再尝试"
-#            exit 1
-#        fi
-#    else
-#	    _error "网络不通，请检查网络，退出中"
-#	    exit 1
-#    fi
-#}
-
-#CheckUpdate(){
-#    # 未来更新到网络上再在此模块中添加远程更新sqlbak的方法
-#    CheckRateLimit
-#    _info "开始解析yq最新版本号并比对本地yq版本(如果存在)"
-#    local remoteYQVersion localYQVersion
-#    remoteYQVersion=$(echo "${remoteYQLatestHTML}"|grep -o "tag_name.*.\""|awk -F '"' '{print $(NF-1)}')
-#    if [ -f "${yqFile}" ]; then
-#        if [ ! -x "${yqFile}" ]; then
-#            chmod +x "${yqFile}"
-#        fi
-#        localYQVersion=$(${yqFile} -V|awk '{print $NF}')
-#        if [[ ! "${remoteYQVersion}" == "${localYQVersion}" ]]; then
-#            _warning "发现新版本yq，开始更新"
-#            DownloadYQ
-#        else
-#            _success "yq已是最新版本，无需更新，跳过"
-#        fi
-#    else
-#        _warning "系统不存在必要解析工具，将检查依赖并试图修复工作环境，修复后请重新运行本工具"
-#        CheckDependence "skip"
-#        exit 0
-#    fi
-#}
-
-#DownloadYQ() {
-#    local yqDownloadLink yqRemoteSize yqLocalSize
-#	yqDownloadLink=$(echo "${remoteYQLatestHTML}" | grep "browser_download_url.*.yq_linux_amd64\"" | awk -F '[" ]' '{print $(NF-1)}')
-#	yqRemoteSize=$(echo "${remoteYQLatestHTML}" | grep -B 10 "browser_download_url.*.yq_linux_amd64\"" | grep size | awk -F '[ ,]' '{print $(NF-1)}')
-#	if [ -z "${yqDownloadLink}" ]; then
-#	    _error "无法获取下载链接，请检查网络，退出中"
-#	    exit 1
-#	else
-#	    _info "开始下载并放置yq到系统中"
-#	    _warningnoblank "下载链接: ${yqDownloadLink}"
-#	    if [ -f "${yqFile}.tmp" ]; then
-#	        _warning "发现上次运行时的下载残留，正在清理"
-#	        rm -rf "${yqFile}.tmp"
-#	    fi
-#
-#	    if ! curl -L -o "${yqFile}.tmp" "${yqDownloadLink}"; then
-#	        _error "下载失败，请重新运行脚本尝试下载"
-#	        _error "清理下载残留，退出中"
-#	        rm -rf "${yqFile}.tmp"
-#	        exit 1
-#	    else
-#	        _info "开始校验完整性"
-#	        yqLocalSize=$(stat --printf="%s" "${yqFile}.tmp")
-#	        if [ "${yqLocalSize}" == "${yqRemoteSize}" ]; then
-#	            mv -f "${yqFile}.tmp" "${yqFile}"
-#	            chmod +x "${yqFile}"
-#	            _success "完整性校验通过，下载并更新完成"
-#	        else
-#	            _error "下载版本和远程版本大小不一致，请重新运行脚本以尝试修正此问题，退出中"
-#	            rm -rf "${yqFile}.tmp"
-#	            exit 1
-#	        fi
-#	    fi
-#	fi
-#}
-
-#SetConstantAndVariableByCurrentUser(){
-#    # 这里面是部分弃用代码，别直接用
-#    # 找到本工具所在的绝对路径
-#    dirPath=$(dirname "$(readlink -f "$0")")
-#    localYQ="${dirPath}/yq"
-#}
-
-#CheckDependence(){
-#    # 这是模块内的部分代码，暂时弃用，不要直接取消注释，部分变量已经被删
-#    if [ ! -f "${yqFile}" ]; then
-#	    if [ "${isClassified}" -eq 0 ]; then
-#            if [ "${1}" == "skip" ]; then
-#                :
-#            else
-#                CheckRateLimit
-#            fi
-#            if [ -f "${localYQ}" ]; then
-#                [ ! -x "${localYQ}" ] && chmod +x "${localYQ}"
-#                if "${localYQ}" -V|awk '{print $NF}' >/dev/null 2>&1; then
-#                    _success "系统不存在必要解析工具但本地存在，已处理并安装进系统"
-#                    cp -a "${localYQ}" "${binPath}"
-#                else
-#                    _warning "系统不存在必要解析工具，本地存在的工具已损坏，开始下载yq，若下载过慢可通过组合键CTRL+C中断工具运行"
-#                    _warning "之后手动下载并改名成yq放在此处(${dirPath})，系统会自动检测可用性，确认无误将自动安装进系统以跳过下载过程"
-#                    rm -rf "${localYQ}"
-#                    DownloadYQ
-#                fi
-#            else
-#                _warning "系统和本工具同目录均不存在yq，开始下载yq，若下载过慢可通过组合键CTRL+C中断工具运行"
-#                _warning "之后手动下载并改名成yq放在此处(${dirPath})，系统会自动检测可用性，确认无误将自动安装进系统以跳过下载过程"
-#                DownloadYQ
-#            fi
-#        else
-#            _error "解析工具yq不存在，程序不会进行任何操作，退出中"
-#            exit 1
-#        fi
-#    fi
-#	if [ "${isClassified}" -eq 0 ]; then
-#    # 这里这个本地自动覆盖的方式继续保留，未来更新到网络上再在update模块中添加远程更新的方法
-#        if [ "${sqlBakFile}" != "$(readlink -f "$0")" ]; then
-#            _info "正在更新 sqlbak"
-#            cp -af "$(readlink -f "$0")" "${sqlBakFile}"
-#            chmod +x "${sqlBakFile}"
-#            _success "sqlbak 更新成功"
-#        fi
-#    fi
-#
-#}
