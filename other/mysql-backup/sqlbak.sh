@@ -35,7 +35,6 @@ IsNetworkValid(){
 }
 
 IsClassifiedSystem
-IsNetworkValid
 
 # 全局颜色(适配涉密机)
 
@@ -123,41 +122,29 @@ SetConstantAndVariableByCurrentUser(){
     # 当前日期时间
     todayDate=$(date +%Y-%m-%d_%H:%M:%S)
 
+    case "$(arch)" in
+    "aarch64")
+        yqFile="/usr/bin/yq_linux_arm64"
+        ;;
+    "x86_64")
+        yqFile="/usr/bin/yq_linux_amd64"
+        ;;
+    esac
+
+    binPath="/usr/bin"
+    sqlBakFile="/usr/bin/sqlbak"
     if [ $EUID -eq 0 ] && [[ $(grep "^$(whoami)" /etc/passwd | cut -d':' -f3) -eq 0 ]]; then
         isNonRootUser=0
-        binPath="/usr/bin"
         etcPath="/etc"
         cronPath="/etc/cron.d"
-
-        case "$(arch)" in
-        "aarch64")
-            yqFile="/usr/bin/yq_linux_arm64"
-            ;;
-        "x86_64")
-            yqFile="/usr/bin/yq_linux_amd64"
-            ;;
-        esac
-
         yamlFile1="/etc/sqlbak.yml"
         yamlFile2="/etc/sqlbak.yaml"
-        sqlBakFile="/usr/bin/sqlbak"
     else
         isNonRootUser=1
-        binPath="/home/$(whoami)/.local/bin"
         etcPath="/home/$(whoami)/.local/etc"
         cronPath="/home/$(whoami)/.local/sqlbakcron"
-
-        case "$(arch)" in
-        "aarch64")
-            yqFile="/home/$(whoami)/.local/bin/yq_linux_arm64"
-            ;;
-        "x86_64")
-            yqFile="/home/$(whoami)/.local/bin/yq_linux_amd64"
-            ;;
-        esac
         yamlFile1="/home/$(whoami)/.local/etc/sqlbak.yml"
         yamlFile2="/home/$(whoami)/.local/etc/sqlbak.yaml"
-        sqlBakFile="/home/$(whoami)/.local/bin/sqlbak"
         otherCronFile="/home/$(whoami)/.local/sqlbakcron/other-cron"
     fi
     if [ -f "${yamlFile1}" ] && [ -f "${yamlFile2}" ]; then
@@ -171,7 +158,7 @@ ${yamlFile2}")
     elif [ -f "${yamlFile2}" ];then
         yamlFile="${yamlFile2}"
     fi
-    _success "变/常量初始化完成"
+    _success "全局变量初始化完成"
 }
 
 CheckDependence(){
@@ -188,11 +175,9 @@ CheckDependence(){
     if [ ! -f "${yqFile}" ]; then
         _error "配置文件解析工具丢失，请重新安装此软件，退出中"
         exit 1
-    else
-        if ! "${yqFile}" -V|awk '{print $NF}' >/dev/null 2>&1; then
-            _error "配置文件解析工具损坏，无法解析，请重新安装此软件，退出中"
-            exit 1
-        fi
+    elif ! "${yqFile}" -V|awk '{print $NF}' >/dev/null 2>&1; then
+        _error "配置文件解析工具损坏，无法解析，请重新安装此软件，退出中"
+        exit 1
     fi
 
     if [ -f "${yamlFile1}" ] && [ -f "${yamlFile2}" ]; then
@@ -213,9 +198,6 @@ CheckDependence(){
 
     # 为非root用户创建工具正常工作所需的必要路径
 	if [ "${isNonRootUser}" -eq 1 ]; then
-	    if [ "${isClassified}" -eq 0 ]; then
-	        [[ ! -d "${binPath}" ]] && mkdir -p "${binPath}"
-	    fi
 	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
 	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
 	fi
@@ -597,10 +579,10 @@ ParseYaml() {
         fi
         ;;
     esac
-    # 调整备份路径写法
+    # 去掉备份路径末尾/
     if [[ ${backupPath} =~ /$ ]]; then
         backupPath="${backupPath%/}"
-        echo "${backupPath}"
+#        echo "${backupPath}"
     fi
 
     # 对涉密系统检查其备份路径是否可用
@@ -1000,6 +982,7 @@ fi
 
 case "${firstOption}" in
     "update")
+        IsNetworkValid
         if [ "${isClassified}" -eq 0 ] && [ "${networkValid}" -eq 1 ]; then
             _error "更新功能暂未开放，请等待版本更新，退出中"
 #            CheckUpdate
@@ -1317,7 +1300,8 @@ esac
 #localYQ=
 
 
-#CheckRateLimit(){
+CheckRateLimitDeprecated(){
+    :
 #    # github有调用API的频率限制，必须先检测
 #    # https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
 #    _info "正在检查外网连接情况"
@@ -1345,9 +1329,10 @@ esac
 #	    _error "网络不通，请检查网络，退出中"
 #	    exit 1
 #    fi
-#}
+}
 
-#CheckUpdate(){
+CheckUpdateDeprecated(){
+    :
 #    # 未来更新到网络上再在此模块中添加远程更新sqlbak的方法
 #    CheckRateLimit
 #    _info "开始解析yq最新版本号并比对本地yq版本(如果存在)"
@@ -1369,9 +1354,10 @@ esac
 #        CheckDependence "skip"
 #        exit 0
 #    fi
-#}
+}
 
-#DownloadYQ() {
+DownloadYQDeprecated() {
+    :
 #    local yqDownloadLink yqRemoteSize yqLocalSize
 #	yqDownloadLink=$(echo "${remoteYQLatestHTML}" | grep "browser_download_url.*.yq_linux_amd64\"" | awk -F '[" ]' '{print $(NF-1)}')
 #	yqRemoteSize=$(echo "${remoteYQLatestHTML}" | grep -B 10 "browser_download_url.*.yq_linux_amd64\"" | grep size | awk -F '[ ,]' '{print $(NF-1)}')
@@ -1405,16 +1391,18 @@ esac
 #	        fi
 #	    fi
 #	fi
-#}
+}
 
-#SetConstantAndVariableByCurrentUser(){
+SetConstantAndVariableByCurrentUserBackupDeprecated(){
+    :
 #    # 这里面是部分弃用代码，别直接用
 #    # 找到本工具所在的绝对路径
 #    dirPath=$(dirname "$(readlink -f "$0")")
 #    localYQ="${dirPath}/yq"
-#}
+}
 
-#CheckDependence(){
+CheckDependenceDeprecated(){
+    :
 #    # 这是模块内的部分代码，暂时弃用，不要直接取消注释，部分变量已经被删
 #    if [ ! -f "${yqFile}" ]; then
 #	    if [ "${isClassified}" -eq 0 ]; then
@@ -1454,4 +1442,4 @@ esac
 #        fi
 #    fi
 #
-#}
+}
