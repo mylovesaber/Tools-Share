@@ -579,64 +579,66 @@ ParseYaml() {
         fi
         ;;
     esac
-    # 去掉备份路径末尾/
-    if [[ ${backupPath} =~ /$ ]]; then
+    # 非根目录且路径末尾有/则去掉路径末尾/
+    if [[ ${backupPath} =~ ^/$ ]]; then
+        :
+    elif [[ ${backupPath} =~ /$ ]]; then
         backupPath="${backupPath%/}"
 #        echo "${backupPath}"
     fi
 
-    # 对涉密系统检查其备份路径是否可用
-    if [ "${isClassified}" -eq 1 ]; then
-        if ! touch "${backupPath}"/testfile >/dev/null 2>&1; then
-            _error "此路径在涉密或限制性系统中无法作为备份路径: ${backupPath}"
-            _error "退出中"
-            exit 1
-        else
-            rm -rf "${backupPath}"/testfile
-        fi
-    fi
-    # 非root用户必须对备份路径进行每一层级目录的权限排查，以避免无法写入备份文件的问题。满足条件有三个:
+    # 非root用户必须对备份路径进行每一层级目录的权限排查，以避免无法写入备份文件的问题。
+    # 已知只要非其他系统已存在用户的家目录，路径末端文件夹属主是当前用户，则内部无限层级均可由当前用户创建，因此判断条件有三个:
     # 1. 备份路径文件夹不是其他用户的家目录下的子文件夹
-    # 2. 写入文件的文件夹属主是当前用户
-    # 3. 如果需要写入文件的文件夹不存在，则上前递归直到有文件夹存在且该文件夹属主是当前用户
+    # 2. 如果需要写入文件的路径存在且不是根目录，则写入文件的文件夹属主必须是当前用户
+    # 3. 如果需要写入文件的文件夹不存在，则向上递归直到有文件夹存在，之后进入第二个判断
+    #
+    # root用户绝大部分路径均可访问写入，但个别路径是系统限制无法写入，因此需要猜测是否可写，所以流程分两步：
+    # 1. 如果路径存在，则尝试直接写入文件检查是否可写
+    # 2. 如果路径不存在，则向上递归直到有文件夹存在，之后进入第一个判断
     local parentPath invalidPath i lastBakFolder
+    parentPath="${backupPath}"
     if [ "${isNonRootUser}" -eq 1 ]; then
         mapfile -t invalidPath < <(awk -F ':' '{print $6}' /etc/passwd|grep -v "/$")
         for i in "${invalidPath[@]}"; do
-            if [[ "${backupPath}" =~ ^${i} ]]; then
+            if [[ "${parentPath}" =~ ^${i} ]]; then
                 _error "指定的备份路径禁止设置为系统已存在用户的家目录(${i})中的子目录！退出中"
                 exit 1
             fi
         done
-        if [ -d "${backupPath}" ]; then
-            if [ ! -O "${backupPath}" ]; then
-                lastBakFolder=$(awk -F '/' '{print $NF}' <<< "${backupPath}")
-                _error "当前用户没有权限将数据库备份到设置的备份路径下，请修改备份文件存放的文件夹的权限(${lastBakFolder})，退出中"
-                exit 1
-            fi
-        else
-            parentPath=$(dirname "${backupPath}")
-            while true; do
-                if [ -d "${parentPath}" ]; then
-                    if [ -O "${parentPath}" ]; then
-                        break
-                    else
-                        _error "当前用户没有权限将数据库备份到设置的备份路径，请修改，退出中"
-                        exit 1
-                    fi
-                else
-                    parentPath=$(dirname "${parentPath}")
-                    if [ "${parentPath}" == "/" ]; then
-                        lastBakFolder=$(awk -F '/' '{print $NF}' <<< "${backupPath}")
-                        _error "系统根目录禁止用于存放非root用户备份的数据库档案，请重新指定路径"
-                        _error "或"
-                        _error "在root用户下将指定的备份路径末尾文件夹(${lastBakFolder})的权限设置为当前用户($(whoami))可完全访问"
+        while true; do
+            if [ -d "${parentPath}" ]; then
+                if [ "${parentPath}" == "/" ]; then
+                        _error "非root用户禁止在系统根目录存放备份的数据库存档，请重新指定路径"
                         _error "退出中"
                         exit 1
-                    fi
+                elif [ ! -O "${parentPath}" ]; then
+                    lastBakFolder=$(awk -F '/' '{print $NF}' <<< "${parentPath}")
+                    _error "当前用户没有权限将数据库备份到设置的备份路径下"
+                    _error "请在root用户下将备份文件存放的文件夹的权限(${lastBakFolder})设置为当前用户($(whoami))可完全访问，退出中"
+                    exit 1
+                else
+                    break
                 fi
-            done
-        fi
+            else
+                parentPath=$(dirname "${parentPath}")
+            fi
+        done
+    elif [ "${isNonRootUser}" -eq 0 ]; then
+        while true; do
+            if [ -d "${parentPath}" ]; then
+                if ! touch "${parentPath}"/testfile >/dev/null 2>&1; then
+                    _error "此路径在涉密或限制性系统中无法作为备份路径: ${parentPath}"
+                    _error "退出中"
+                    exit 1
+                else
+                    rm -rf "${parentPath}"/testfile
+                    break
+                fi
+            else
+                parentPath=$(dirname "${parentPath}")
+            fi
+        done
     fi
 
     # 检查过期天数合法性
