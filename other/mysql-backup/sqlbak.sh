@@ -158,6 +158,10 @@ ${yamlFile2}")
     elif [ -f "${yamlFile2}" ];then
         yamlFile="${yamlFile2}"
     fi
+    
+    # 设置定时任务文件名前缀
+    prefixCronFile="mysql-backup-task@_"
+
     _success "全局变量初始化完成"
 }
 
@@ -170,6 +174,12 @@ CheckDependence(){
         _error "找不到mysqldump，退出中"
         exit 1
     fi
+
+    # 为非root用户创建工具正常工作所需的必要路径，后面会用到
+	if [ "${isNonRootUser}" -eq 1 ]; then
+	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
+	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
+	fi
 
 	# 检查配置文件解析工具工作是否正常，如果不正常或丢失则退出
     if [ ! -f "${yqFile}" ]; then
@@ -186,9 +196,15 @@ CheckDependence(){
         echo "${yamlFile2}"
         exit 1
     elif [ ! -f "${yamlFile1}" ] && [ ! -f "${yamlFile2}" ]; then
-        _warning "未发现配置文件，开始生成模板，请修改后重新运行"
+        _warning "未发现配置文件，开始生成模板..."
         yamlFile="${yamlFile1}"
-        GenerateProfile
+        if GenerateProfile; then
+            _success "模板配置文件已生成，请修改后重新运行，以下是配置文件绝对路径："
+            echo "${yamlFile}"
+        else
+            _error "生成模板配置文件时出现未知情况，请联系作者排查，退出中"
+            exit 1
+        fi
         exit 0
     elif [ -f "${yamlFile1}" ];then
         yamlFile="${yamlFile1}"
@@ -196,11 +212,6 @@ CheckDependence(){
         yamlFile="${yamlFile2}"
     fi
 
-    # 为非root用户创建工具正常工作所需的必要路径
-	if [ "${isNonRootUser}" -eq 1 ]; then
-	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
-	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
-	fi
 	_success "环境依赖检查完成"
 }
 
@@ -242,7 +253,7 @@ root：
     installedTask=()
     notInstalledTask=()
     mapfile -t taskList < <(${yqFile} '.*|key' "${yamlFile}")
-    mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
+    mapfile -t timingSegmentList < <(find "${cronPath}" -name "${prefixCronFile}*"|awk -F '@_' '{print $NF}')
     if [ "${isNonRootUser}" -eq 0 ]; then
         # 配置文件中任务名对比系统已有定时的任务名，对比相同的名称组成：已安装任务数组
         for i in "${taskList[@]}" ; do
@@ -337,7 +348,7 @@ AutoRepair(){
     if [ "${isNonRootUser}" -eq 0 ]; then
         if [ "${#loseControlTask[@]}" -gt 0 ]; then
             for i in "${loseControlTask[@]}" ; do
-                rm -rf  "${cronPath}"/mysql-backup-task@_"${i}"
+                rm -rf  "${cronPath:?}/${prefixCronFile}${i}"
             done
             _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
             flag=1
@@ -347,7 +358,7 @@ AutoRepair(){
         # 删除残留定时分段
         if [ "${#taskListNotExistList[@]}" -gt 0 ]; then
             for i in "${taskListNotExistList[@]}" ; do
-                rm -rf "${cronPath}"/mysql-backup-task@_"${i}"
+                rm -rf "${cronPath:?}/${prefixCronFile}${i}"
             done
             needRebuildSystemTimer=1
             _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
@@ -367,9 +378,9 @@ AutoRepair(){
         # 重建系统定时
         if [ "${needRebuildSystemTimer}" -eq 1 ]; then
             timingSegmentList=()
-            mapfile -t timingSegmentList < <(find "${cronPath}" -name "mysql-backup-task@_*"|awk -F '@_' '{print $NF}')
+            mapfile -t timingSegmentList < <(find "${cronPath}" -name "${prefixCronFile}*"|awk -F '@_' '{print $NF}')
             for i in "${timingSegmentList[@]}" ; do
-                cat "${cronPath}"/mysql-backup-task@_"${i}" >> "${cronPath}"/final-cron-install-file
+                cat "${cronPath}/${prefixCronFile}${i}" >> "${cronPath}"/final-cron-install-file
             done
             if [ -f "${cronPath}"/final-cron-install-file ]; then
                 crontab "${cronPath}"/final-cron-install-file
@@ -684,7 +695,7 @@ ParseYaml() {
 # 2. 非root：任何任务记录文件均不会执行，而是生成一个或多个任务记录文件后，将指定的任务记录文件内的内容组合成一个最终文件，然后将最终文件安装进系统定时任务后删除，非root用户安装不同定时任务文件会覆盖而非追加故用此方法实现
 InstallTask(){
     # 为每一个任务拼装一个定时文件
-    cat > "${cronPath}"/mysql-backup-task@_"${1}" << EOF
+    cat > "${cronPath}/${prefixCronFile}${1}" << EOF
 #%${1}:
 #%  ip: ${mysqlIP}
 #%  port: ${mysqlPort}
@@ -697,44 +708,44 @@ EOF
     case "${dbType}" in
     "include")
         if [ "${#databaseList[@]}" -eq 1 ]; then
-            echo "#  database: ${databaseList[0]}" >> "${cronPath}"/mysql-backup-task@_"${1}"
+            echo "#  database: ${databaseList[0]}" >> "${cronPath}/${prefixCronFile}${1}"
         elif [ "${#databaseList[@]}" -gt 1 ]; then
-            echo "#  database: " >> "${cronPath}"/mysql-backup-task@_"${1}"
+            echo "#  database: " >> "${cronPath}/${prefixCronFile}${1}"
 
             local i
             for i in "${databaseList[@]}" ; do
-                echo "#    - ${i}" >> "${cronPath}"/mysql-backup-task@_"${1}"
+                echo "#    - ${i}" >> "${cronPath}/${prefixCronFile}${1}"
             done
         fi
 
         ;;
     "exclude")
         if [ "${#excludeDatabaseList[@]}" -eq 1 ]; then
-            echo "#  exclude-database: ${excludeDatabaseList[0]}" >> "${cronPath}"/mysql-backup-task@_"${1}"
+            echo "#  exclude-database: ${excludeDatabaseList[0]}" >> "${cronPath}/${prefixCronFile}${1}"
         elif [ "${#excludeDatabaseList[@]}" -gt 1 ]; then
-            echo "#  exclude-database: " >> "${cronPath}"/mysql-backup-task@_"${1}"
+            echo "#  exclude-database: " >> "${cronPath}/${prefixCronFile}${1}"
 
             local i
             for i in "${excludeDatabaseList[@]}" ; do
-                echo "#    - ${i}" >> "${cronPath}"/mysql-backup-task@_"${1}"
+                echo "#    - ${i}" >> "${cronPath}/${prefixCronFile}${1}"
             done
         fi
     ;;
     esac
 
     if [ "${isNonRootUser}" -eq 0 ]; then
-        cat >> "${cronPath}"/mysql-backup-task@_"${1}" << EOF
+        cat >> "${cronPath}/${prefixCronFile}${1}" << EOF
 ${cronFormat} $(whoami) ${sqlBakFile} run ${1}
 EOF
     elif [ "${isNonRootUser}" -eq 1 ]; then
-        cat >> "${cronPath}"/mysql-backup-task@_"${1}" << EOF
+        cat >> "${cronPath}/${prefixCronFile}${1}" << EOF
 ${cronFormat} ${sqlBakFile} run ${1}
 EOF
     fi
 }
 
 RemoveTask(){
-    rm -rf "${cronPath}"/mysql-backup-task@_"${1}"
+    rm -rf "${cronPath:?}/${prefixCronFile}${1}"
 }
 
 RunTask() {
@@ -756,7 +767,8 @@ RunTask() {
         local i
         for ((i=0; i<${#excludeDatabaseList[@]}; i++))
         do
-            excludeDatabaseList[$i]=" --ignore-database=${excludeDatabaseList[$i]}"
+#            excludeDatabaseList[$i]=" --ignore-database=${excludeDatabaseList[$i]}"
+            excludeDatabaseList+=(" --ignore-database=${excludeDatabaseList[$i]}")
         done
         execCommand="${mysqldumpPath} -h ${mysqlIP} -P ${mysqlPort} -u ${mysqlUser} -p${mysqlPass} --default-character-set=utf8mb4 -A ${excludeDatabaseList[@]} | gzip >${backupPath}/${1}_-_${todayDate}.sql.gz 2>/tmp/sqlbak.tmp"
         if ! eval "${execCommand}";then
@@ -835,8 +847,8 @@ CheckTask(){
 RebuildCron(){
     _info "开始重建系统定时任务"
     [ -f "${cronPath}"/final-cron-install-file ] && rm -rf "${cronPath}"/final-cron-install-file
-    if [ -n "$(find "${cronPath}" -name "mysql-backup-task@_*")" ]; then
-        cat "${cronPath}"/mysql-backup-task@_* >> "${cronPath}"/final-cron-install-file
+    if [ -n "$(find "${cronPath}" -name "${prefixCronFile}*")" ]; then
+        cat "${cronPath}/${prefixCronFile}*" >> "${cronPath}"/final-cron-install-file
     else
         crontab -r >/dev/null 2>&1
     fi
@@ -857,7 +869,7 @@ RebuildCron(){
 Destroy(){
     _info "开始卸载sqlbak"
     if [ "${isNonRootUser}" -eq 0 ]; then
-        rm -rf "${cronPath}"/mysql-backup-task@_*
+        rm -rf "${cronPath:?}/${prefixCronFile}*"
         rm -rf "${yamlFile}" "${sqlBakFile}" "${yqFile}"
     elif [ "${isNonRootUser}" -eq 1 ]; then
         if [ -f "${otherCronFile}" ]; then
@@ -961,6 +973,7 @@ if [ "${isClassified}" -eq 2 ]; then
     exit 1
 fi
 SetConstantAndVariableByCurrentUser
+CheckDependence
 
 # 判断工具后跟的首个参数名以分配不同功能
 firstOption="${1}"
@@ -1019,7 +1032,6 @@ case "${firstOption}" in
         ;;
 esac
 
-CheckDependence
 _info "开始比对本工具生成的系统定时任务和配置文件中指定的定时任务"
 CheckInstallStatus
 AutoRepair
