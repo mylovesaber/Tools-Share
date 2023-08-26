@@ -353,9 +353,6 @@ root：
                     break
                 fi
             done
-        # 系统定时随意-定时分段1-配置文件0，均删除多余分段后重建系统定时
-        elif [ "${#taskListNotExistList[@]}" -gt 0 ]; then
-            : # 删除该数组中的所有定时分段，然后重建系统定时
         fi
     fi
 }
@@ -773,7 +770,7 @@ RunTask() {
     fi
 
     # 备份并转写为压缩包，格式：任务名_-_表名_-_日期.sql.gz
-    local i execCommand commandArray
+    local i commandArray
     commandArray=()
     case "${dbType}" in
     "include")
