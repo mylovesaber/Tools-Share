@@ -81,10 +81,12 @@ _errornoblank() {
 }
 
 
-todayDate=
+todayDateMore=
+todayDateLess=
 isNonRootUser=
 binPath=
 etcPath=
+logPath=
 cronPath=
 yqFile=
 yamlFile=
@@ -120,7 +122,8 @@ needRebuildSystemTimer=0
 
 SetConstantAndVariableByCurrentUser(){
     # 当前日期时间
-    todayDate=$(date +%Y-%m-%d_%H:%M:%S)
+    todayDateMore=$(date +%Y-%m-%d_%H:%M:%S)
+    todayDateLess=$(date +%Y-%m-%d)
 
     case "$(arch)" in
     "aarch64")
@@ -137,15 +140,17 @@ SetConstantAndVariableByCurrentUser(){
         isNonRootUser=0
         etcPath="/etc"
         cronPath="/etc/cron.d"
+        logPath="/var/log/sqlbak"
         yamlFile1="/etc/sqlbak.yml"
         yamlFile2="/etc/sqlbak.yaml"
     else
         isNonRootUser=1
-        etcPath="/home/$(whoami)/.local/etc"
-        cronPath="/home/$(whoami)/.local/sqlbakcron"
-        yamlFile1="/home/$(whoami)/.local/etc/sqlbak.yml"
-        yamlFile2="/home/$(whoami)/.local/etc/sqlbak.yaml"
-        otherCronFile="/home/$(whoami)/.local/sqlbakcron/other-cron"
+        etcPath="/home/$(whoami)/.local/sqlbak/etc"
+        cronPath="/home/$(whoami)/.local/sqlbak/sqlbakcron"
+        logPath="/home/$(whoami)/.local/sqlbak/log"
+        yamlFile1="/home/$(whoami)/.local/sqlbak/etc/sqlbak.yml"
+        yamlFile2="/home/$(whoami)/.local/sqlbak/etc/sqlbak.yaml"
+        otherCronFile="/home/$(whoami)/.local/sqlbak/sqlbakcron/other-cron"
     fi
     if [ -f "${yamlFile1}" ] && [ -f "${yamlFile2}" ]; then
         yamlFile=$(echo -e "
@@ -179,6 +184,9 @@ CheckDependence(){
 	if [ "${isNonRootUser}" -eq 1 ]; then
 	    [[ ! -d "${etcPath}" ]] && mkdir -p "${etcPath}"
 	    [[ ! -d "${cronPath}" ]] && mkdir -p "${cronPath}"
+	    [[ ! -d "${logPath}" ]] && mkdir -p "${logPath}"
+	elif [ "${isNonRootUser}" -eq 0 ]; then
+	    [[ ! -d "${logPath}" ]] && mkdir -p "${logPath}"
 	fi
 
 	# 检查配置文件解析工具工作是否正常，如果不正常或丢失则退出
@@ -239,21 +247,35 @@ root：
 		0		1		未安装
 		0		0		-
 " > /dev/null
-    local i
-    # timingSegmentList: 定时分段
-    # taskList: 配置文件
-    # yamlStreamTaskList: 系统定时
-    if ! ${yqFile} '.*|key' "${yamlFile}" >/dev/null; then
+    local i j sameNameTaskList
+
+    # 检查配置文件是否存在yq能检测的报错
+    if ! ${yqFile} '.' "${yamlFile}" >/dev/null; then
         _error "配置文件出现异常，已输出报错信息，退出中"
         exit 1
     fi
+
+    # 检查相同的任务名，如果存在，则报错退出，这个检测任务yq做不到
+    mapfile -t sameNameTaskList < <(grep -o '^.*:' "${yamlFile}" | grep -v "^ \|^#" | cut -d':' -f1 | uniq -d)
+    if [ "${#sameNameTaskList[@]}" -gt 0 ]; then
+        _error "禁止存在相同任务名，退出中，以下是重名任务："
+        for j in "${sameNameTaskList[@]}"; do
+            _warningnoblank "${j}"
+        done
+        exit 1
+    fi
+
+    # yamlStreamTaskList: 系统定时
+    # timingSegmentList: 定时分段
+    # taskList: 配置文件
     # 重置数组防止被事先存入了元素
     taskList=()
     loseControlTask=()
     installedTask=()
     notInstalledTask=()
-    mapfile -t taskList < <(${yqFile} '.*|key' "${yamlFile}")
+    mapfile -t taskList < <(${yqFile} '.[]|key' "${yamlFile}")
     mapfile -t timingSegmentList < <(find "${cronPath}" -name "${prefixCronFile}*"|awk -F '@_' '{print $NF}')
+
     if [ "${isNonRootUser}" -eq 0 ]; then
         # 配置文件中任务名对比系统已有定时的任务名，对比相同的名称组成：已安装任务数组
         for i in "${taskList[@]}" ; do
@@ -277,12 +299,8 @@ root：
         done
     else
         local systemCronToYamlStream yamlStreamTaskList temp1Task temp0Task
-        if crontab -l >/dev/null 2>&1; then
-            systemCronToYamlStream=$(crontab -l|grep "^#%"|sed 's/^#%//g')
-            mapfile -t -O "${#yamlStreamTaskList[@]}" yamlStreamTaskList < <(echo "${systemCronToYamlStream}"|yq '.*|key')
-        else
-            yamlStreamTaskList=()
-        fi
+        systemCronToYamlStream=$(crontab -l 2>/dev/null|grep "^#%"|sed 's/^#%//g')
+        mapfile -t -O "${#yamlStreamTaskList[@]}" yamlStreamTaskList < <(echo "${systemCronToYamlStream}"|${yqFile} '.[]|key')
 
         # 配置文件中任务名对比定时分段任务名，对比相同的名称组成：temp1Task，定时分段不存在的话组成：temp0Task
         temp0Task=()
@@ -295,8 +313,8 @@ root：
             fi
         done
 
-        # 配置文件1-定时分段1-系统定时1->installedTask: 已安装
-        # 配置文件1-定时分段1-系统定时0->repairSystemTimerList: 自修复（重建系统定时）
+        # 系统定时1-定时分段1-配置文件1->installedTask: 已安装
+        # 系统定时0-定时分段1-配置文件1->repairSystemTimerList: 自修复（重建系统定时）
         if [ "${#temp1Task[@]}" -gt 0 ]; then
             for i in "${temp1Task[@]}" ; do
                 if printf '%s\0' "${yamlStreamTaskList[@]}" | grep -Fxqz -- "${i}"; then
@@ -307,8 +325,8 @@ root：
             done
         fi
 
-        # 配置文件1-定时分段0-系统定时1->repairSegmentTimerList: 自修复（添加定时分段）
-        # 配置文件1-定时分段0-系统定时0->notInstalledTask: 未安装
+        # 系统定时1-定时分段0-配置文件1->repairSegmentTimerList: 自修复（添加定时分段）
+        # 系统定时0-定时分段0-配置文件1->notInstalledTask: 未安装
         if [ "${#temp0Task[@]}" -gt 0 ]; then
             for i in "${temp0Task[@]}" ; do
                 if printf '%s\0' "${yamlStreamTaskList[@]}" | grep -Fxqz -- "${i}"; then
@@ -320,22 +338,22 @@ root：
         fi
 
         # 定时分段任务名对比配置文件中任务名，配置文件中不存在的任务名组成：taskListNotExistList（删除残留定时分段）
-        # 配置文件0-定时分段1-系统定时随意，均删除多余分段后重建系统定时
+        # 系统定时随意-定时分段1-配置文件0，均删除多余分段后重建系统定时
         for i in "${timingSegmentList[@]}" ; do
             if ! printf '%s\0' "${taskList[@]}" | grep -Fxqz -- "${i}"; then
                 mapfile -t -O "${#taskListNotExistList[@]}" taskListNotExistList < <(echo "${i}")
             fi
         done
 
-        # 配置文件0-定时分段0-系统定时1，直接重建系统定时
+        # 系统定时1-定时分段0-配置文件0，直接重建系统定时
         if [ "${#taskListNotExistList[@]}" -eq 0 ]; then
             for i in "${yamlStreamTaskList[@]}" ; do
                 if ! printf '%s\0' "${taskList[@]}" | grep -Fxqz -- "${i}"; then
-                    needRebuildSystemTimer=1
+                    needRebuildSystemTimer=2
                     break
                 fi
             done
-        # 配置文件0-定时分段1-系统定时随意，均删除多余分段后重建系统定时
+        # 系统定时随意-定时分段1-配置文件0，均删除多余分段后重建系统定时
         elif [ "${#taskListNotExistList[@]}" -gt 0 ]; then
             : # 删除该数组中的所有定时分段，然后重建系统定时
         fi
@@ -360,9 +378,9 @@ AutoRepair(){
             for i in "${taskListNotExistList[@]}" ; do
                 rm -rf "${cronPath:?}/${prefixCronFile}${i}"
             done
-            needRebuildSystemTimer=1
+            needRebuildSystemTimer=3
             _warning "发现系统中存在本工具配置文件中不存在的备份任务！已清理"
-            flag=1
+            flag=2
         fi
 
         # 添加定时分段
@@ -372,11 +390,11 @@ AutoRepair(){
                 InstallTask "${i}"
             done
             _warning "发现系统中存在部分配置丢失的备份任务！已修复"
-            flag=2
+            flag=3
         fi
 
         # 重建系统定时
-        if [ "${needRebuildSystemTimer}" -eq 1 ]; then
+        if [ "${needRebuildSystemTimer}" -gt 0 ]; then
             timingSegmentList=()
             mapfile -t timingSegmentList < <(find "${cronPath}" -name "${prefixCronFile}*"|awk -F '@_' '{print $NF}')
             for i in "${timingSegmentList[@]}" ; do
@@ -387,7 +405,7 @@ AutoRepair(){
                 rm -rf "${cronPath}"/final-cron-install-file
                 _warning "已根据已安装的备份任务重建系统备份计划"
             fi
-            flag=3
+            flag=4
         fi
     fi
     if [ "${flag}" -gt 0 ]; then
@@ -497,7 +515,7 @@ ParseYaml() {
 
     # 检测程序工作所需键在配置文件中是否存在
     # 检测键database和exclude-database是否同时存在，二者只能必须且仅能留一个
-    mapfile -t specifiedTaskParamList < <(${yqFile} '.'"${1}"'.*|key' "${yamlFile}")
+    mapfile -t specifiedTaskParamList < <(${yqFile} '.'"${1}"'.[]|key' "${yamlFile}")
     local dbCount edbCount
     dbCount=0
     edbCount=0
@@ -591,11 +609,11 @@ ParseYaml() {
         ;;
     esac
     # 非根目录且路径末尾有/则去掉路径末尾/
-    if [[ ${backupPath} =~ ^/$ ]]; then
-        :
+    if [[ ! ${backupPath} =~ ^/ ]]; then
+        _error "备份路径禁止使用相对路径，退出中"
+        exit 1
     elif [[ ${backupPath} =~ /$ ]]; then
         backupPath="${backupPath%/}"
-#        echo "${backupPath}"
     fi
 
     # 非root用户必须对备份路径进行每一层级目录的权限排查，以避免无法写入备份文件的问题。
@@ -612,8 +630,8 @@ ParseYaml() {
     if [ "${isNonRootUser}" -eq 1 ]; then
         mapfile -t invalidPath < <(awk -F ':' '{print $6}' /etc/passwd|grep -v "/$")
         for i in "${invalidPath[@]}"; do
-            if [[ "${parentPath}" =~ ^${i} ]]; then
-                _error "指定的备份路径禁止设置为系统已存在用户的家目录(${i})中的子目录！退出中"
+            if [[ "${parentPath}" =~ ^${i} ]] && [[ ! ${parentPath} =~ ^$HOME ]]; then
+                _error "指定的备份路径禁止设置为系统已存在用户但非当前登录用户的家目录及其(${i})中的子目录！退出中"
                 exit 1
             fi
         done
@@ -755,41 +773,42 @@ RunTask() {
     fi
 
     # 备份并转写为压缩包，格式：任务名_-_表名_-_日期.sql.gz
-    local i execCommand
+    local i execCommand commandArray
+    commandArray=()
     case "${dbType}" in
     "include")
-        execCommand="${mysqldumpPath} -h ${mysqlIP} -P ${mysqlPort} -u ${mysqlUser} -p${mysqlPass} --default-character-set=utf8mb4 -B ${databaseList[@]} | gzip >"${backupPath}"/"${1}"_-_"${todayDate}".sql.gz 2>/tmp/sqlbak.tmp"
-        if ! eval "${execCommand}";then
-            WriteLog "${1}"
-        fi
+        commandArray+=("${mysqldumpPath}" "-h" "${mysqlIP}" "-P" "${mysqlPort}" "-u" "${mysqlUser}" "-p${mysqlPass}" "--default-character-set=utf8mb4" "-B")
+        for ((i=0; i<${#databaseList[@]}; i++))
+        do
+            mapfile -t -O "${#commandArray[@]}" commandArray < <(echo "${databaseList[$i]}")
+        done
         ;;
     "exclude")
-        local i
+        commandArray+=("${mysqldumpPath}" "-h" "${mysqlIP}" "-P" "${mysqlPort}" "-u" "${mysqlUser}" "-p${mysqlPass}" "--default-character-set=utf8mb4" "-A")
         for ((i=0; i<${#excludeDatabaseList[@]}; i++))
         do
-#            excludeDatabaseList[$i]=" --ignore-database=${excludeDatabaseList[$i]}"
-            excludeDatabaseList+=(" --ignore-database=${excludeDatabaseList[$i]}")
+            mapfile -t -O "${#commandArray[@]}" commandArray < <(echo "--ignore-database=${excludeDatabaseList[$i]}")
         done
-        execCommand="${mysqldumpPath} -h ${mysqlIP} -P ${mysqlPort} -u ${mysqlUser} -p${mysqlPass} --default-character-set=utf8mb4 -A ${excludeDatabaseList[@]} | gzip >${backupPath}/${1}_-_${todayDate}.sql.gz 2>/tmp/sqlbak.tmp"
-        if ! eval "${execCommand}";then
-            WriteLog "${1}"
-        fi
         ;;
     esac
-    rm -rf /tmp/sqlbak.tmp
+    if ! "${commandArray[@]}" 2>/tmp/sqlbak_error.tmp 1>/tmp/"${1}"_-_"${todayDateMore}".sql;then
+        _error "备份过程中出错，正在写入错误日志..."
+        WriteLog "${1}"
+        _errornoblank "日志已记录,请检查日志：${logPath}/error-${todayDateLess}.log"
+    else
+        tar -zcPf "${backupPath}"/"${1}"_-_"${todayDateMore}".sql.tar.gz /tmp/"${1}"_-_"${todayDateMore}".sql
+    fi
+    rm -rf /tmp/sqlbak_error.tmp /tmp/"${1}"_-_"${todayDateMore}".sql
 }
 
 WriteLog(){
-    if [ ! -d /var/log/sqlbak ]; then
-        mkdir -p /var/log/sqlbak
-    fi
-    cat >> /var/log/sqlbak/error-"${todayDate}".log <<EOF
+    cat >> "${logPath}"/error-"${todayDateLess}".log <<EOF
 =======================================
-时间: ${todayDate}
+时间: $(date +"%Y年%m月%d日 %H:%M:%S")
 任务名: ${1}
 
 EOF
-    cat /tmp/sqlbak.tmp >> /var/log/sqlbak/error-"${todayDate}".log
+    cat /tmp/sqlbak_error.tmp >> "${logPath}"/error-"${todayDateLess}".log
 }
 
 DeleteExpiresArchive() {
@@ -810,7 +829,6 @@ DeleteExpiresArchive() {
 }
 
 CheckTask(){
-    printf "================\n"
     # 判断备份路径是否存在
     if [ ! -d "${backupPath}" ]; then
         _warning "备份路径不存在，实际执行时将创建此路径: ${backupPath}"
@@ -890,7 +908,7 @@ Help(){
     echo -e "
 sqlbak  -- mysql/mariadb数据库备份工具
 
-设计思路: 以确定的数据库连接为一个基本单元
+设计思路: 将连接一个数据库所需各参数组合为一个基本单元
 通过yaml文件来配置若干基本单元各自的详细信息
 一个基本单元被运行时可以备份其中一个或多个数据库
 也可以通过安装/卸载以向系统中添加/取消/更新定时备份计划
@@ -901,24 +919,19 @@ sqlbak  -- mysql/mariadb数据库备份工具
         "
         if [[ $(readlink -f "$0") == "${sqlBakFile}" ]]; then
             _warning "注意:
-1. 本工具首次带[操作]名称运行即自动将自身和必要依赖和配置文件安装进系统(不包括help/--help/-h选项)，后续直接输入sqlbak即可运行
-2. 对于非root用户使用本工具且系统中已有或未来需要新增其他定时任务的需求，必须执行此命令以完成当前用户系统定时重建:
+1. 本工具首次运行即自动生成模板配置文件
+2. 当系统中已存在或未来需要新增其他定时任务的需求时，非root用户必须执行此命令以完成当前用户系统定时重建:
 $(readlink -f "$0") rebuild-cron
 3. 未来本工具如有更新，只需手动执行以下命令即可完成功能更新:
-$(readlink -f "$0")
-4. 若本工具并未安装过，绝对不要运行以下命令，否则非root已有的系统定时任务将被清空:
-$(readlink -f "$0") destroy
+$(readlink -f "$0") update
 "
         else
             _warning "注意:
-1. 本工具首次带[操作]名称运行即自动将自身和必要依赖和配置文件安装进系统(不包括help/--help/-h选项)，后续直接输入sqlbak即可运行
-2. 本工具首次运行后如果无报错生成则可以删除此文件: $(readlink -f "$0")
-3. 对于非root用户使用本工具且系统中已有或未来需要新增其他定时任务的需求，必须执行此命令以完成当前用户系统定时重建:
-bash $(readlink -f "$0") rebuild-cron
-4. 未来本工具如有更新，只需手动执行以下命令即可完成功能更新(bash后的绝对路径是根据本工具当前所处路径而自动检测后打印的):
-bash $(readlink -f "$0")
-5. 若本工具并未安装过，绝对不要运行以下命令，否则非root已有的系统定时任务将被清空:
-bash $(readlink -f "$0") destroy
+1. 本工具首次运行即自动生成模板配置文件
+2. 当系统中已存在或未来需要新增其他定时任务的需求时，非root用户必须执行此命令以完成当前用户系统定时重建:
+$(readlink -f "$0") rebuild-cron
+3. 未来本工具如有更新，只需手动执行以下命令即可完成功能更新:
+$(readlink -f "$0") update
 "
         fi
     elif [ "${isClassified}" -eq 1 ]; then
@@ -1258,8 +1271,8 @@ case "${firstOption}" in
         if [ "${#specifiedTaskList[@]}" -eq 0 ] || { [ "${2}" == "help" ] && [ -z "${3}" ]; }; then
             echo
             _infonoblank "Tips: 支持单个任务查询配置或多个任务名同时查询配置，任务名之间用空格隔开
-            例1: $0 check aa
-            例2: $0 check aa bb cc dd ...
+例1: $0 check aa
+例2: $0 check aa bb cc dd ...
             "
             _infonoblank "特殊任务名:
             all: 查询全部任务的配置细节，后面不能有任何其他任务名"|column -t
@@ -1283,15 +1296,21 @@ case "${firstOption}" in
             _error "all 后面禁止添加其他字段，请删除多余字段后重新运行: ${*:3}"
             exit 1
         elif [ "${2}" == "all" ] && [ -z "${3}" ]; then
-            _info "开始展示全部任务配置"
+            _info "开始依次检查并展示任务配置"
             for taskName in "${taskList[@]}"; do
+                printf "=====================\\n"
+                echo -e "${_cyan}正在检查合规性的任务：${_tan}${taskName}${_norm}"
                 ParseYaml "${taskName}"
+                _success "检查通过"
                 CheckTask "${taskName}"
             done
         else
-            _info "开始依次展示任务配置"
+            _info "开始依次检查并展示任务配置"
             for taskName in "${specifiedTaskList[@]}"; do
+                printf "=====================\n"
+                echo -e "${_cyan}正在检查合规性的任务：${_tan}${taskName}${_norm}"
                 ParseYaml "${taskName}"
+                _success "检查通过"
                 CheckTask "${taskName}"
             done
         fi
