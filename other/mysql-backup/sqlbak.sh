@@ -856,6 +856,7 @@ CheckTask(){
         ;;
     esac
 
+echo -e "${_cyan}创建的定时规则: ${_tan}\"${cronFormat}\"${_cyan}"
     echo
 }
 
