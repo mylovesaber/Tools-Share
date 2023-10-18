@@ -791,7 +791,6 @@ elif [ "\${#LOCAL_NIC_NAMES[@]}" -gt 1 ]; then
         _error "检测到多张网卡已联网，请联系作者适配"
     esac
 else
-    local LOCAL_NIC_NAME
     LOCAL_NIC_NAME="\${LOCAL_NIC_NAMES[0]}"
     IP_RESULT1=\$(ip -f inet address show "\${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
     IP_RESULT2=\$(ifconfig "\${LOCAL_NIC_NAME}" | grep -Po 'inet \K[\d.]+')
