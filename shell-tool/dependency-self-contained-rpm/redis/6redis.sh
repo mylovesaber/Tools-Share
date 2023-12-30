@@ -1,0 +1,1 @@
+time rpmbuild -D '_topdir /home/build/rpmbuild'  -bb 6redis.spec
