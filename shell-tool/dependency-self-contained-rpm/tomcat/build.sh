@@ -240,13 +240,24 @@ ParseConfig(){
     logRetentionPeriodType=${log_retention_period_type}
     logRetentionPeriodAmount=${log_retention_period_amount}
 
-#    # 老版本rpm构建工具不支持此类用法，暂时屏蔽功能
-#    if declare -p java_package_name 2>/dev/null | grep -q 'declare \-a'; then
-#        javaPackageName=$(sed -e 's/^/(/g' -e 's/$/)/g' -e 's/ / | /g' <<< "${java_package_name[*]}")
-#    else
-#        # shellcheck disable=SC2128
-#        javaPackageName="${java_package_name}"
-#    fi
+    # 低于4.13的老版本rpm构建工具只支持单一名称的依赖包名
+    # https://rpm-software-management.github.io/rpm/manual/boolean_dependencies.html
+
+    currentRPMVer=$(rpm --version| cut -d' ' -f3)
+    versionNumList=(4.13 "${currentRPMVer}")
+    if declare -p java_package_name 2>/dev/null | grep -q 'declare \-a'; then
+        if test "$(echo "${versionNumList[@]}" | tr " " "\n" | sort -V | head -n 1)" != "4.13"; then
+            javaPackageName=$(sed -e 's/^/(/g' -e 's/$/)/g' <<< "${java_package_name[*]}")
+        elif [[ ${currentRPMVer} == "4.13" ]]; then
+            javaPackageName=$(sed -e 's/^/(/g' -e 's/$/)/g' <<< "${java_package_name[*]}")
+        else
+            formatError "当前rpm版本低于4.13，仅支持单一名称的依赖包名，请修改java_package_name的值，退出中"
+            exit 1
+        fi
+    else
+        # shellcheck disable=SC2128
+        javaPackageName="${java_package_name}"
+    fi
 
     if declare -p systemd_limit_conf 2>/dev/null | grep -q 'declare \-a'; then
         systemdLimitConf=("${systemd_limit_conf[@]}")
@@ -827,6 +838,14 @@ tomcat二进制文件校验码: ${TAN}${tomcatSha}${CYAN}
 构建厂商中文名: ${TAN}${vendorCn}${CYAN}
 指定JAVA_HOME路径: ${TAN}${javaHome}${CYAN}
 指定安装时依赖的JDK包名:" | column -t
+    local tmpDepList=()
+    if [[ "${javaPackageName}" =~ " " ]]; then
+        formatWarning "检测到依赖包名可能不是单一依赖"
+        formatWarning "在高版本rpm中支持依赖包的条件选择功能，本工具不会解析该功能是否合法"
+        formatWarning "如果不合法，在构建时将会报错，之后请根据官方文档检查合法性并修改："
+        formatInfoNoBlank "https://rpm-software-management.github.io/rpm/manual/boolean_dependencies.html"
+    fi
+    formatSuccessNoBlank "以下是解析的依赖包名:"
     echo -e "${TAN}${javaPackageName}${NORM}"
     echo
 
@@ -1237,7 +1256,6 @@ AutoReqProv:       no
 BuildArch:         noarch
 Requires:          %{java_package_name}
 Requires(pre):     shadow-utils
-BuildRequires:     systemd-rpm-macros
 
 %description
 此安装包为%{vendor_cn}项目部署所需的定制版 tomcat
