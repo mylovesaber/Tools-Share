@@ -1,0 +1,23 @@
+[Unit]
+Description=Tomcat-9 定制版
+After=syslog.target network.target
+
+[Service]
+LimitNOFILE=infinity
+SuccessExitStatus=143
+Type=forking
+User=tomcat
+Group=tomcat
+Environment=JAVA_HOME=/opt/java-8
+WorkingDirectory=/opt/tomcat-9-1
+ExecStartPre=/bin/bash -c " \
+    if test -e /opt/tomcat-9-1/logs/catalina.out; then \
+        cp /opt/tomcat-9-1/logs/catalina.out /opt/tomcat-9-1/logs/catalina_lastest_backup.log; \
+        rm -rf /opt/tomcat-9-1/logs/catalina.out; \
+    fi"
+ExecStart=/opt/tomcat-9-1/bin/startup.sh
+ExecStop=/opt/tomcat-9-1/bin/shutdown.sh
+Restart=always
+
+[Install]
+WantedBy=default.target
