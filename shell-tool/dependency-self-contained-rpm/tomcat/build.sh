@@ -245,7 +245,7 @@ ParseConfig(){
 
     currentRPMVer=$(rpm --version| cut -d' ' -f3)
     versionNumList=(4.13 "${currentRPMVer}")
-    if declare -p java_package_name 2>/dev/null | grep -q 'declare \-a'; then
+    if declare -p "${java_package_name}" 2>/dev/null | grep -q 'declare \-a'; then
         if test "$(echo "${versionNumList[@]}" | tr " " "\n" | sort -V | head -n 1)" != "4.13"; then
             javaPackageName=$(sed -e 's/^/(/g' -e 's/$/)/g' <<< "${java_package_name[*]}")
         elif [[ ${currentRPMVer} == "4.13" ]]; then
