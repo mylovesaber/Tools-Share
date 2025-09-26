@@ -964,7 +964,7 @@ GenerateEnv(){
     # tomcat 日志处理
     formatInfo "正在生成 tomcat 日志处理配置..."
     cat > "${topDir}/tomcat.${tomcatUser}.logrotate" <<EOF
-$/opt/${vendorEn}/###TOMCAT_NAME###/logs/catalina*.log {
+/opt/${vendorEn}/###TOMCAT_NAME###/logs/catalina*.log {
     copytruncate
     ${logRetentionPeriodType}
     rotate ${logRetentionPeriodAmount}
